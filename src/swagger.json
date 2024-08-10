@@ -1,0 +1,147 @@
+{
+	"openapi": "3.0.2",
+	"info": {
+		"title": "COMY Business Matching Platform API Documentation",
+		"description": "This API supports the functionality of COMY, a business matching platform inspired by BNI’s 1-to-1 sheets. COMY enables companies to share their visions, missions, and business goals, facilitating collaboration and expansion within the COMY community. The API provides endpoints for user registration, authentication, and interaction with business sheets—a core feature of the platform. Users can create, customize, share, and search for business sheets, helping businesses connect and grow through shared goals and interests.",
+		"version": "1.0.0",
+		"contact": {
+			"name": "Mohamad Ghaith Alzin",
+			"email": "ghaithalzein05@gmail.com",
+			"url": "https://github.com/alzin"
+		}
+	},
+	"paths": {
+		"/auth/register": {
+			"post": {
+				"tags": [
+					"Auth"
+				],
+				"summary": "Register a new user",
+				"description": "Registers a new user with an email, name, and password.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									},
+									"password": {
+										"type": "string"
+									}
+								},
+								"example": {
+									"name": "John Doe",
+									"email": "john.doe@example.com",
+									"password": "Password123!"
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "User registered successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string",
+											"example": "User registered successfully"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string",
+											"example": "Invalid input or user already exists"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/login": {
+			"post": {
+				"tags": [
+					"Auth"
+				],
+				"summary": "User login",
+				"description": "Logs in a user with email and password, returning a JWT token.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"email": {
+										"type": "string"
+									},
+									"password": {
+										"type": "string"
+									}
+								},
+								"example": {
+									"email": "john.doe@example.com",
+									"password": "Password123!"
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Login successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"token": {
+											"type": "string",
+											"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid username or password",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string",
+											"example": "Invalid username or password"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
