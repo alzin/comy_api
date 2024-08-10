@@ -1,26 +1,19 @@
 {
-    "defaultSeverity": "error",
-    "extends": ["tslint:recommended"],
-    "jsRules": {},
-    "rules": {
-        "no-console": false,
-        "ordered-imports": false,
-        "no-unused-expression": false,
-        "no-shadowed-variable": false,
-        "no-var-requires": false,
-        "quotemark": [true, "single", "avoid-escape"],
-        "trailing-comma": [
-            true,
-            {
-                "multiline": {
-                    "objects": "always",
-                    "arrays": "always",
-                    "functions": "never",
-                    "typeLiterals": "ignore"
-                },
-                "esSpecCompliant": true
-            }
-        ]
-    },
-    "rulesDirectory": []
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended", "tslint-config-airbnb"],
+  "jsRules": {
+    "no-unused-expression": true
+  },
+  "rules": {
+    "max-line-length": [true, 150],
+    "prefer-template": false,
+    "interface-name": [true, "never-prefix"],
+    "import-name": false,
+    "no-console": false,
+    "object-literal-sort-keys": false,
+    "disable-next-line": ["align", "no-trailing-whitespace"],
+    "max-classes-per-file": true,
+    "no-parameter-reassignment": false
+  },
+  "rulesDirectory": []
 }

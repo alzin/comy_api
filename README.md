@@ -1,41 +1,52 @@
-# example-swagger-express-ts
+# node-express-typescript-mongodb-swagger
 
-## Getting started
+Environment
+```
+NPM: 8.19.2
+Node : 18.12.1 LTS
 
-First, clone the project.
-
-```sh
-git clone https://github.com/olivierlsc/example-swagger-express-ts.git
 ```
 
-Install all packages.
+Please follw the below steps:
 
-```sh
+```
+git clone https://github.com/vipinkavlar/node-express-typescript-mongodb-swagger.git
+cd node-express-typescript-mongodb-swagger
 npm install
-```
-
-Start the server.
-
-```sh
+npm update  //if required
+npm outdated //if required. Then update the required packages as given below;
+npm install ts-node@<suggestedVersionhere>
+npm install typescript@<suggestedVersionhere>
+npm install --save @types/node@18.11.15
 npm run dev
 ```
 
-Test it on http://localhost:3000/api-docs/swagger
+Swagger documentation sample can be found at `http://localhost:<port>/api-docs`
 
-## For any questions, suggestions, or feature requests
+# Form input validation
 
-[Please file an issue](https://github.com/olivierlsc/example-swagger-express-ts/issues)!
+Input validation is done through class-validator. The decorators are defined in src/dtos files.
+Two middleware can be used to process error responses.
+1. ../middlewares/validation.middleware 
+2. ../middlewares/validationJsonResponse.middleware
 
-## License
+validationJsonResponse will output the response in JSON format as given below: 
 
-License under the MIT License (MIT)
+```
+{
+	message : null,
+	data: null,
+	errorCode : 201
+	errorMessages : {
+		"email": {
+			"isNotEmpty": "email should not be empty",
+			"isEmail": "email must be an email"
+		},
+		"password": {
+			"isString": "password must be a string"
+		}
+	}
+}
+```
 
-Copyright © 2018 [Olivier LIN-SI-CHENG](http://www.olivierlinsicheng.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+validationMiddleware sends HTTP response. Usage of both middlewares can be seen in the routes/user.route.ts file
