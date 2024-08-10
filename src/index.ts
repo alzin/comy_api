@@ -1,40 +1,79 @@
-import { log } from "console";
-import express from "express";
-import cors from "cors";
-import authRouter from "./routes/auth";
-import { serve, setup } from "swagger-ui-express";
-import swaggerJSDocs from "swagger-jsdoc";
-import swaggerDocument from "./swagger.json";
-import dotenv from "dotenv";
-dotenv.config();
+import * as bodyParser from 'body-parser';
+import * as express from 'express';
+import 'reflect-metadata';
+import { Container } from 'inversify';
+import {
+    interfaces,
+    InversifyExpressServer,
+    TYPE,
+} from 'inversify-express-utils';
+import * as swagger from 'swagger-express-ts';
+import { CarsController } from './cars/cars.controller';
+import { CarController } from './cars/car.controller';
+import { CarsService } from './cars/cars.service';
 
-const PORT = process.env.PORT || 3000;
+// import models
 
-const definition = swaggerDocument;
+// set up container
+const container = new Container();
 
-const options = {
-  definition,
-  apis: ["**/*.ts"]
-};
+// note that you *must* bind your controllers to Controller
+container
+    .bind<CarsService>(CarsService.name)
+    .to(CarsService)
+    .inSingletonScope();
+container
+    .bind<interfaces.Controller>(TYPE.Controller)
+    .to(CarsController)
+    .whenTargetNamed(CarsController.name);
+container
+    .bind<interfaces.Controller>(TYPE.Controller)
+    .to(CarController)
+    .inSingletonScope()
+    .whenTargetNamed(CarController.name);
 
-const swaggerSpec = swaggerJSDocs(options);
+// create server
+const server = new InversifyExpressServer(container);
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.get("/swagger.json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
+server.setConfig((app: any) => {
+    app.use('/api-docs/swagger', express.static('swagger'));
+    app.use(
+        '/api-docs/swagger/assets',
+        express.static('node_modules/swagger-ui-dist')
+    );
+    app.use(bodyParser.json());
+    app.use(
+        swagger.express({
+            definition: {
+                externalDocs: {
+                    url: 'My url',
+                },
+                info: {
+                    title: 'My api',
+                    version: '1.0',
+                },
+                responses: {
+                    500: {},
+                },
+            },
+        })
+    );
 });
-app.use("/docs", serve, setup(swaggerSpec));
 
-app.use("/auth", authRouter);
-
-app.get("/", (req, res) => {
-  res.status(200).send("OK");
+server.setErrorConfig((app: any) => {
+    app.use(
+        (
+            err: Error,
+            request: express.Request,
+            response: express.Response,
+            next: express.NextFunction
+        ) => {
+            console.error(err.stack);
+            response.status(500).send('Something broke!');
+        }
+    );
 });
 
-app.listen(PORT, () => {
-  log(`Server is running on http://localhost:${PORT}`);
-});
+const app = server.build();
+app.listen(3000);
+console.info('Server is listening on port : 3000');
