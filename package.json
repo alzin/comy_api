@@ -4,13 +4,9 @@
     "description": "",
     "main": "built/main.js",
     "scripts": {
-        "clean": "echo \"Cleaning...\" && gulp clean",
-        "build":
-            "echo \"Building...\" && npm run clean && tsc -p tsconfig.json && echo \"Application is building in directory built.\"",
-        "test": "echo \"Testing...\" && nyc mocha",
-        "dev": "echo \"Developing...\" && nodemon",
-        "start":
-            "echo \"Starting application...\" && npm run build && node built/index.js"
+        "start": "node dist/index.js",
+        "dev": "nodemon src/index.ts",
+        "build": "tsc"
     },
     "repository": {
         "type": "git",
