@@ -1,52 +1,97 @@
-# node-express-typescript-mongodb-swagger
+## Follow the steps below to create a RESTful server using swager!
 
-Environment
-```
-NPM: 8.19.2
-Node : 18.12.1 LTS
+## Here is the Tree
 
 ```
+ ┣ 📂public
+ ┣ 📂src
+ ┃ ┣ 📂Data
+ ┃ ┃ ┗ 📜data.js
+ ┃ ┣ 📂Routes
+ ┃ ┃ ┗ 📜posts.js
+ ┃ ┣ 📂views
+ ┃ ┃ ┣ 📂pages
+ ┃ ┃ ┃ ┣ 📜index.css
+ ┃ ┃ ┃ ┣ 📜index.ejs
+ ┃ ┃ ┃ ┗ 📜log.jpeg
+ ┃ ┃ ┣ 📂public
+ ┃ ┃ ┃ ┗ 📜index.css
+ ┃ ┃ ┗ 📜.DS_Store
+ ┃ ┣ 📜.DS_Store
+ ┃ ┗ 📜hello.js
+ ┣ 📜.DS_Store
+ ┣ 📜.babelrc
+ ┣ 📜.gitignore
+ ┣ 📜Readme.md
+ ┣ 📜index.js
+ ┣ 📜nodemon.json
+ ┣ 📜now.json
+ ┣ 📜package-lock.json
+ ┣ 📜package.json
+ ┗ 📜vercel.json
+```
 
-Please follw the below steps:
+## Firstly let’s create a RESTful web server:
+
+## Navigate the cursor to the file I will create the project in the terminal and I am creating the package.json file with the following command:
 
 ```
-git clone https://github.com/vipinkavlar/node-express-typescript-mongodb-swagger.git
-cd node-express-typescript-mongodb-swagger
-npm install
-npm update  //if required
-npm outdated //if required. Then update the required packages as given below;
-npm install ts-node@<suggestedVersionhere>
-npm install typescript@<suggestedVersionhere>
-npm install --save @types/node@18.11.15
-npm run dev
+npm init --y
 ```
 
-Swagger documentation sample can be found at `http://localhost:<port>/api-docs`
+## Now let’s add the packages that are necessary to create the server:
 
-# Form input validation
+```
+npm install express cors morgan body-parser dotenv
+```
 
-Input validation is done through class-validator. The decorators are defined in src/dtos files.
-Two middleware can be used to process error responses.
-1. ../middlewares/validation.middleware 
-2. ../middlewares/validationJsonResponse.middleware
+## let’s add the babel modules to the project:
 
-validationJsonResponse will output the response in JSON format as given below: 
+```
+npm install @babel/core @babel/node @babel/preset-env
+```
+
+## let’s create the .babelrc file and add the following code:
 
 ```
 {
-	message : null,
-	data: null,
-	errorCode : 201
-	errorMessages : {
-		"email": {
-			"isNotEmpty": "email should not be empty",
-			"isEmail": "email must be an email"
-		},
-		"password": {
-			"isString": "password must be a string"
-		}
-	}
+  “presets”: [“@babel/preset-env”]
 }
 ```
 
-validationMiddleware sends HTTP response. Usage of both middlewares can be seen in the routes/user.route.ts file
+## And finally, let’s add the following code to scripts field in the package.json file.
+
+```
+"start": "nodemon — exec babel-node src/index.js"
+```
+
+### If you don’t have nodemon in your PC, I advise installing it globally.
+
+```
+sudo npm install -g nodemon
+```
+
+## Adding Swagger to the project
+
+Firstly, let’s install two modules that are necessary for documentation and user interface (UI):
+
+```
+npm install swagger-jsdoc swagger-ui-express
+```
+
+## And I am importing these two modules in the index.js file:
+
+```
+import swaggerUI from “swagger-ui-express”;
+import swaggerJsDoc from “swagger-jsdoc”;
+```
+
+# &#x1F34E; PS: If you have any other ideas about what can be improved please share your thoughts I would really appreciate that!
+
+<img align="right" src="public/Home.png" width="100%"/>&nbsp;
+&nbsp;
+
+<img align="right" src="public/api-docs.png" width="100%"/>&nbsp;
+&nbsp;
+
+## Nodejs server built and maintained by [Milan Sachani &#x1F49C;](https://milansachani.dev)
