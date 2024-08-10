@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.2",
+  "openapi": "3.0.0",
   "info": {
     "title": "COMY Business Matching Platform API Documentation",
     "description": "This API supports the functionality of COMY, a business matching platform inspired by BNI’s 1-to-1 sheets. COMY enables companies to share their visions, missions, and business goals, facilitating collaboration and expansion within the COMY community. The API provides endpoints for user registration, authentication, and interaction with business sheets—a core feature of the platform. Users can create, customize, share, and search for business sheets, helping businesses connect and grow through shared goals and interests.",
