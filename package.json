@@ -18,7 +18,6 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.1.0",
     "@types/swagger-ui-express": "^4.1.6",
-    "copy-webpack-plugin": "^12.0.2",
     "nodemon": "^3.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
@@ -29,6 +28,6 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^4.6.2"
   }
 }
