@@ -60,11 +60,9 @@ authRouter.post("/register", async (req: Request, res: Response) => {
 
     await sendVerificationEmail(email, verificationToken);
 
-    res
-      .status(201)
-      .json({
-        message: "User registered successfully. Please verify your email.",
-      });
+    res.status(201).json({
+      message: "User registered successfully. Please verify your email.",
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -116,6 +114,37 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 
     const token = jwt.sign({ id: user.email }, jwtSecret, { expiresIn: "1h" });
     res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+authRouter.post("/change-password", async (req: Request, res: Response) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Invalid input" });
+    }
+
+    const user = users.find((user) => user.email === email);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+    user.password = hashedNewPassword;
+
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
