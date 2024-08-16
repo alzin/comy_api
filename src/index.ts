@@ -2,22 +2,19 @@ import { log } from "console";
 import express from "express";
 import cors from "cors";
 import authRouter from "./routes/auth";
-import swaggerUI from "swagger-ui-express";
-import swaggerDocument from "./swagger.json";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
-// Vercel can't properly serve the Swagger UI CSS from its npm package, here we load it from a public location
-const options = {
-  customCssUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.3.0/swagger-ui.css",
-};
-app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument, options));
+app.get("/docs", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "swagger-ui.html"));
+});
 
 app.use("/auth", authRouter);
 
