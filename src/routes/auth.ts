@@ -32,6 +32,32 @@ const sendVerificationEmail = async (email: string, token: string) => {
   await transporter.sendMail(mainOptions);
 };
 
+const sendResetEmail = async (email: string, token: string) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Password Reset",
+    text:
+      `You requested a password reset. Please click on the link below to reset your password:\n\n` +
+      `${process.env.BASE_URL}/auth/reset-password/${token}\n\n` +
+      `If you did not request a password reset, please ignore this email.`,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+authRouter.get("/users", async (req: Request, res: Response) => {
+  return res.json(users);
+});
+
 authRouter.post("/register", async (req: Request, res: Response) => {
   try {
     const { email, name, password } = req.body;
@@ -145,6 +171,60 @@ authRouter.post("/change-password", async (req: Request, res: Response) => {
     user.password = hashedNewPassword;
 
     res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+authRouter.post("/forgot-password", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Please provide a valid email" });
+    }
+
+    const user = users.find((user) => user.email === email);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.verificationToken = resetToken; // Reuse the verificationToken field or create a new one for reset tokens
+
+    await sendResetEmail(email, resetToken);
+
+    res
+      .status(200)
+      .json({ message: "Password reset email sent. Please check your inbox." });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+authRouter.post("/reset-password/:token", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Invalid input" });
+    }
+
+    const user = users.find((user) => user.verificationToken === token);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+    user.password = hashedNewPassword;
+    user.verificationToken = "";
+
+    res.status(200).json({
+      message:
+        "Password has been reset successfully. You can now log in with your new password.",
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
