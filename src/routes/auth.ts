@@ -11,7 +11,7 @@ dotenv.config();
 const authRouter = Router();
 const jwtSecret = process.env.JWT_SECRET as string;
 
-const users: User[] = [];
+export const users: User[] = [];
 
 const sendVerificationEmail = async (email: string, token: string) => {
   const transporter = nodemailer.createTransport({
@@ -139,7 +139,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign({ id: user.email }, jwtSecret, { expiresIn: "1h" });
-    res.json({ token });
+    res.status(200).json({ token });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
