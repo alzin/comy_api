@@ -42,7 +42,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": { "type": "string", "example": "Internal server error" }
+                    "message": {
+                      "type": "string",
+                      "example": "Internal server error"
+                    }
                   }
                 }
               }
