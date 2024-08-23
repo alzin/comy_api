@@ -3,55 +3,32 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
 import User from "../models/user";
+import { EmailService } from "../interfaces/email.service.interface";
+import { NodemailerEmailService } from "../services/NodemailerEmailService";
 
 dotenv.config();
 
 const authRouter = Router();
 const jwtSecret = process.env.JWT_SECRET as string;
+const saltRounds = 10;
 
 export const users: User[] = [];
 
+const emailService: EmailService = new NodemailerEmailService();
+
 const sendVerificationEmail = async (email: string, token: string) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mainOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Account Verification",
-    text: `Please verify your account by clicking the link: \n${process.env.BASE_URL}/auth/verify-email?token=${token}`,
-  };
-
-  await transporter.sendMail(mainOptions);
+  const verificationUrl = `${process.env.BASE_URL}/auth/verify-email?token=${token}`;
+  const subject = "Account Verification";
+  const text = `Please verify your account by clicking the link: \n${verificationUrl}`;
+  await emailService.sendEmail(email, subject, text);
 };
 
 const sendResetEmail = async (email: string, token: string) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Password Reset",
-    text:
-      `You requested a password reset. Please click on the link below to reset your password:\n\n` +
-      `${process.env.BASE_URL}/auth/reset-password/${token}\n\n` +
-      `If you did not request a password reset, please ignore this email.`,
-  };
-
-  await transporter.sendMail(mailOptions);
+  const resetUrl = `${process.env.BASE_URL}/auth/reset-password/${token}`;
+  const subject = "Password Reset";
+  const text = `You requested a password reset. Please click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request a password reset, please ignore this email.`;
+  await emailService.sendEmail(email, subject, text);
 };
 
 authRouter.get("/users", async (req: Request, res: Response) => {
@@ -66,12 +43,10 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid input" });
     }
 
-    const existingUser = users.find((user) => user.email === email);
-    if (existingUser) {
+    if (users.some((user) => user.email === email)) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
@@ -166,7 +141,6 @@ authRouter.post("/change-password", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
 
-    const saltRounds = 10;
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
     user.password = hashedNewPassword;
 
@@ -202,32 +176,35 @@ authRouter.post("/forgot-password", async (req: Request, res: Response) => {
   }
 });
 
-authRouter.post("/reset-password/:token", async (req: Request, res: Response) => {
-  try {
-    const { token } = req.params;
-    const { newPassword } = req.body;
+authRouter.post(
+  "/reset-password/:token",
+  async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+      const { newPassword } = req.body;
 
-    if (!token || !newPassword) {
-      return res.status(400).json({ message: "Invalid input" });
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Invalid input" });
+      }
+
+      const user = users.find((user) => user.verificationToken === token);
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+      }
+
+      const saltRounds = 10;
+      const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+      user.password = hashedNewPassword;
+      user.verificationToken = "";
+
+      res.status(200).json({
+        message:
+          "Password has been reset successfully. You can now log in with your new password.",
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
     }
-
-    const user = users.find((user) => user.verificationToken === token);
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
-
-    const saltRounds = 10;
-    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
-    user.password = hashedNewPassword;
-    user.verificationToken = "";
-
-    res.status(200).json({
-      message:
-        "Password has been reset successfully. You can now log in with your new password.",
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
+  },
+);
 
 export default authRouter;
