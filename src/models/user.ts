@@ -1,9 +1,8 @@
-interface User {
+export interface User {
+  id: string;
   email: string;
   name: string;
   password: string;
   isVerified: boolean;
-  verificationToken: string;
+  verificationToken: string | null;
 }
-
-export default User;
