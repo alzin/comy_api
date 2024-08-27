@@ -1,30 +1,30 @@
-// src/presentation/routes/authRoutes.ts
+// src/routes/authRoutes.ts
 
-import { Router } from "express";
-import { AuthController } from "../controllers/AuthController";
+import { Router, Request, Response } from 'express';
+import { AuthController } from '../controllers/AuthController';
+import { 
+  validateRegisterInput, 
+  validateLoginInput, 
+  validateChangePasswordInput, 
+  validateForgotPasswordInput, 
+  validateResetPasswordInput,
+  validateVerifyEmailInput
+} from '../middlewares/validationMiddleware';
 
 export const setupAuthRoutes = (authController: AuthController): Router => {
   const router = Router();
 
-  router.post("/register", (req, res) => authController.register(req, res));
-
-  router.get("/verify-email", (req, res) =>
-    authController.verifyEmail(req, res),
-  );
-
-  router.post("/login", (req, res) => authController.login(req, res));
-
-  router.post("/change-password", (req, res) =>
-    authController.changePassword(req, res),
-  );
-
-  router.post("/forgot-password", (req, res) =>
-    authController.forgotPassword(req, res),
-  );
-
-  router.post("/reset-password/:token", (req, res) =>
-    authController.resetPassword(req, res),
-  );
+  router.post('/register', validateRegisterInput, (req: Request, res: Response) => authController.register(req, res));
+  
+  router.get('/verify-email', validateVerifyEmailInput, (req: Request, res: Response) => authController.verifyEmail(req, res));
+  
+  router.post('/login', validateLoginInput, (req: Request, res: Response) => authController.login(req, res));
+  
+  router.post('/change-password', validateChangePasswordInput, (req: Request, res: Response) => authController.changePassword(req, res));
+  
+  router.post('/forgot-password', validateForgotPasswordInput, (req: Request, res: Response) => authController.forgotPassword(req, res));
+  
+  router.post('/reset-password/:token', validateResetPasswordInput, (req: Request, res: Response) => authController.resetPassword(req, res));
 
   return router;
 };
