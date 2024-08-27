@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
-import { EmailService } from "../interfaces/email.service.interface";
+import { IEmailService } from "../interfaces/IEmailService";
 
-export class NodemailerEmailService implements EmailService {
+export class NodemailerEmailService implements IEmailService {
   sendEmail = async (email: string, subject: string, text: string) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
