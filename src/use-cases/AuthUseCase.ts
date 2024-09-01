@@ -3,7 +3,7 @@ import { IEmailService } from "../interfaces/IEmailService";
 import { IEncryptionService } from "../interfaces/IEncryptionService";
 import { ITokenService } from "../interfaces/ITokenService";
 import { IUserRepository } from "../interfaces/IUserRepository";
-import crypto from "crypto";
+import { IRandomStringGenerator } from "../interfaces/IRandomStringGenerator";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -11,6 +11,7 @@ export class AuthUseCase implements IAuthUseCase {
     private emailService: IEmailService,
     private encryptionService: IEncryptionService,
     private tokenService: ITokenService,
+    private randomStringGenerator: IRandomStringGenerator,
   ) {}
 
   async register(email: string, name: string, password: string): Promise<void> {
@@ -20,7 +21,7 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const hashedPassword = await this.encryptionService.hash(password);
-    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationToken = this.randomStringGenerator.generate(32);
 
     await this.userRepository.save({
       id: "",
@@ -31,7 +32,7 @@ export class AuthUseCase implements IAuthUseCase {
       verificationToken,
     });
 
-    const verificationUrl = `${process.env.BASE_URL}/auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.BASE_URL}auth/verify-email?token=${verificationToken}`;
     await this.emailService.sendEmail(
       email,
       "Account Verification",
@@ -100,11 +101,11 @@ export class AuthUseCase implements IAuthUseCase {
       throw new Error("User not found");
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = this.randomStringGenerator.generate(32);
     user.verificationToken = resetToken;
     await this.userRepository.update(user);
 
-    const resetUrl = `${process.env.BASE_URL}/auth/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.BASE_URL}auth/reset-password/${resetToken}`;
     await this.emailService.sendEmail(
       email,
       "Password Reset",

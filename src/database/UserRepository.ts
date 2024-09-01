@@ -3,7 +3,7 @@ import { User } from "../models/user";
 import { v4 as uuidv4 } from "uuid";
 
 export class UserRepository implements IUserRepository {
-  private users: User[] = [];
+  users: User[] = [];
 
   async findByEmail(email: string): Promise<User | null> {
     return this.users.find((user) => user.email === email) || null;
