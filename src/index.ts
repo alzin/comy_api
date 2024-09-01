@@ -8,6 +8,7 @@ import { UserRepository } from "./database/UserRepository";
 import { NodemailerEmailService } from "./services/NodemailerEmailService";
 import { BcryptPasswordHasher } from "./services/BcryptPasswordHasher";
 import { JwtTokenService } from "./services/JwtTokenService";
+import { CryptoRandomStringGenerator } from "./services/CryptoRandomStringGenerator";
 import { AuthController } from "./controllers/AuthController";
 import { AuthUseCase } from "./use-cases/AuthUseCase";
 import { setupAuthRoutes } from "./routes/authRoutes";
@@ -35,12 +36,14 @@ const userRepository = new UserRepository();
 const emailService = new NodemailerEmailService();
 const encryptionService = new BcryptPasswordHasher();
 const tokenService = new JwtTokenService();
+const randomStringGenerator = new CryptoRandomStringGenerator();
 
 const authUseCase = new AuthUseCase(
   userRepository,
   emailService,
   encryptionService,
   tokenService,
+  randomStringGenerator,
 );
 const authController = new AuthController(authUseCase);
 

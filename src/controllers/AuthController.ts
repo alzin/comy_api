@@ -8,12 +8,10 @@ export class AuthController {
     try {
       const { email, name, password } = req.body;
       await this.authUseCase.register(email, name, password);
-      res
-        .status(201)
-        .json({
-          message:
-            "User registered successfully. Please check your email for verification.",
-        });
+      res.status(201).json({
+        message:
+          "User registered successfully. Please check your email for verification.",
+      });
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
@@ -79,11 +77,9 @@ export class AuthController {
     try {
       const { email } = req.body;
       await this.authUseCase.forgotPassword(email);
-      res
-        .status(200)
-        .json({
-          message: "Password reset email sent. Please check your inbox.",
-        });
+      res.status(200).json({
+        message: "Password reset email sent. Please check your inbox.",
+      });
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
@@ -98,12 +94,10 @@ export class AuthController {
       const { token } = req.params;
       const { newPassword } = req.body;
       await this.authUseCase.resetPassword(token, newPassword);
-      res
-        .status(200)
-        .json({
-          message:
-            "Password reset successfully. You can now log in with your new password.",
-        });
+      res.status(200).json({
+        message:
+          "Password reset successfully. You can now log in with your new password.",
+      });
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
