@@ -1,4 +1,4 @@
-import { IRandomStringGenerator } from "../interfaces/IRandomStringGenerator";
+import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
 import crypto from "crypto";
 
 export class CryptoRandomStringGenerator implements IRandomStringGenerator {

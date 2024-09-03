@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { IEmailService } from "../interfaces/IEmailService";
+import { IEmailService } from "../../domain/interfaces/IEmailService";
 
 export class NodemailerEmailService implements IEmailService {
   sendEmail = async (email: string, subject: string, text: string) => {

@@ -3,22 +3,23 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import Stripe from "stripe";
-import bodyParser from "body-parser";
-import { UserRepository } from "./database/UserRepository";
-import { NodemailerEmailService } from "./services/NodemailerEmailService";
-import { BcryptPasswordHasher } from "./services/BcryptPasswordHasher";
-import { JwtTokenService } from "./services/JwtTokenService";
-import { CryptoRandomStringGenerator } from "./services/CryptoRandomStringGenerator";
-import { AuthController } from "./controllers/AuthController";
-import { AuthUseCase } from "./use-cases/AuthUseCase";
-import { setupAuthRoutes } from "./routes/authRoutes";
+import { NodemailerEmailService } from "./infrastructure/services/NodemailerEmailService";
+import { BcryptPasswordHasher } from "./infrastructure/services/BcryptPasswordHasher";
+import { JwtTokenService } from "./infrastructure/services/JwtTokenService";
+import { CryptoRandomStringGenerator } from "./infrastructure/services/CryptoRandomStringGenerator";
+import { AuthController } from "./presentation/controllers/AuthController";
+import { AuthUseCase } from "./domain/use-cases/AuthUseCase";
+import { setupAuthRoutes } from "./presentation/routes/authRoutes";
+import { connectToDatabase } from "./infrastructure/database/connection";
+import { MongoUserRepository } from "./infrastructure/repositories/MongoUserRepository";
 
 dotenv.config();
+
+connectToDatabase();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const stripe_secret_key = process.env.STRIPE_SECRET_KEY!;
@@ -32,7 +33,8 @@ app.get("/docs", (req, res) => {
 });
 
 // Dependencies
-const userRepository = new UserRepository();
+// const userRepository = new UserRepository();
+const userRepository = new MongoUserRepository();
 const emailService = new NodemailerEmailService();
 const encryptionService = new BcryptPasswordHasher();
 const tokenService = new JwtTokenService();

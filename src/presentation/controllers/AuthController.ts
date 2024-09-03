@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { IAuthUseCase } from "../interfaces/IAuthUseCase";
+import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
 
 export class AuthController {
   constructor(private authUseCase: IAuthUseCase) {}

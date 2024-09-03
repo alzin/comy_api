@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { IEncryptionService } from "../interfaces/IEncryptionService";
+import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
 
 export class BcryptPasswordHasher implements IEncryptionService {
   private readonly saltRounds = 10;

@@ -1,5 +1,5 @@
-import { IUserRepository } from "../interfaces/IUserRepository";
-import { User } from "../models/user";
+import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { User } from "../../domain/models/user";
 import { v4 as uuidv4 } from "uuid";
 
 export class UserRepository implements IUserRepository {
