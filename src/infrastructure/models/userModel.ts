@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 interface IUserDocument extends Document {
   email: string;
@@ -8,12 +8,15 @@ interface IUserDocument extends Document {
   verificationToken: string | null;
 }
 
-const UserSchema = new Schema<IUserDocument>({
-  email: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  password: { type: String, required: true },
-  isVerified: { type: Boolean, default: false },
-  verificationToken: { type: String, default: null },
-}, { _id: true }); // This ensures that MongoDB will auto-generate _id if not provided
+const UserSchema = new Schema<IUserDocument>(
+  {
+    email: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    password: { type: String, required: true },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String, default: null },
+  },
+  { _id: true },
+); // This ensures that MongoDB will auto-generate _id if not provided
 
-export const UserModel = mongoose.model<IUserDocument>('User', UserSchema);
+export const UserModel = mongoose.model<IUserDocument>("User", UserSchema);

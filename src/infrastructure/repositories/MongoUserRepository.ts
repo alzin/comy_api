@@ -1,7 +1,7 @@
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { User } from "../../domain/models/user";
 import { UserModel } from "../models/userModel";
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
 
 export class MongoUserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
@@ -37,7 +37,7 @@ export class MongoUserRepository implements IUserRepository {
       doc.password,
       doc.isVerified,
       doc.verificationToken,
-      doc._id.toString()
+      doc._id.toString(),
     );
   }
 

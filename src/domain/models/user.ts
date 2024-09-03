@@ -5,7 +5,7 @@ export class User {
     public name: string,
     public password: string,
     public isVerified: boolean,
-    public verificationToken: string | null
+    public verificationToken: string | null,
   ) {}
 
   static create(
@@ -14,7 +14,7 @@ export class User {
     password: string,
     isVerified: boolean = false,
     verificationToken: string | null = null,
-    id: string | null = null
+    id: string | null = null,
   ): User {
     return new User(id, email, name, password, isVerified, verificationToken);
   }

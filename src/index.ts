@@ -3,7 +3,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import Stripe from "stripe";
-import bodyParser from "body-parser";
 import { NodemailerEmailService } from "./infrastructure/services/NodemailerEmailService";
 import { BcryptPasswordHasher } from "./infrastructure/services/BcryptPasswordHasher";
 import { JwtTokenService } from "./infrastructure/services/JwtTokenService";
@@ -21,7 +20,6 @@ connectToDatabase();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const stripe_secret_key = process.env.STRIPE_SECRET_KEY!;
