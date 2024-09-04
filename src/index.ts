@@ -1,7 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
 import Stripe from "stripe";
 import { NodemailerEmailService } from "./infrastructure/services/NodemailerEmailService";
 import { BcryptPasswordHasher } from "./infrastructure/services/BcryptPasswordHasher";
@@ -12,13 +11,14 @@ import { AuthUseCase } from "./domain/use-cases/AuthUseCase";
 import { setupAuthRoutes } from "./presentation/routes/authRoutes";
 import { connectToDatabase } from "./infrastructure/database/connection";
 import { MongoUserRepository } from "./infrastructure/repositories/MongoUserRepository";
+import { setupSwagger } from "./main/config/swagger";
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+setupSwagger(app);
 
 const stripe_secret_key = process.env.STRIPE_SECRET_KEY!;
 
@@ -26,12 +26,6 @@ const stripe = new Stripe(stripe_secret_key, {
   apiVersion: "2024-06-20",
 });
 
-app.get("/docs", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "swagger-ui.html"));
-});
-
-// Dependencies
-// const userRepository = new UserRepository();
 const userRepository = new MongoUserRepository();
 const emailService = new NodemailerEmailService();
 const encryptionService = new BcryptPasswordHasher();
