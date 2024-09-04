@@ -40,7 +40,7 @@ export class AuthUseCase implements IAuthUseCase {
     );
   }
 
-  async verifyEmail(token: string): Promise<void> {
+  async verifyEmail(token: string): Promise<string> {
     const user = await this.userRepository.findByVerificationToken(token);
     if (!user) {
       throw new Error("Invalid or expired token");
@@ -49,6 +49,12 @@ export class AuthUseCase implements IAuthUseCase {
     user.isVerified = true;
     user.verificationToken = null;
     await this.userRepository.update(user);
+
+    const jwtToken = this.tokenService.generate({
+      id: user.id,
+      email: user.email,
+    });
+    return jwtToken;
   }
 
   async login(email: string, password: string): Promise<string> {

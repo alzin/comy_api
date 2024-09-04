@@ -28,10 +28,8 @@ export class AuthController {
         res.status(400).json({ message: "Invalid token" });
         return;
       }
-      await this.authUseCase.verifyEmail(token);
-      res
-        .status(200)
-        .json({ message: "Email verified successfully. You can now log in." });
+      const jwtToken = await this.authUseCase.verifyEmail(token);
+      res.status(200).redirect(`${process.env.TERMS_URL}?token=${jwtToken}`);
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
