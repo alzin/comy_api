@@ -24,6 +24,7 @@ describe("AuthController", () => {
     mockResponse = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
+      redirect: jest.fn(),
     };
   });
 
@@ -75,8 +76,9 @@ describe("AuthController", () => {
   });
 
   describe("verifyEmail", () => {
-    it("should verify email successfully", async () => {
+    it("should verify email successfully and redirect", async () => {
       mockRequest.query = { token: "valid-token" };
+      mockAuthUseCase.verifyEmail.mockResolvedValue("jwt-token");
 
       await authController.verifyEmail(
         mockRequest as Request,
@@ -85,9 +87,9 @@ describe("AuthController", () => {
 
       expect(mockAuthUseCase.verifyEmail).toHaveBeenCalledWith("valid-token");
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Email verified successfully. You can now log in.",
-      });
+      expect(mockResponse.redirect).toHaveBeenCalledWith(
+        `${process.env.TERMS_URL}?token=jwt-token`,
+      );
     });
 
     it("should handle invalid token", async () => {
@@ -152,7 +154,7 @@ describe("AuthController", () => {
         mockResponse as Response,
       );
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Invalid credentials",
       });
