@@ -1,9 +1,10 @@
-import { IAuthUseCase } from "../interfaces/IAuthUseCase";
-import { IEmailService } from "../interfaces/IEmailService";
-import { IEncryptionService } from "../interfaces/IEncryptionService";
-import { ITokenService } from "../interfaces/ITokenService";
-import { IUserRepository } from "../interfaces/IUserRepository";
-import { IRandomStringGenerator } from "../interfaces/IRandomStringGenerator";
+import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
+import { IEmailService } from "../../domain/interfaces/IEmailService";
+import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
+import { ITokenService } from "../../domain/interfaces/ITokenService";
+import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
+import env from "../../main/config/env";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -23,6 +24,13 @@ export class AuthUseCase implements IAuthUseCase {
     const hashedPassword = await this.encryptionService.hash(password);
     const verificationToken = this.randomStringGenerator.generate(32);
 
+    const verificationUrl = `${env.url}auth/verify-email?token=${verificationToken}`;
+    await this.emailService.sendEmail(
+      email,
+      "Account Verification",
+      `Please verify your account by clicking the link: \n${verificationUrl}`,
+    );
+
     await this.userRepository.save({
       id: "",
       email,
@@ -31,13 +39,6 @@ export class AuthUseCase implements IAuthUseCase {
       isVerified: false,
       verificationToken,
     });
-
-    const verificationUrl = `${process.env.BASE_URL}auth/verify-email?token=${verificationToken}`;
-    await this.emailService.sendEmail(
-      email,
-      "Account Verification",
-      `Please verify your account by clicking the link: \n${verificationUrl}`,
-    );
   }
 
   async verifyEmail(token: string): Promise<string> {
@@ -111,7 +112,7 @@ export class AuthUseCase implements IAuthUseCase {
     user.verificationToken = resetToken;
     await this.userRepository.update(user);
 
-    const resetUrl = `${process.env.BASE_URL}auth/reset-password/${resetToken}`;
+    const resetUrl = `${env.url}auth/reset-password/${resetToken}`;
     await this.emailService.sendEmail(
       email,
       "Password Reset",

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
+import env from "../../main/config/env";
 
 export class AuthController {
   constructor(private authUseCase: IAuthUseCase) {}
@@ -29,7 +30,7 @@ export class AuthController {
         return;
       }
       const jwtToken = await this.authUseCase.verifyEmail(token);
-      res.status(200).redirect(`${process.env.TERMS_URL}?token=${jwtToken}`);
+      res.status(200).redirect(`${env.terms}?token=${jwtToken}`);
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });

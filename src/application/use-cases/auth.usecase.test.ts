@@ -1,9 +1,9 @@
 import { AuthUseCase } from "./AuthUseCase";
-import { IUserRepository } from "../interfaces/IUserRepository";
-import { IEmailService } from "../interfaces/IEmailService";
-import { IEncryptionService } from "../interfaces/IEncryptionService";
-import { ITokenService } from "../interfaces/ITokenService";
-import { IRandomStringGenerator } from "../interfaces/IRandomStringGenerator";
+import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IEmailService } from "../../domain/interfaces/IEmailService";
+import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
+import { ITokenService } from "../../domain/interfaces/ITokenService";
+import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
 
 describe("AuthUseCase", () => {
   let authUseCase: AuthUseCase;
