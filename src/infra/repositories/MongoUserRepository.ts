@@ -1,5 +1,5 @@
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
-import { User } from "../../domain/models/user";
+import { User } from "../../domain/entities/user";
 import { UserModel } from "../models/userModel";
 import { Types } from "mongoose";
 

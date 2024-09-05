@@ -1,30 +1,26 @@
+import dotenv from "dotenv";
+dotenv.config();
+import env from "./main/config/env";
+
 import express, { Request, Response } from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import Stripe from "stripe";
-import { NodemailerEmailService } from "./infrastructure/services/NodemailerEmailService";
-import { BcryptPasswordHasher } from "./infrastructure/services/BcryptPasswordHasher";
-import { JwtTokenService } from "./infrastructure/services/JwtTokenService";
-import { CryptoRandomStringGenerator } from "./infrastructure/services/CryptoRandomStringGenerator";
-import { AuthController } from "./presentation/controllers/AuthController";
-import { AuthUseCase } from "./domain/use-cases/AuthUseCase";
-import { setupAuthRoutes } from "./presentation/routes/authRoutes";
-import { connectToDatabase } from "./infrastructure/database/connection";
-import { MongoUserRepository } from "./infrastructure/repositories/MongoUserRepository";
-import { setupSwagger } from "./main/config/swagger";
 
-dotenv.config();
+import { NodemailerEmailService } from "./infra/services/NodemailerEmailService";
+import { BcryptPasswordHasher } from "./infra/services/BcryptPasswordHasher";
+import { JwtTokenService } from "./infra/services/JwtTokenService";
+import { CryptoRandomStringGenerator } from "./infra/services/CryptoRandomStringGenerator";
+import { AuthController } from "./presentation/controllers/AuthController";
+import { AuthUseCase } from "./application/use-cases/AuthUseCase";
+import { setupAuthRoutes } from "./presentation/routes/authRoutes";
+import { connectToDatabase } from "./infra/database/connection";
+import { MongoUserRepository } from "./infra/repositories/MongoUserRepository";
+import { setupSwagger } from "./main/config/swagger";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 setupSwagger(app);
-
-const stripe_secret_key = process.env.STRIPE_SECRET_KEY!;
-
-const stripe = new Stripe(stripe_secret_key, {
-  apiVersion: "2024-06-20",
-});
 
 const userRepository = new MongoUserRepository();
 const emailService = new NodemailerEmailService();
@@ -42,6 +38,10 @@ const authUseCase = new AuthUseCase(
 const authController = new AuthController(authUseCase);
 
 app.use("/auth", setupAuthRoutes(authController));
+
+const stripe = new Stripe(env.stripeKey, {
+  apiVersion: "2024-06-20",
+});
 
 app.post("/create-checkout-session", async (req: Request, res: Response) => {
   try {
@@ -73,17 +73,15 @@ app.post("/create-checkout-session", async (req: Request, res: Response) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.status(200).send("OK");
 });
 
 async function startServer() {
   try {
     await connectToDatabase();
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+    app.listen(env.port, () => {
+      console.log(`Server is running on http://localhost:${env.port}`);
     });
   } catch (error) {
     console.log("Failed to start the server:", error);
