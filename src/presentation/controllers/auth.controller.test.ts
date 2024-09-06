@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuthController } from "./AuthController";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
-import env from "../../main/config/env";
+import { CONFIG } from "../../main/config/config";
 
 describe("AuthController", () => {
   let authController: AuthController;
@@ -89,7 +89,7 @@ describe("AuthController", () => {
       expect(mockAuthUseCase.verifyEmail).toHaveBeenCalledWith("valid-token");
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.redirect).toHaveBeenCalledWith(
-        `${env.terms}?token=jwt-token`,
+        `${CONFIG.TERMS_URL}?token=jwt-token`,
       );
     });
 

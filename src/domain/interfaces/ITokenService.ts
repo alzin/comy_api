@@ -1,4 +1,4 @@
 export interface ITokenService {
-  generate(payload: object): Promise<string>;
-  verify(token: string): Promise<object | null>;
+  generate(payload: object, key: string, expiresIn: string): Promise<string>;
+  verify(token: string, key: string): Promise<object | null>;
 }

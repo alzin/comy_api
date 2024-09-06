@@ -4,6 +4,10 @@ import { UserModel } from "../models/userModel";
 import { Types } from "mongoose";
 
 export class MongoUserRepository implements IUserRepository {
+  async findById(id: string): Promise<User | null> {
+    const userDoc = await UserModel.findById(id);
+    return userDoc ? this.documentToEntity(userDoc) : null;
+  }
   async findByEmail(email: string): Promise<User | null> {
     const userDoc = await UserModel.findOne({ email });
     return userDoc ? this.documentToEntity(userDoc) : null;
