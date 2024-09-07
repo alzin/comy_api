@@ -17,11 +17,18 @@ export class AuthUseCase implements IAuthUseCase {
 
   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
-      const payload = this.tokenService.verify(
+      const payload: object | null = await this.tokenService.verify(
         refreshToken,
         CONFIG.REFRESH_TOKEN_SECRET,
       );
-      return this.tokenService.generate(
+  
+      // Check if payload is null before proceeding
+      if (payload === null) {
+        throw new Error("Invalid payload: null received");
+      }
+  
+      // Generate a new token using the valid payload
+      return await this.tokenService.generate(
         payload,
         CONFIG.JWT_SECRET,
         CONFIG.JWT_EXPIRATION,
@@ -30,6 +37,8 @@ export class AuthUseCase implements IAuthUseCase {
       throw new Error("Invalid refresh token");
     }
   }
+  
+  
 
   async register(email: string, name: string, password: string): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
