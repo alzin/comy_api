@@ -30,6 +30,10 @@ export const setupAuthRoutes = (authController: AuthController): Router => {
     authController.login(req, res),
   );
 
+  router.post("/refresh", (req: Request, res: Response) => {
+    authController.refreshAccessToken(req, res);
+  });
+
   router.post(
     "/change-password",
     validateChangePasswordInput,

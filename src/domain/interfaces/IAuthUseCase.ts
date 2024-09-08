@@ -1,7 +1,13 @@
 export interface IAuthUseCase {
   register(email: string, name: string, password: string): Promise<void>;
-  verifyEmail(token: string): Promise<string>;
-  login(email: string, password: string): Promise<string>;
+  verifyEmail(
+    token: string,
+  ): Promise<{ accessToken: string; refreshToken: string }>;
+  login(
+    email: string,
+    password: string,
+  ): Promise<{ accessToken: string; refreshToken: string }>;
+  refreshAccessToken(refreshToken: string): Promise<string>;
   changePassword(
     email: string,
     currentPassword: string,

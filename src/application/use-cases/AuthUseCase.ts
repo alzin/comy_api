@@ -4,7 +4,8 @@ import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
 import { ITokenService } from "../../domain/interfaces/ITokenService";
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
-import env from "../../main/config/env";
+import { CONFIG } from "../../main/config/config";
+import { log } from "console";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -15,6 +16,28 @@ export class AuthUseCase implements IAuthUseCase {
     private randomStringGenerator: IRandomStringGenerator,
   ) {}
 
+  async refreshAccessToken(refreshToken: string): Promise<string> {
+    try {
+      const decoded = (await this.tokenService.verify(
+        refreshToken,
+        CONFIG.REFRESH_TOKEN_SECRET,
+      )) as { userId: string } | null;
+
+      if (!decoded || !decoded.userId) {
+        throw new Error("Invalid refresh token");
+      }
+
+      return await this.tokenService.generate(
+        { userId: decoded.userId },
+        CONFIG.JWT_SECRET,
+        CONFIG.JWT_EXPIRATION,
+      );
+    } catch (error) {
+      log(error);
+      throw new Error("Invalid refresh token");
+    }
+  }
+
   async register(email: string, name: string, password: string): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
@@ -24,7 +47,7 @@ export class AuthUseCase implements IAuthUseCase {
     const hashedPassword = await this.encryptionService.hash(password);
     const verificationToken = this.randomStringGenerator.generate(32);
 
-    const verificationUrl = `${env.url}auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${CONFIG.BASE_URL}auth/verify-email?token=${verificationToken}`;
     await this.emailService.sendEmail(
       email,
       "Account Verification",
@@ -41,7 +64,9 @@ export class AuthUseCase implements IAuthUseCase {
     });
   }
 
-  async verifyEmail(token: string): Promise<string> {
+  async verifyEmail(
+    token: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.userRepository.findByVerificationToken(token);
     if (!user) {
       throw new Error("Invalid or expired token");
@@ -51,14 +76,24 @@ export class AuthUseCase implements IAuthUseCase {
     user.verificationToken = null;
     await this.userRepository.update(user);
 
-    const jwtToken = this.tokenService.generate({
-      id: user.id,
-      email: user.email,
-    });
-    return jwtToken;
+    const accessToken = await this.tokenService.generate(
+      { userId: user.id },
+      CONFIG.JWT_SECRET,
+      CONFIG.JWT_EXPIRATION,
+    );
+    const refreshToken = await this.tokenService.generate(
+      { userId: user.id },
+      CONFIG.REFRESH_TOKEN_SECRET,
+      CONFIG.REFRESH_TOKEN_EXPIRATION,
+    );
+
+    return { accessToken, refreshToken };
   }
 
-  async login(email: string, password: string): Promise<string> {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new Error("Invalid credentials");
@@ -76,7 +111,18 @@ export class AuthUseCase implements IAuthUseCase {
       throw new Error("Invalid credentials");
     }
 
-    return this.tokenService.generate({ id: user.id, email: user.email });
+    const accessToken = await this.tokenService.generate(
+      { userId: user.id },
+      CONFIG.JWT_SECRET,
+      CONFIG.JWT_EXPIRATION,
+    );
+    const refreshToken = await this.tokenService.generate(
+      { userId: user.id },
+      CONFIG.REFRESH_TOKEN_SECRET,
+      CONFIG.REFRESH_TOKEN_EXPIRATION,
+    );
+
+    return { accessToken, refreshToken };
   }
 
   async changePassword(
@@ -112,7 +158,7 @@ export class AuthUseCase implements IAuthUseCase {
     user.verificationToken = resetToken;
     await this.userRepository.update(user);
 
-    const resetUrl = `${env.url}auth/reset-password/${resetToken}`;
+    const resetUrl = `${CONFIG.BASE_URL}auth/reset-password/${resetToken}`;
     await this.emailService.sendEmail(
       email,
       "Password Reset",

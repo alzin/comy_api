@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { IEmailService } from "../../domain/interfaces/IEmailService";
-import env from "../../main/config/env";
+import { CONFIG } from "../../main/config/config";
 import { log } from "console";
 
 export class NodemailerEmailService implements IEmailService {
@@ -9,18 +9,18 @@ export class NodemailerEmailService implements IEmailService {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: env.email,
-          pass: env.pass,
+          user: CONFIG.EMAIL_USER,
+          pass: CONFIG.EMAIL_PASS,
         },
       });
-  
+
       const mailOptions = {
-        from: env.email,
+        from: CONFIG.EMAIL_USER,
         to: email,
         subject,
         text,
       };
-  
+
       await transporter.sendMail(mailOptions);
     } catch (error) {
       log("Failed to send email:", error);

@@ -1,9 +1,19 @@
 import { Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
-import env from "../../main/config/env";
+import { CONFIG } from "../../main/config/config";
+import { log } from "console";
 
 export class AuthController {
   constructor(private authUseCase: IAuthUseCase) {}
+
+  private setTokenCookie(res: Response, name: string, token: string): void {
+    res.cookie(name, token, {
+      httpOnly: true,
+      secure: CONFIG.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: name === CONFIG.REFRESH_TOKEN_COOKIE_NAME ? 30 * 1000 : 15 * 1000, //  60 seconds for refresh, 10 seconds for access
+    });
+  }
 
   async register(req: Request, res: Response): Promise<void> {
     try {
@@ -25,12 +35,19 @@ export class AuthController {
   async verifyEmail(req: Request, res: Response): Promise<void> {
     try {
       const { token } = req.query;
+
       if (typeof token !== "string") {
         res.status(400).json({ message: "Invalid token" });
         return;
       }
-      const jwtToken = await this.authUseCase.verifyEmail(token);
-      res.status(200).redirect(`${env.terms}?token=${jwtToken}`);
+
+      const { accessToken, refreshToken } =
+        await this.authUseCase.verifyEmail(token);
+
+      this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, accessToken);
+      this.setTokenCookie(res, CONFIG.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
+
+      res.status(200).redirect(`${CONFIG.TERMS_URL}`);
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
@@ -43,8 +60,15 @@ export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const token = await this.authUseCase.login(email, password);
-      res.status(200).json({ token });
+      const { accessToken, refreshToken } = await this.authUseCase.login(
+        email,
+        password,
+      );
+
+      this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, accessToken);
+      this.setTokenCookie(res, CONFIG.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
+
+      res.status(200).json({ message: "Login successful" });
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Please verify your email before logging in") {
@@ -54,6 +78,27 @@ export class AuthController {
         }
       } else {
         res.status(500).json({ message: "An unexpected error occurred" });
+      }
+    }
+  }
+
+  async refreshAccessToken(req: Request, res: Response): Promise<void> {
+    try {
+      const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
+
+      if (!refreshToken) {
+        throw new Error("No refresh token provided");
+      }
+
+      const newAccessToken =
+        await this.authUseCase.refreshAccessToken(refreshToken);
+      this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
+
+      res.status(200).json({ message: "Token refreshed successfully" });
+    } catch (error) {
+      log(error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
       }
     }
   }

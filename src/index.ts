@@ -1,9 +1,8 @@
-import dotenv from "dotenv";
-dotenv.config();
-import env from "./main/config/env";
+import { CONFIG } from "./main/config/config";
 
 import express, { Request, Response } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import Stripe from "stripe";
 
 import { NodemailerEmailService } from "./infra/services/NodemailerEmailService";
@@ -16,11 +15,8 @@ import { setupAuthRoutes } from "./presentation/routes/authRoutes";
 import { connectToDatabase } from "./infra/database/connection";
 import { MongoUserRepository } from "./infra/repositories/MongoUserRepository";
 import { setupSwagger } from "./main/config/swagger";
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-setupSwagger(app);
+import { authMiddleware } from "./presentation/middlewares/authMiddleware";
+import { log } from "console";
 
 const userRepository = new MongoUserRepository();
 const emailService = new NodemailerEmailService();
@@ -37,9 +33,30 @@ const authUseCase = new AuthUseCase(
 );
 const authController = new AuthController(authUseCase);
 
+const app = express();
+
+const corsOptions = {
+  origin: CONFIG.ORIGIN_URL,
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(cookieParser());
+setupSwagger(app);
+
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
+app.use(authMiddleware(tokenService, userRepository));
 app.use("/auth", setupAuthRoutes(authController));
 
-const stripe = new Stripe(env.stripeKey, {
+app.get("/check-auth", (req, res) => {
+  res.json({ isAuthenticated: !!req.user });
+});
+
+const stripe = new Stripe(CONFIG.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
 });
 
@@ -69,22 +86,19 @@ app.post("/create-checkout-session", async (req: Request, res: Response) => {
 
     res.json({ id: session.id });
   } catch (e) {
+    log(e);
     res.status(500).json({ error: e });
   }
-});
-
-app.get("/", (_, res) => {
-  res.status(200).send("OK");
 });
 
 async function startServer() {
   try {
     await connectToDatabase();
-    app.listen(env.port, () => {
-      console.log(`Server is running on http://localhost:${env.port}`);
+    app.listen(CONFIG.PORT, () => {
+      log(`Server is running on http://localhost:${CONFIG.PORT}`);
     });
   } catch (error) {
-    console.log("Failed to start the server:", error);
+    log("Failed to start the server:", error);
     process.exit(1);
   }
 }
