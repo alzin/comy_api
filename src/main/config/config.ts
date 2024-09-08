@@ -3,6 +3,7 @@ dotenv.config();
 
 export const CONFIG = {
   PORT: process.env.PORT || 5000,
+  ORIGIN_URL: process.env.ORIGIN_URL || "http://localhost:3000",
   BASE_URL: process.env.BASE_URL || "http://localhost:5000/",
   NODE_ENV: process.env.NODE_ENV || "development",
   EMAIL_USER: process.env.EMAIL_USER,

@@ -36,7 +36,7 @@ const authController = new AuthController(authUseCase);
 const app = express();
 
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: CONFIG.ORIGIN_URL,
   credentials: true,
 };
 
