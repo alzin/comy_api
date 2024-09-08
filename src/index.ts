@@ -36,17 +36,25 @@ const authController = new AuthController(authUseCase);
 const app = express();
 
 const corsOptions = {
-  origin: CONFIG.BASE_URL,
+  origin: "http://localhost:3000",
   credentials: true,
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use(authMiddleware(tokenService, userRepository));
 setupSwagger(app);
 
+app.get("/", (req, res) => {
+  res.status(200).send("OK");
+});
+
+app.use(authMiddleware(tokenService, userRepository));
 app.use("/auth", setupAuthRoutes(authController));
+
+app.get("/check-auth", (req, res) => {
+  res.json({ isAuthenticated: !!req.user });
+});
 
 const stripe = new Stripe(CONFIG.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
@@ -81,10 +89,6 @@ app.post("/create-checkout-session", async (req: Request, res: Response) => {
     log(e);
     res.status(500).json({ error: e });
   }
-});
-
-app.get("/", (req, res) => {
-  res.status(200).send("OK");
 });
 
 async function startServer() {

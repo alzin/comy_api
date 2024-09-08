@@ -17,11 +17,20 @@ export const authMiddleware = (
   userRepository: IUserRepository,
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // Skip authMiddleware for /auth/refresh
+    if (req.path === "/auth/refresh") {
+      return next();
+    }
+
     const token = req.cookies[CONFIG.ACCESS_TOKEN_COOKIE_NAME];
+    const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
+
+    if (!token && !refreshToken) {
+      return next();
+    }
 
     if (!token) {
-      log("There was no JWT token in cookies ");
-      return next();
+      return res.status(401).json({ error: "No token provided" });
     }
 
     try {
@@ -33,8 +42,8 @@ export const authMiddleware = (
         req.user = user;
       }
     } catch (error) {
-      log(error);
       // Token is invalid, but we'll just not set the user
+      log(error);
     }
 
     next();

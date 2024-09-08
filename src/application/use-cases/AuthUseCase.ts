@@ -5,6 +5,7 @@ import { ITokenService } from "../../domain/interfaces/ITokenService";
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
 import { CONFIG } from "../../main/config/config";
+import { log } from "console";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -17,28 +18,25 @@ export class AuthUseCase implements IAuthUseCase {
 
   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
-      const payload: object | null = await this.tokenService.verify(
+      const decoded = (await this.tokenService.verify(
         refreshToken,
         CONFIG.REFRESH_TOKEN_SECRET,
-      );
-  
-      // Check if payload is null before proceeding
-      if (payload === null) {
-        throw new Error("Invalid payload: null received");
+      )) as { userId: string } | null;
+
+      if (!decoded || !decoded.userId) {
+        throw new Error("Invalid refresh token");
       }
-  
-      // Generate a new token using the valid payload
+
       return await this.tokenService.generate(
-        payload,
+        { userId: decoded.userId },
         CONFIG.JWT_SECRET,
         CONFIG.JWT_EXPIRATION,
       );
     } catch (error) {
+      log(error);
       throw new Error("Invalid refresh token");
     }
   }
-  
-  
 
   async register(email: string, name: string, password: string): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
@@ -85,7 +83,7 @@ export class AuthUseCase implements IAuthUseCase {
     );
     const refreshToken = await this.tokenService.generate(
       { userId: user.id },
-      CONFIG.REFRESH_TOKEN_EXPIRATION,
+      CONFIG.REFRESH_TOKEN_SECRET,
       CONFIG.REFRESH_TOKEN_EXPIRATION,
     );
 
@@ -120,7 +118,7 @@ export class AuthUseCase implements IAuthUseCase {
     );
     const refreshToken = await this.tokenService.generate(
       { userId: user.id },
-      CONFIG.REFRESH_TOKEN_EXPIRATION,
+      CONFIG.REFRESH_TOKEN_SECRET,
       CONFIG.REFRESH_TOKEN_EXPIRATION,
     );
 

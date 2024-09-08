@@ -1,6 +1,5 @@
 import { ITokenService } from "../../domain/interfaces/ITokenService";
 import jwt from "jsonwebtoken";
-import { CONFIG } from "../../main/config/config";
 import { log } from "console";
 
 export class JwtTokenService implements ITokenService {

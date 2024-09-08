@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../main/config/config";
+import { log } from "console";
 
 export class AuthController {
   constructor(private authUseCase: IAuthUseCase) {}
@@ -10,10 +11,7 @@ export class AuthController {
       httpOnly: true,
       secure: CONFIG.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge:
-        name === CONFIG.REFRESH_TOKEN_COOKIE_NAME
-          ? 7 * 24 * 60 * 60 * 1000
-          : 60 * 60 * 1000, // 7 days for refresh, 1 hour for access
+      maxAge: name === CONFIG.REFRESH_TOKEN_COOKIE_NAME ? 30 * 1000 : 15 * 1000, //  60 seconds for refresh, 10 seconds for access
     });
   }
 
@@ -80,6 +78,27 @@ export class AuthController {
         }
       } else {
         res.status(500).json({ message: "An unexpected error occurred" });
+      }
+    }
+  }
+
+  async refreshAccessToken(req: Request, res: Response): Promise<void> {
+    try {
+      const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
+
+      if (!refreshToken) {
+        throw new Error("No refresh token provided");
+      }
+
+      const newAccessToken =
+        await this.authUseCase.refreshAccessToken(refreshToken);
+      this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
+
+      res.status(200).json({ message: "Token refreshed successfully" });
+    } catch (error) {
+      log(error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
       }
     }
   }
