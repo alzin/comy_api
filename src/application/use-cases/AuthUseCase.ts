@@ -158,7 +158,7 @@ export class AuthUseCase implements IAuthUseCase {
     user.verificationToken = resetToken;
     await this.userRepository.update(user);
 
-    const resetUrl = `${CONFIG.BASE_URL}auth/reset-password/${resetToken}`;
+    const resetUrl = `${CONFIG.ORIGIN_URL}/update-password?token=${resetToken}`;
     await this.emailService.sendEmail(
       email,
       "Password Reset",
