@@ -11,7 +11,10 @@ export class AuthController {
       httpOnly: true,
       secure: CONFIG.NODE_ENV === "production",
       sameSite: "none",
-      maxAge: name === CONFIG.REFRESH_TOKEN_COOKIE_NAME ? 30 * 1000 : 15 * 1000, //  60 seconds for refresh, 10 seconds for access
+      maxAge:
+        name === CONFIG.REFRESH_TOKEN_COOKIE_NAME
+          ? 7 * 24 * 60 * 60 * 1000
+          : 60 * 60 * 1000, // 7 days for refresh, 1 hour for access
     });
   }
 
