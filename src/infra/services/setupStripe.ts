@@ -18,7 +18,7 @@ export function setupStripe(app: express.Application) {
               product_data: {
                 name: 'One Year Subscription',
               },
-              unit_amount: 12000,
+              unit_amount: 13200,
               recurring: {
                 interval: 'year',
               },
@@ -27,8 +27,8 @@ export function setupStripe(app: express.Application) {
           },
         ],
         mode: 'subscription',
-        success_url: 'https://yourdomain.com/success',
-        cancel_url: 'https://yourdomain.com/cancel',
+        success_url: 'https://comy-front-end.vercel.app/account-creation-completed',
+        cancel_url: 'https://comy-front-end.vercel.app/stripe-payment',
       });
 
       res.json({ id: session.id });
