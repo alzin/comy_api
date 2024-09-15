@@ -1,9 +1,9 @@
-import { User } from "../entities/user";
+import { User } from "../entities/User";
 
 export interface IUserRepository {
+  create(user: User): Promise<User>;
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findByVerificationToken(token: string): Promise<User | null>;
-  save(user: User): Promise<void>;
   update(user: User): Promise<void>;
 }

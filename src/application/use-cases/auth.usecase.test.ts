@@ -1,5 +1,5 @@
 import { AuthUseCase } from "./AuthUseCase";
-import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { IEmailService } from "../../domain/interfaces/IEmailService";
 import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
 import { ITokenService } from "../../domain/interfaces/ITokenService";
@@ -46,7 +46,7 @@ describe("AuthUseCase", () => {
         "password123",
       );
 
-      expect(mockUserRepository.save).toHaveBeenCalledWith(
+      expect(mockUserRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           email: "test@example.com",
           name: "Test User",

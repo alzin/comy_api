@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { CONFIG } from "../../main/config/config";
 import { ITokenService } from "../../domain/interfaces/ITokenService";
-import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { log } from "console";
 
 declare global {
@@ -26,6 +26,7 @@ export const authMiddleware = (
     const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
 
     if (!token && !refreshToken) {
+      console.log("no accessToken or refreshToken");
       return next();
     }
 

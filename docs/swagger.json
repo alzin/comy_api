@@ -1,476 +1,1038 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "COMY Business Matching Platform",
-    "description": "This API supports the functionality of COMY, a business matching platform inspired by BNI’s 1-to-1 sheets. COMY enables companies to share their visions, missions, and business goals, facilitating collaboration and expansion within the COMY community. The API provides endpoints for user registration, authentication, email verification, password management, and interaction with business sheets—a core feature of the platform.",
-    "version": "1.0.0",
-    "contact": {
-      "name": "API Support",
-      "url": "https://github.com/alzin",
-      "email": "ghaithalzein05@gmail.com"
-    }
+      "title": "COMY Business Matching Platform",
+      "description": "This API supports the functionality of COMY, a business matching platform inspired by BNI’s 1-to-1 sheets. COMY enables companies to share their visions, missions, and business goals, facilitating collaboration and expansion within the COMY community. The API provides endpoints for user registration, authentication, email verification, password management, and interaction with business sheets—a core feature of the platform.",
+      "version": "1.0.0",
+      "contact": {
+          "name": "API Support",
+          "url": "https://github.com/alzin",
+          "email": "ghaithalzein05@gmail.com"
+      }
   },
   "paths": {
-    "/auth/register": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Register a new user",
-        "description": "Registers a new user with an email, name, and password, and sends a verification email.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
-                },
-                "example": {
-                  "name": "Ghaith Alzin",
-                  "email": "ghaithalzein055@gmail.com",
-                  "password": "Password123!"
-                }
+      "/auth/register": {
+          "post": {
+              "tags": [
+                  "Auth"
+              ],
+              "summary": "Register a new user",
+              "description": "Registers a new user with an email, name, and password, and sends a verification email.",
+              "requestBody": {
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "name": {
+                                      "type": "string"
+                                  },
+                                  "email": {
+                                      "type": "string"
+                                  },
+                                  "password": {
+                                      "type": "string"
+                                  }
+                              },
+                              "example": {
+                                  "name": "Ghaith Alzin",
+                                  "email": "ghaithalzein055@gmail.com",
+                                  "password": "Password123!"
+                              }
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "201": {
+                      "description": "User registered successfully. Please verify your email.",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "User registered successfully. Please verify your email."
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid input or user already exists",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Invalid input or user already exists"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Internal server error"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
               }
-            }
           }
-        },
-        "responses": {
-          "201": {
-            "description": "User registered successfully. Please verify your email.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "User registered successfully. Please verify your email."
-                    }
+      },
+      "/auth/verify-email": {
+          "get": {
+              "tags": [
+                  "Auth"
+              ],
+              "summary": "Verify email address",
+              "description": "Verifies a user's email address using a token sent via email.",
+              "parameters": [
+                  {
+                      "name": "token",
+                      "in": "query",
+                      "required": true,
+                      "schema": {
+                          "type": "string"
+                      },
+                      "description": "The verification token sent to the user's email."
                   }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or user already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid input or user already exists"
-                    }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Email verified successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Email verified successfully. You can now log in."
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid or expired token",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Invalid or expired token"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Internal server error"
+                                      }
+                                  }
+                              }
+                          }
+                      }
                   }
-                }
               }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
           }
-        }
+      },
+      "/auth/login": {
+          "post": {
+              "tags": [
+                  "Auth"
+              ],
+              "summary": "User login",
+              "description": "Logs in a user with email and password, returning a JWT token. User must verify email before logging in.",
+              "requestBody": {
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "email": {
+                                      "type": "string"
+                                  },
+                                  "password": {
+                                      "type": "string"
+                                  }
+                              },
+                              "example": {
+                                  "email": "ghaithalzein055@gmail.com",
+                                  "password": "Password123!"
+                              }
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "200": {
+                      "description": "Login successful",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "token": {
+                                          "type": "string",
+                                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid credentials",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Invalid credentials"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "401": {
+                      "description": "Email not verified",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Please verify your email before logging in."
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Internal server error"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/auth/change-password": {
+          "post": {
+              "tags": [
+                  "Auth"
+              ],
+              "summary": "Change user password",
+              "description": "Allows a user to change their password by providing the current password and a new password.",
+              "requestBody": {
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "email": {
+                                      "type": "string"
+                                  },
+                                  "currentPassword": {
+                                      "type": "string"
+                                  },
+                                  "newPassword": {
+                                      "type": "string"
+                                  }
+                              },
+                              "example": {
+                                  "email": "ghaithalzein055@gmail.com",
+                                  "currentPassword": "OldPassword123!",
+                                  "newPassword": "NewPassword123!"
+                              }
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "200": {
+                      "description": "Password updated successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Password updated successfully"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid input or current password incorrect",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Invalid input or current password is incorrect"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Internal server error"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/auth/forgot-password": {
+          "post": {
+              "tags": [
+                  "Auth"
+              ],
+              "summary": "Forgot password",
+              "description": "Allows a user to request a password reset email.",
+              "requestBody": {
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "email": {
+                                      "type": "string"
+                                  }
+                              },
+                              "example": {
+                                  "email": "ghaithalzein055@gmail.com"
+                              }
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "200": {
+                      "description": "Password reset email sent",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Password reset email sent. Please check your inbox."
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid email or user not found",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Invalid email or user not found"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Internal server error"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/auth/reset-password/{token}": {
+          "post": {
+              "tags": [
+                  "Auth"
+              ],
+              "summary": "Reset password",
+              "description": "Allows a user to reset their password using a token sent to their email.",
+              "parameters": [
+                  {
+                      "name": "token",
+                      "in": "path",
+                      "required": true,
+                      "schema": {
+                          "type": "string"
+                      },
+                      "description": "The password reset token sent to the user's email."
+                  }
+              ],
+              "requestBody": {
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "newPassword": {
+                                      "type": "string"
+                                  }
+                              },
+                              "example": {
+                                  "newPassword": "NewPassword123!"
+                              }
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "200": {
+                      "description": "Password reset successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Password has been reset successfully. You can now log in with your new password."
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid or expired token",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Invalid or expired token"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Internal server error"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/business-sheets": {
+          "post": {
+              "tags": [
+                  "Business Sheets"
+              ],
+              "summary": "Create a new Business Sheet",
+              "description": "Creates a new business sheet for the authenticated user.",
+              "security": [
+                  {
+                      "BearerAuth": []
+                  }
+              ],
+              "requestBody": {
+                  "required": true,
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "$ref": "#/components/schemas/BusinessSheetInput"
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "201": {
+                      "description": "Business sheet created successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/BusinessSheet"
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid input",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "401": {
+                      "description": "Unauthorized",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/business-sheets/{id}": {
+          "get": {
+              "tags": [
+                  "Business Sheets"
+              ],
+              "summary": "Get a Business Sheet",
+              "description": "Retrieves a business sheet by its ID.",
+              "security": [
+                  {
+                      "BearerAuth": []
+                  }
+              ],
+              "parameters": [
+                  {
+                      "name": "id",
+                      "in": "path",
+                      "required": true,
+                      "schema": {
+                          "type": "string"
+                      },
+                      "description": "The ID of the business sheet."
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Business sheet retrieved successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/BusinessSheet"
+                              }
+                          }
+                      }
+                  },
+                  "401": {
+                      "description": "Unauthorized",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "404": {
+                      "description": "Business sheet not found",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  }
+              }
+          },
+          "put": {
+              "tags": [
+                  "Business Sheets"
+              ],
+              "summary": "Edit a Business Sheet",
+              "description": "Updates an existing business sheet.",
+              "security": [
+                  {
+                      "BearerAuth": []
+                  }
+              ],
+              "parameters": [
+                  {
+                      "name": "id",
+                      "in": "path",
+                      "required": true,
+                      "schema": {
+                          "type": "string"
+                      },
+                      "description": "The ID of the business sheet."
+                  }
+              ],
+              "requestBody": {
+                  "required": true,
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "$ref": "#/components/schemas/BusinessSheetInput"
+                          }
+                      }
+                  }
+              },
+              "responses": {
+                  "200": {
+                      "description": "Business sheet updated successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "object",
+                                  "properties": {
+                                      "message": {
+                                          "type": "string",
+                                          "example": "Business sheet updated successfully"
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  },
+                  "400": {
+                      "description": "Invalid input",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "401": {
+                      "description": "Unauthorized",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "404": {
+                      "description": "Business sheet not found",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      },
+      "/business-sheets/{id}/share": {
+          "post": {
+              "tags": [
+                  "Business Sheets"
+              ],
+              "summary": "Share a Business Sheet",
+              "description": "Generates sharing information (URL and QR code) for a business sheet.",
+              "security": [
+                  {
+                      "BearerAuth": []
+                  }
+              ],
+              "parameters": [
+                  {
+                      "name": "id",
+                      "in": "path",
+                      "required": true,
+                      "schema": {
+                          "type": "string"
+                      },
+                      "description": "The ID of the business sheet."
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Sharing information generated successfully",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/SharingInformation"
+                              }
+                          }
+                      }
+                  },
+                  "401": {
+                      "description": "Unauthorized",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "404": {
+                      "description": "Business sheet not found",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Internal server error",
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/ErrorResponse"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
       }
-    },
-    "/auth/verify-email": {
-      "get": {
-        "tags": ["Auth"],
-        "summary": "Verify email address",
-        "description": "Verifies a user's email address using a token sent via email.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "The verification token sent to the user's email."
+  },
+  "components": {
+      "securitySchemes": {
+          "BearerAuth": {
+              "type": "http",
+              "scheme": "bearer",
+              "bearerFormat": "JWT"
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Email verified successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
+      },
+      "schemas": {
+          "BusinessSheet": {
+              "type": "object",
+              "properties": {
+                  "id": {
+                      "type": "string"
+                  },
+                  "userId": {
+                      "type": "string"
+                  },
+                  "memberProfile": {
+                      "$ref": "#/components/schemas/MemberProfile"
+                  },
+                  "businessInformation": {
+                      "$ref": "#/components/schemas/BusinessInformation"
+                  },
+                  "personalInformation": {
                       "type": "string",
-                      "example": "Email verified successfully. You can now log in."
-                    }
+                      "maxLength": 200
+                  },
+                  "goals": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "accomplishments": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "interests": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "networks": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "skills": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "goldenFarmer": {
+                      "$ref": "#/components/schemas/GoldenFarmer"
+                  },
+                  "goldenGoose": {
+                      "$ref": "#/components/schemas/GoldenGoose"
+                  },
+                  "companyStrengths": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "powerWords": {
+                      "$ref": "#/components/schemas/PowerWords"
+                  },
+                  "itemsProducts": {
+                      "$ref": "#/components/schemas/ItemsProducts"
+                  },
+                  "customization": {
+                      "$ref": "#/components/schemas/Customization"
+                  },
+                  "sharingInformation": {
+                      "$ref": "#/components/schemas/SharingInformation"
                   }
-                }
               }
-            }
           },
-          "400": {
-            "description": "Invalid or expired token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
+          "BusinessSheetInput": {
+              "type": "object",
+              "properties": {
+                  "memberProfile": {
+                      "$ref": "#/components/schemas/MemberProfile"
+                  },
+                  "businessInformation": {
+                      "$ref": "#/components/schemas/BusinessInformation"
+                  },
+                  "personalInformation": {
                       "type": "string",
-                      "example": "Invalid or expired token"
-                    }
+                      "maxLength": 200
+                  },
+                  "goals": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "accomplishments": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "interests": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "networks": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "skills": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "goldenFarmer": {
+                      "$ref": "#/components/schemas/GoldenFarmer"
+                  },
+                  "goldenGoose": {
+                      "$ref": "#/components/schemas/GoldenGoose"
+                  },
+                  "companyStrengths": {
+                      "type": "string",
+                      "maxLength": 1000
+                  },
+                  "powerWords": {
+                      "$ref": "#/components/schemas/PowerWords"
+                  },
+                  "itemsProducts": {
+                      "$ref": "#/components/schemas/ItemsProducts"
+                  },
+                  "customization": {
+                      "$ref": "#/components/schemas/Customization"
+                  },
+                  "sharingInformation": {
+                      "$ref": "#/components/schemas/SharingInformation"
                   }
-                }
-              }
-            }
+              },
+              "required": [
+                  "memberProfile",
+                  "businessInformation"
+              ]
           },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
+          "MemberProfile": {
+              "type": "object",
+              "properties": {
+                  "shortBiography": {
                       "type": "string",
-                      "example": "Internal server error"
-                    }
+                      "maxLength": 400
                   }
-                }
               }
-            }
+          },
+          "BusinessInformation": {
+              "type": "object",
+              "properties": {
+                  "businessDescription": {
+                      "type": "string",
+                      "maxLength": 400
+                  }
+              }
+          },
+          "GoldenFarmer": {
+              "type": "object",
+              "properties": {
+                  "fields": {
+                      "type": "array",
+                      "items": {
+                          "type": "string",
+                          "maxLength": 10
+                      },
+                      "maxItems": 3
+                  }
+              }
+          },
+          "GoldenGoose": {
+              "type": "object",
+              "properties": {
+                  "fields": {
+                      "type": "array",
+                      "items": {
+                          "type": "string",
+                          "maxLength": 40
+                      },
+                      "maxItems": 3
+                  }
+              }
+          },
+          "PowerWords": {
+              "type": "object",
+              "properties": {
+                  "fields": {
+                      "type": "array",
+                      "items": {
+                          "type": "string",
+                          "maxLength": 10
+                      },
+                      "maxItems": 3
+                  }
+              }
+          },
+          "ItemsProducts": {
+              "type": "object",
+              "properties": {
+                  "fields": {
+                      "type": "array",
+                      "items": {
+                          "type": "string",
+                          "maxLength": 40
+                      },
+                      "maxItems": 3
+                  }
+              }
+          },
+          "Customization": {
+              "type": "object",
+              "properties": {
+                  "fontPreference": {
+                      "type": "string"
+                  },
+                  "colorPreference": {
+                      "type": "string"
+                  }
+              }
+          },
+          "SharingInformation": {
+              "type": "object",
+              "properties": {
+                  "url": {
+                      "type": "string"
+                  },
+                  "qrCode": {
+                      "type": "string"
+                  }
+              }
+          },
+          "ErrorResponse": {
+              "type": "object",
+              "properties": {
+                  "message": {
+                      "type": "string"
+                  }
+              }
           }
-        }
       }
-    },
-    "/auth/login": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "User login",
-        "description": "Logs in a user with email and password, returning a JWT token. User must verify email before logging in.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
-                },
-                "example": {
-                  "email": "ghaithalzein055@gmail.com",
-                  "password": "Password123!"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Login successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string",
-                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid credentials"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Email not verified",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Please verify your email before logging in."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/change-password": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Change user password",
-        "description": "Allows a user to change their password by providing the current password and a new password.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": { "type": "string" },
-                  "currentPassword": { "type": "string" },
-                  "newPassword": { "type": "string" }
-                },
-                "example": {
-                  "email": "ghaithalzein055@gmail.com",
-                  "currentPassword": "OldPassword123!",
-                  "newPassword": "NewPassword123!"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Password updated successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or current password incorrect",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid input or current password is incorrect"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/forgot-password": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Forgot password",
-        "description": "Allows a user to request a password reset email.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": { "type": "string" }
-                },
-                "example": {
-                  "email": "ghaithalzein055@gmail.com"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password reset email sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Password reset email sent. Please check your inbox."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid email or user not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid email or user not found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/reset-password/{token}": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Reset password",
-        "description": "Allows a user to reset their password using a token sent to their email.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "The password reset token sent to the user's email."
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "newPassword": { "type": "string" }
-                },
-                "example": {
-                  "newPassword": "NewPassword123!"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password reset successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Password has been reset successfully. You can now log in with your new password."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or expired token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Invalid or expired token"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
   }
 }
