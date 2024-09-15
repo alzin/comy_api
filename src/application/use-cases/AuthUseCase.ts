@@ -2,7 +2,7 @@ import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
 import { IEmailService } from "../../domain/interfaces/IEmailService";
 import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
 import { ITokenService } from "../../domain/interfaces/ITokenService";
-import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
 import { CONFIG } from "../../main/config/config";
 import { log } from "console";
@@ -54,7 +54,7 @@ export class AuthUseCase implements IAuthUseCase {
       `Please verify your account by clicking the link: \n${verificationUrl}`,
     );
 
-    await this.userRepository.save({
+    await this.userRepository.create({
       id: "",
       email,
       name,

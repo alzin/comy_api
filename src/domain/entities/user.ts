@@ -1,21 +1,11 @@
-export class User {
-  constructor(
-    public id: string | null,
-    public email: string,
-    public name: string,
-    public password: string,
-    public isVerified: boolean,
-    public verificationToken: string | null,
-  ) {}
+// src/domain/entities/User.ts
 
-  static create(
-    email: string,
-    name: string,
-    password: string,
-    isVerified: boolean = false,
-    verificationToken: string | null = null,
-    id: string | null = null,
-  ): User {
-    return new User(id, email, name, password, isVerified, verificationToken);
-  }
+export interface User {
+  id?: string;
+  email: string;
+  name: string;
+  password: string;
+  isVerified: boolean;
+  verificationToken?: string | null;
+  businessSheetId?: string;
 }
