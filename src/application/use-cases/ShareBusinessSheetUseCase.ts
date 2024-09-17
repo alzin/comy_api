@@ -1,15 +1,18 @@
 // src/application/use-cases/ShareBusinessSheetUseCase.ts
 
-import { IBusinessSheetRepository } from '../../domain/repo/IBusinessSheetRepository';
-import { CONFIG } from '../../main/config/config';
+import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
+import { CONFIG } from "../../main/config/config";
 
 export class ShareBusinessSheetUseCase {
   constructor(private businessSheetRepository: IBusinessSheetRepository) {}
 
-  async execute(businessSheetId: string): Promise<{ url: string; qrCode: string }> {
-    const businessSheet = await this.businessSheetRepository.findById(businessSheetId);
+  async execute(
+    businessSheetId: string,
+  ): Promise<{ url: string; qrCode: string }> {
+    const businessSheet =
+      await this.businessSheetRepository.findById(businessSheetId);
     if (!businessSheet) {
-      throw new Error('BusinessSheet not found.');
+      throw new Error("BusinessSheet not found.");
     }
 
     // Generate sharing information (e.g., URL and QR code)
@@ -26,6 +29,6 @@ export class ShareBusinessSheetUseCase {
   private generateQRCode(url: string): string {
     // Implement QR code generation logic
     // This could involve calling an external service or library
-    return 'generated-qr-code-data';
+    return "generated-qr-code-data";
   }
 }

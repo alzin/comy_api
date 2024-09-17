@@ -1,8 +1,8 @@
 // src/infrastructure/repositories/BusinessSheetRepository.ts
 
-import { IBusinessSheetRepository } from '../../domain/repo/IBusinessSheetRepository';
-import { BusinessSheet } from '../../domain/entities/BusinessSheet';
-import { BusinessSheetModel } from '../models/BusinessSheetSchema';
+import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
+import { BusinessSheet } from "../../domain/entities/BusinessSheet";
+import { BusinessSheetModel } from "../models/BusinessSheetSchema";
 
 export class BusinessSheetRepository implements IBusinessSheetRepository {
   async create(businessSheet: BusinessSheet): Promise<BusinessSheet> {
@@ -22,7 +22,10 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
   }
 
   async update(businessSheet: BusinessSheet): Promise<void> {
-    await BusinessSheetModel.findByIdAndUpdate(businessSheet.id, businessSheet).exec();
+    await BusinessSheetModel.findByIdAndUpdate(
+      businessSheet.id,
+      businessSheet,
+    ).exec();
   }
 
   async delete(id: string): Promise<void> {
@@ -48,6 +51,9 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
       itemsProducts: bsDoc.itemsProducts,
       customization: bsDoc.customization,
       sharingInformation: bsDoc.sharingInformation,
+      headerBackgroundImageUrl: bsDoc.headerBackgroundImageUrl,
+      profileImageUrl: bsDoc.profileImageUrl,
+      referralSheetBackgroundImageUrl: bsDoc.referralSheetBackgroundImageUrl,
     };
   }
 }

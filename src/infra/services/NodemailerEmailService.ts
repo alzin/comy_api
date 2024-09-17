@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { IEmailService } from "../../domain/interfaces/IEmailService";
+import { IEmailService } from "../../domain/services/IEmailService";
 import { CONFIG } from "../../main/config/config";
 import { log } from "console";
 

@@ -1,8 +1,8 @@
 // src/infrastructure/repositories/UserRepository.ts
 
-import { IUserRepository } from '../../domain/repo/IUserRepository';
-import { User } from '../../domain/entities/User';
-import { UserDocument, UserModel } from '../models/UserSchema';
+import { IUserRepository } from "../../domain/repo/IUserRepository";
+import { User } from "../../domain/entities/User";
+import { UserDocument, UserModel } from "../models/UserSchema";
 
 export class UserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
@@ -22,7 +22,9 @@ export class UserRepository implements IUserRepository {
   }
 
   async findByVerificationToken(token: string): Promise<User | null> {
-    const userDoc = await UserModel.findOne({ verificationToken: token }).exec();
+    const userDoc = await UserModel.findOne({
+      verificationToken: token,
+    }).exec();
     return userDoc ? this.mapToDomain(userDoc) : null;
   }
 
@@ -40,9 +42,8 @@ export class UserRepository implements IUserRepository {
       email: userDoc.email,
       name: userDoc.name,
       password: userDoc.password,
-      isVerified: userDoc.isVerified,
+      isEmailVerified: userDoc.isEmailVerified,
       verificationToken: userDoc.verificationToken || undefined,
-      businessSheetId: userDoc.businessSheetId ? userDoc.businessSheetId.toString() : undefined,
     };
   }
 }

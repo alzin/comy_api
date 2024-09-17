@@ -18,4 +18,7 @@ export const CONFIG = {
   REFRESH_TOKEN_EXPIRATION: "7d",
   ACCESS_TOKEN_COOKIE_NAME: "access_token",
   REFRESH_TOKEN_COOKIE_NAME: "refresh_token",
+  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
+  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
+  AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME || "",
 };

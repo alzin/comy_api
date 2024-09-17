@@ -62,4 +62,9 @@ export interface BusinessSheet {
     url: string;
     qrCode: string;
   };
+
+  // Images
+  headerBackgroundImageUrl?: string;
+  profileImageUrl?: string;
+  referralSheetBackgroundImageUrl?: string;
 }

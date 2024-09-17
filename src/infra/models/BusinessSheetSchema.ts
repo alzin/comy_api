@@ -1,13 +1,15 @@
 // src/infrastructure/schemas/BusinessSheetSchema.ts
 
-import mongoose, { Schema, Document } from 'mongoose';
-import { BusinessSheet } from '../../domain/entities/BusinessSheet';
+import mongoose, { Schema, Document } from "mongoose";
+import { BusinessSheet } from "../../domain/entities/BusinessSheet";
 
-export interface BusinessSheetDocument extends Omit<BusinessSheet, 'id'>, Document {}
+export interface BusinessSheetDocument
+  extends Omit<BusinessSheet, "id">,
+    Document {}
 
 const BusinessSheetSchema: Schema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
     memberProfile: {
       shortBiography: { type: String, max_length: 400 },
@@ -56,11 +58,15 @@ const BusinessSheetSchema: Schema = new Schema(
       url: { type: String },
       qrCode: { type: String },
     },
+
+    headerBackgroundImageUrl: { type: String },
+    profileImageUrl: { type: String },
+    referralSheetBackgroundImageUrl: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const BusinessSheetModel = mongoose.model<BusinessSheetDocument>(
-  'BusinessSheet',
-  BusinessSheetSchema
+  "BusinessSheet",
+  BusinessSheetSchema,
 );

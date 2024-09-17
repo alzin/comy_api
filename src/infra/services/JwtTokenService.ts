@@ -1,4 +1,4 @@
-import { ITokenService } from "../../domain/interfaces/ITokenService";
+import { ITokenService } from "../../domain/services/ITokenService";
 import jwt from "jsonwebtoken";
 import { log } from "console";
 

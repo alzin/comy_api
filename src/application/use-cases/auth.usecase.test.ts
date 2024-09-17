@@ -1,9 +1,9 @@
 import { AuthUseCase } from "./AuthUseCase";
 import { IUserRepository } from "../../domain/repo/IUserRepository";
-import { IEmailService } from "../../domain/interfaces/IEmailService";
-import { IEncryptionService } from "../../domain/interfaces/IEncryptionService";
-import { ITokenService } from "../../domain/interfaces/ITokenService";
-import { IRandomStringGenerator } from "../../domain/interfaces/IRandomStringGenerator";
+import { IEmailService } from "../../domain/services/IEmailService";
+import { IEncryptionService } from "../../domain/services/IEncryptionService";
+import { ITokenService } from "../../domain/services/ITokenService";
+import { IRandomStringGenerator } from "../../domain/services/IRandomStrGeneratorService";
 
 describe("AuthUseCase", () => {
   let authUseCase: AuthUseCase;
