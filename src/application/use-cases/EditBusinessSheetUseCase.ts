@@ -29,15 +29,23 @@ export class EditBusinessSheetUseCase {
     // Upload new images if provided
     const imageUrls = await this.uploadImages(images, userId);
 
-    // Merge updates and image URLs
-    const updatedBusinessSheet = {
-      ...existingBusinessSheet,
+    // Prepare the updates
+    const updateData = {
       ...updates,
       ...imageUrls,
     };
 
+    if (!existingBusinessSheet.id) {
+      throw new Error("BusinessSheet ID is missing.");
+    }
+    
     // Save the updates
-    await this.businessSheetRepository.update(updatedBusinessSheet);
+    await this.businessSheetRepository.update(
+      existingBusinessSheet.id,
+      updateData,
+    );
+    
+
   }
 
   private async uploadImages(

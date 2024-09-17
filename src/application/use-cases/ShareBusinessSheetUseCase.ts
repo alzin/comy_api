@@ -21,7 +21,7 @@ export class ShareBusinessSheetUseCase {
 
     // Update the business sheet with sharing information
     businessSheet.sharingInformation = { url, qrCode };
-    await this.businessSheetRepository.update(businessSheet);
+    // await this.businessSheetRepository.update(businessSheet);
 
     return businessSheet.sharingInformation;
   }

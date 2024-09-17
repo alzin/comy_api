@@ -20,14 +20,12 @@ export class CreateBusinessSheetUseCase {
   ): Promise<BusinessSheet> {
     const imageUrls = await this.uploadImages(images, businessSheetData.userId);
 
-    console.log(businessSheetData);
     const completeBusinessSheetData = { ...businessSheetData, ...imageUrls };
 
-    console.log(completeBusinessSheetData);
-
     const businessSheet = await this.businessSheetRepository.create(
-      completeBusinessSheetData,
+      completeBusinessSheetData
     );
+    
     return businessSheet;
   }
 

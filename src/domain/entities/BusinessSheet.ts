@@ -1,7 +1,7 @@
 // src/domain/entities/BusinessSheet.ts
 
 export interface BusinessSheet {
-  id?: string;
+  id?: string; 
   userId: string;
 
   // 1. Member Profile

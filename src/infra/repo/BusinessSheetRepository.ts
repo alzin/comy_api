@@ -5,7 +5,9 @@ import { BusinessSheet } from "../../domain/entities/BusinessSheet";
 import { BusinessSheetModel } from "../models/BusinessSheetSchema";
 
 export class BusinessSheetRepository implements IBusinessSheetRepository {
-  async create(businessSheet: BusinessSheet): Promise<BusinessSheet> {
+  async create(
+    businessSheet: Omit<BusinessSheet, "id">,
+  ): Promise<BusinessSheet> {
     const newBusinessSheet = new BusinessSheetModel(businessSheet);
     const savedBusinessSheet = await newBusinessSheet.save();
     return this.mapToDomain(savedBusinessSheet);
@@ -21,10 +23,21 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
     return bsDoc ? this.mapToDomain(bsDoc) : null;
   }
 
-  async update(businessSheet: BusinessSheet): Promise<void> {
-    await BusinessSheetModel.findByIdAndUpdate(
-      businessSheet.id,
-      businessSheet,
+  // async update(businessSheet: BusinessSheet): Promise<void> {
+  //   await BusinessSheetModel.findByIdAndUpdate(
+  //     businessSheet.id,
+  //     businessSheet,
+  //   ).exec();
+  // }
+
+  async update(
+    id: string,
+    updates: Partial<BusinessSheet>,
+  ): Promise<void> {
+    await BusinessSheetModel.updateOne(
+      { _id: id },
+      { $set: updates },
+      { runValidators: true },
     ).exec();
   }
 

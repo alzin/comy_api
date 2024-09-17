@@ -592,7 +592,7 @@
                     "format": "binary",
                     "description": "Upload profile image"
                   },
-                  "referralSheetBackgroundImageUrl": {
+                  "referralSheetBackgroundImage": {
                     "type": "string",
                     "format": "binary",
                     "description": "Upload referral sheet background image"
@@ -787,7 +787,7 @@
                     "format": "binary",
                     "description": "Upload profile image"
                   },
-                  "referralSheetBackgroundImageUrl": {
+                  "referralSheetBackgroundImage": {
                     "type": "string",
                     "format": "binary",
                     "description": "Upload referral sheet background image"
