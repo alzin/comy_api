@@ -24,11 +24,13 @@
                 "properties": {
                   "name": { "type": "string" },
                   "email": { "type": "string" },
+                  "category": { "type": "string" },
                   "password": { "type": "string" }
                 },
                 "example": {
                   "name": "Ghaith Alzin",
                   "email": "ghaithalzein055@gmail.com",
+                  "category": "AI engineer",
                   "password": "Password123!"
                 }
               }

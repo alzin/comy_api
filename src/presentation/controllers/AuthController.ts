@@ -20,8 +20,8 @@ export class AuthController {
 
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, name, password } = req.body;
-      await this.authUseCase.register(email, name, password);
+      const { email, name, category, password } = req.body;
+      await this.authUseCase.register(email, name, category, password);
       res.status(201).json({
         message:
           "User registered successfully. Please check your email for verification.",

@@ -41,6 +41,7 @@ export class UserRepository implements IUserRepository {
       id: userDoc._id.toString(),
       email: userDoc.email,
       name: userDoc.name,
+      category: userDoc.category,
       password: userDoc.password,
       isEmailVerified: userDoc.isEmailVerified,
       verificationToken: userDoc.verificationToken || undefined,

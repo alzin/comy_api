@@ -13,6 +13,7 @@ const UserSchema: Schema<UserDocument> = new Schema(
   {
     email: { type: String, required: true, unique: true },
     name: { type: String, required: true },
+    category: { type: String, required: true },
     password: { type: String, required: true },
     isEmailVerified: { type: Boolean, default: false },
     verificationToken: { type: String, default: null },

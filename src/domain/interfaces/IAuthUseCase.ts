@@ -1,5 +1,5 @@
 export interface IAuthUseCase {
-  register(email: string, name: string, password: string): Promise<void>;
+  register(email: string, name: string, category: string, password: string): Promise<void>;
   verifyEmail(
     token: string,
   ): Promise<{ accessToken: string; refreshToken: string }>;

@@ -38,7 +38,7 @@ export class AuthUseCase implements IAuthUseCase {
     }
   }
 
-  async register(email: string, name: string, password: string): Promise<void> {
+  async register(email: string, name: string, category: string, password: string): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new Error("User already exists");
@@ -58,6 +58,7 @@ export class AuthUseCase implements IAuthUseCase {
       id: "",
       email,
       name,
+      category,
       password: hashedPassword,
       isEmailVerified: false,
       verificationToken,
