@@ -9,20 +9,33 @@
       href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css"
     />
     <script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
   </head>
   <body>
     <div id="swagger-ui"></div>
     <script>
-      window.onload = function () {
-        SwaggerUIBundle({
-          url: "/swagger.json",
-          dom_id: "#swagger-ui",
-          presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIBundle.SwaggerUIStandalonePreset,
-          ],
-          layout: "BaseLayout",
-        });
+      window.onload = async function () {
+        const urls = ["/auth-swagger.json", "/business-sheet-swagger.json"];
+
+        try {
+          const responses = await Promise.all(urls.map((url) => fetch(url)));
+          const jsonMap = await Promise.all(responses.map((res) => res.json()));
+
+          // Merge the JSON objects
+          const mergedJson = _.merge({}, ...jsonMap);
+
+          SwaggerUIBundle({
+            spec: mergedJson,
+            dom_id: "#swagger-ui",
+            presets: [
+              SwaggerUIBundle.presets.apis,
+              SwaggerUIBundle.SwaggerUIStandalonePreset,
+            ],
+            layout: "BaseLayout",
+          });
+        } catch (error) {
+          console.error("Error loading Swagger files:", error);
+        }
       };
     </script>
   </body>

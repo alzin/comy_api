@@ -3,9 +3,9 @@
 import { BusinessSheet } from "../entities/BusinessSheet";
 
 export interface IBusinessSheetRepository {
-  create(businessSheet: BusinessSheet): Promise<BusinessSheet>;
+  create(businessSheet: Omit<BusinessSheet, "id">): Promise<BusinessSheet>;
   findById(id: string): Promise<BusinessSheet | null>;
   findByUserId(userId: string): Promise<BusinessSheet | null>;
-  update(businessSheet: BusinessSheet): Promise<void>;
+  update(id: string, updates: Partial<BusinessSheet>): Promise<void>;
   delete(id: string): Promise<void>;
 }

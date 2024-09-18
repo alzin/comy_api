@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { CONFIG } from "../../main/config/config";
-import { ITokenService } from "../../domain/interfaces/ITokenService";
+import { ITokenService } from "../../domain/services/ITokenService";
 import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { log } from "console";
 

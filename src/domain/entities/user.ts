@@ -5,7 +5,6 @@ export interface User {
   email: string;
   name: string;
   password: string;
-  isVerified: boolean;
+  isEmailVerified: boolean;
   verificationToken?: string | null;
-  businessSheetId?: string;
 }

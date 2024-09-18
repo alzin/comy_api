@@ -9,7 +9,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "Node"
   },
   "include": ["src/**/*", "../jest.config.js"],
   "exclude": ["node_modules"]
