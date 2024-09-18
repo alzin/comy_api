@@ -20,10 +20,14 @@ export class ShareBusinessSheetUseCase {
     const qrCode = this.generateQRCode(url);
 
     // Update the business sheet with sharing information
-    businessSheet.sharingInformation = { url, qrCode };
+    businessSheet.sharingUrl = url;
+    businessSheet.sharingQrCode = qrCode;
     // await this.businessSheetRepository.update(businessSheet);
 
-    return businessSheet.sharingInformation;
+    return {
+      url: businessSheet.sharingUrl,
+      qrCode: businessSheet.sharingQrCode,
+    };
   }
 
   private generateQRCode(url: string): string {

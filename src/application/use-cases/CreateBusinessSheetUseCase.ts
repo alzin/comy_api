@@ -23,9 +23,9 @@ export class CreateBusinessSheetUseCase {
     const completeBusinessSheetData = { ...businessSheetData, ...imageUrls };
 
     const businessSheet = await this.businessSheetRepository.create(
-      completeBusinessSheetData
+      completeBusinessSheetData,
     );
-    
+
     return businessSheet;
   }
 

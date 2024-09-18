@@ -23,17 +23,7 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
     return bsDoc ? this.mapToDomain(bsDoc) : null;
   }
 
-  // async update(businessSheet: BusinessSheet): Promise<void> {
-  //   await BusinessSheetModel.findByIdAndUpdate(
-  //     businessSheet.id,
-  //     businessSheet,
-  //   ).exec();
-  // }
-
-  async update(
-    id: string,
-    updates: Partial<BusinessSheet>,
-  ): Promise<void> {
+  async update(id: string, updates: Partial<BusinessSheet>): Promise<void> {
     await BusinessSheetModel.updateOne(
       { _id: id },
       { $set: updates },
@@ -49,21 +39,24 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
     return {
       id: bsDoc._id.toString(),
       userId: bsDoc.userId.toString(),
-      memberProfile: bsDoc.memberProfile,
-      businessInformation: bsDoc.businessInformation,
+      shortBiography: bsDoc.shortBiography,
+      businessDescription: bsDoc.businessDescription,
       personalInformation: bsDoc.personalInformation,
       goals: bsDoc.goals,
       accomplishments: bsDoc.accomplishments,
       interests: bsDoc.interests,
       networks: bsDoc.networks,
       skills: bsDoc.skills,
+      goldenEgg: bsDoc.goldenEgg,
       goldenFarmer: bsDoc.goldenFarmer,
       goldenGoose: bsDoc.goldenGoose,
       companyStrengths: bsDoc.companyStrengths,
       powerWords: bsDoc.powerWords,
       itemsProducts: bsDoc.itemsProducts,
-      customization: bsDoc.customization,
-      sharingInformation: bsDoc.sharingInformation,
+      fontPreference: bsDoc.fontPreference,
+      colorPreference: bsDoc.colorPreference,
+      sharingUrl: bsDoc.sharingUrl,
+      sharingQrCode: bsDoc.sharingQrCode,
       headerBackgroundImageUrl: bsDoc.headerBackgroundImageUrl,
       profileImageUrl: bsDoc.profileImageUrl,
       referralSheetBackgroundImageUrl: bsDoc.referralSheetBackgroundImageUrl,

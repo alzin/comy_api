@@ -38,14 +38,12 @@ export class EditBusinessSheetUseCase {
     if (!existingBusinessSheet.id) {
       throw new Error("BusinessSheet ID is missing.");
     }
-    
+
     // Save the updates
     await this.businessSheetRepository.update(
       existingBusinessSheet.id,
       updateData,
     );
-    
-
   }
 
   private async uploadImages(
