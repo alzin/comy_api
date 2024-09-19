@@ -1,7 +1,8 @@
 // src/application/use-cases/GetBusinessSheetUseCase.ts
 
-import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
-import { BusinessSheet } from "../../domain/entities/BusinessSheet";
+import { BusinessSheet } from "../../../domain/entities/BusinessSheet";
+import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRepository";
+
 
 export class GetBusinessSheetUseCase {
   constructor(private businessSheetRepository: IBusinessSheetRepository) {}

@@ -5,16 +5,15 @@ import { NodemailerEmailService } from "../../infra/services/NodemailerEmailServ
 import { BcryptPasswordHasher } from "../../infra/services/BcryptPasswordHasher";
 import { JwtTokenService } from "../../infra/services/JwtTokenService";
 import { CryptoRandomStringGenerator } from "../../infra/services/CryptoRandomStringGenerator";
-import { AuthUseCase } from "../../application/use-cases/AuthUseCase";
 import { AuthController } from "../../presentation/controllers/AuthController";
-
 import { BusinessSheetRepository } from "../../infra/repo/BusinessSheetRepository";
-import { CreateBusinessSheetUseCase } from "../../application/use-cases/CreateBusinessSheetUseCase";
-import { EditBusinessSheetUseCase } from "../../application/use-cases/EditBusinessSheetUseCase";
-import { GetBusinessSheetUseCase } from "../../application/use-cases/GetBusinessSheetUseCase";
-import { ShareBusinessSheetUseCase } from "../../application/use-cases/ShareBusinessSheetUseCase";
 import { BusinessSheetController } from "../../presentation/controllers/BusinessSheetController";
 import { AWSImageUploadService } from "../../infra/services/AWSImageUploadService";
+import { AuthUseCase } from "../../application/use-cases/auth/AuthUseCase";
+import { CreateBusinessSheetUseCase } from "../../application/use-cases/business-sheet/CreateBusinessSheetUseCase";
+import { EditBusinessSheetUseCase } from "../../application/use-cases/business-sheet/EditBusinessSheetUseCase";
+import { GetBusinessSheetUseCase } from "../../application/use-cases/business-sheet/GetBusinessSheetUseCase";
+import { ShareBusinessSheetUseCase } from "../../application/use-cases/business-sheet/ShareBusinessSheetUseCase";
 
 export function setupDependencies() {
   const userRepository = new UserRepository();
@@ -32,7 +31,6 @@ export function setupDependencies() {
   );
   const authController = new AuthController(authUseCase);
 
-  // Business sheet dependencies
   const businessSheetRepository = new BusinessSheetRepository();
   const imageUploadService = new AWSImageUploadService();
 

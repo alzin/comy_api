@@ -1,11 +1,12 @@
-import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
-import { IEmailService } from "../../domain/services/IEmailService";
-import { IEncryptionService } from "../../domain/services/IEncryptionService";
-import { ITokenService } from "../../domain/services/ITokenService";
-import { IUserRepository } from "../../domain/repo/IUserRepository";
-import { IRandomStringGenerator } from "../../domain/services/IRandomStrGeneratorService";
-import { CONFIG } from "../../main/config/config";
+
 import { log } from "console";
+import { IAuthUseCase } from "../../../domain/interfaces/IAuthUseCase";
+import { IUserRepository } from "../../../domain/repo/IUserRepository";
+import { IEmailService } from "../../../domain/services/IEmailService";
+import { IEncryptionService } from "../../../domain/services/IEncryptionService";
+import { IRandomStringGenerator } from "../../../domain/services/IRandomStrGeneratorService";
+import { ITokenService } from "../../../domain/services/ITokenService";
+import { CONFIG } from "../../../main/config/config";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(

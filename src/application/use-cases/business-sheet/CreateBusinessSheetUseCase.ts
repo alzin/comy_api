@@ -1,8 +1,8 @@
 // src/application/use-cases/CreateBusinessSheetUseCase.ts
 
-import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
-import { BusinessSheet } from "../../domain/entities/BusinessSheet";
-import { IImageUploadService } from "../../domain/services/IImageUploadService";
+import { BusinessSheet } from "../../../domain/entities/BusinessSheet";
+import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRepository";
+import { IImageUploadService } from "../../../domain/services/IImageUploadService";
 
 export class CreateBusinessSheetUseCase {
   constructor(

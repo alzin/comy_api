@@ -1,10 +1,10 @@
 // src/interfaces/controllers/BusinessSheetController.ts
 
 import { Request, Response } from "express";
-import { CreateBusinessSheetUseCase } from "../../application/use-cases/CreateBusinessSheetUseCase";
-import { EditBusinessSheetUseCase } from "../../application/use-cases/EditBusinessSheetUseCase";
-import { GetBusinessSheetUseCase } from "../../application/use-cases/GetBusinessSheetUseCase";
-import { ShareBusinessSheetUseCase } from "../../application/use-cases/ShareBusinessSheetUseCase";
+import { CreateBusinessSheetUseCase } from "../../application/use-cases/business-sheet/CreateBusinessSheetUseCase";
+import { EditBusinessSheetUseCase } from "../../application/use-cases/business-sheet/EditBusinessSheetUseCase";
+import { GetBusinessSheetUseCase } from "../../application/use-cases/business-sheet/GetBusinessSheetUseCase";
+import { ShareBusinessSheetUseCase } from "../../application/use-cases/business-sheet/ShareBusinessSheetUseCase";
 
 export class BusinessSheetController {
   constructor(
