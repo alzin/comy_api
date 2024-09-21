@@ -8,4 +8,5 @@ export interface User {
   password: string;
   isEmailVerified: boolean;
   verificationToken?: string | null;
+  stripeCustomerId?: string | null;
 }

@@ -2,7 +2,8 @@ import express from "express";
 
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
-import { setupAuthRoutes } from "./authRoutes";
+import { setupAuthRoutes } from "./AuthRoutes";
+import { setupStripeRoutes } from "./stripeRoutes";
 
 export function setupRoutes(app: express.Application, dependencies: any) {
   app.get("/", (_, res) => res.status(200).send("OK"));
@@ -10,6 +11,8 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   app.use(
     authMiddleware(dependencies.tokenService, dependencies.userRepository),
   );
+
+  app.use("/create-checkout-session", setupStripeRoutes(dependencies.stripeController));
 
   // Business sheet routes
   app.use(

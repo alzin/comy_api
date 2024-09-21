@@ -1,3 +1,5 @@
+// src/domain/entities/BusinessSheet.ts
+
 export interface BusinessSheet {
   id?: string;
   userId: string;

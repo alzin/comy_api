@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { BusinessSheet } from "../../domain/entities/BusinessSheet";
+import { BusinessSheet } from "../../../domain/entities/BusinessSheet";
 
 export interface BusinessSheetDocument
   extends Omit<BusinessSheet, "id">,

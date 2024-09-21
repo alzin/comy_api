@@ -1,7 +1,7 @@
-// src/infrastructure/schemas/UserSchema.ts
+// src/infrastructure/database/models/UserModel.ts
 
 import mongoose, { Schema, Document, Types } from "mongoose";
-import { User } from "../../domain/entities/User";
+import { User } from "../../../domain/entities/User";
 
 export interface UserDocument
   extends Omit<User, "id">,
@@ -17,6 +17,7 @@ const UserSchema: Schema<UserDocument> = new Schema(
     password: { type: String, required: true },
     isEmailVerified: { type: Boolean, default: false },
     verificationToken: { type: String, default: null },
+    stripeCustomerId: { type: String, default: null },
   },
   { timestamps: true },
 );

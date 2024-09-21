@@ -2,7 +2,7 @@
 
 import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
 import { BusinessSheet } from "../../domain/entities/BusinessSheet";
-import { BusinessSheetModel } from "../models/BusinessSheetSchema";
+import { BusinessSheetModel } from "../database/models/BusinessSheetModel";
 
 export class BusinessSheetRepository implements IBusinessSheetRepository {
   async create(
