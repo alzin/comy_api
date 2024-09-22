@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as validationMiddleware from "./validationMiddleware";
+import * as validationMiddleware from "../../../src/presentation/middlewares/validationMiddleware";
 
 describe("Validation Middleware", () => {
   let mockRequest: Partial<Request>;
