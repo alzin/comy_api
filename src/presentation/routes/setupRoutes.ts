@@ -2,8 +2,9 @@ import express from "express";
 
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
-import { setupAuthRoutes } from "./AuthRoutes";
-import { setupStripeRoutes } from "./stripeRoutes";
+
+import { setupAuthRoutes } from "./authRoutes";
+import { setupStripeRoutes } from "./StripeRoutes";
 
 export function setupRoutes(app: express.Application, dependencies: any) {
   app.get("/", (_, res) => res.status(200).send("OK"));
