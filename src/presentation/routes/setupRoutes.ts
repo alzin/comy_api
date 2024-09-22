@@ -1,7 +1,8 @@
 import express from "express";
-import { setupAuthRoutes } from "./authRoutes";
+
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
+import { setupAuthRoutes } from "./authRoutes";
 
 export function setupRoutes(app: express.Application, dependencies: any) {
   app.get("/", (_, res) => res.status(200).send("OK"));

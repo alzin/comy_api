@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "Node"
   },
-  "include": ["src/**/*", "../jest.config.js"],
+  "include": ["src/**/*", "tests/**/*", "jest.config.js"],
   "exclude": ["node_modules"]
 }

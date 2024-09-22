@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { AuthController } from "./AuthController";
-import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
-import { CONFIG } from "../../main/config/config";
+import { IAuthUseCase } from "../../../src/domain/interfaces/IAuthUseCase";
+import { CONFIG } from "../../../src/main/config/config";
+import { AuthController } from "../../../src/presentation/controllers/AuthController";
 
 describe("AuthController", () => {
   let authController: AuthController;
@@ -14,6 +14,7 @@ describe("AuthController", () => {
       register: jest.fn(),
       verifyEmail: jest.fn(),
       login: jest.fn(),
+      refreshAccessToken: jest.fn(),
       changePassword: jest.fn(),
       forgotPassword: jest.fn(),
       resetPassword: jest.fn(),
@@ -26,6 +27,7 @@ describe("AuthController", () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
       redirect: jest.fn(),
+      cookie: jest.fn(),
     };
   });
 
@@ -34,6 +36,7 @@ describe("AuthController", () => {
       mockRequest.body = {
         email: "test@example.com",
         name: "Test User",
+        category: "AI engineer",
         password: "password123",
       };
 
@@ -45,7 +48,8 @@ describe("AuthController", () => {
       expect(mockAuthUseCase.register).toHaveBeenCalledWith(
         "test@example.com",
         "Test User",
-        "password123",
+        "AI engineer",
+        "password123"
       );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -58,10 +62,11 @@ describe("AuthController", () => {
       mockRequest.body = {
         email: "test@example.com",
         name: "Test User",
+        category: "AI engineer",
         password: "password123",
       };
       mockAuthUseCase.register.mockRejectedValue(
-        new Error("Registration failed"),
+        new Error("Registration failed")
       );
 
       await authController.register(
@@ -77,9 +82,12 @@ describe("AuthController", () => {
   });
 
   describe("verifyEmail", () => {
-    it("should verify email successfully and redirect", async () => {
+    it("should verify email successfully and set tokens", async () => {
       mockRequest.query = { token: "valid-token" };
-      mockAuthUseCase.verifyEmail.mockResolvedValue("jwt-token");
+      mockAuthUseCase.verifyEmail.mockResolvedValue({
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+      });
 
       await authController.verifyEmail(
         mockRequest as Request,
@@ -87,10 +95,18 @@ describe("AuthController", () => {
       );
 
       expect(mockAuthUseCase.verifyEmail).toHaveBeenCalledWith("valid-token");
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.redirect).toHaveBeenCalledWith(
-        `${CONFIG.TERMS_URL}?token=jwt-token`,
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        CONFIG.ACCESS_TOKEN_COOKIE_NAME,
+        "access-token",
+        expect.any(Object),
       );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        CONFIG.REFRESH_TOKEN_COOKIE_NAME,
+        "refresh-token",
+        expect.any(Object),
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.redirect).toHaveBeenCalledWith(CONFIG.TERMS_URL);
     });
 
     it("should handle invalid token", async () => {
@@ -110,7 +126,7 @@ describe("AuthController", () => {
     it("should handle verification errors", async () => {
       mockRequest.query = { token: "invalid-token" };
       mockAuthUseCase.verifyEmail.mockRejectedValue(
-        new Error("Verification failed"),
+        new Error("Verification failed")
       );
 
       await authController.verifyEmail(
@@ -126,9 +142,12 @@ describe("AuthController", () => {
   });
 
   describe("login", () => {
-    it("should login successfully", async () => {
+    it("should login successfully and set tokens", async () => {
       mockRequest.body = { email: "test@example.com", password: "password123" };
-      mockAuthUseCase.login.mockResolvedValue("jwt-token");
+      mockAuthUseCase.login.mockResolvedValue({
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+      });
 
       await authController.login(
         mockRequest as Request,
@@ -137,10 +156,22 @@ describe("AuthController", () => {
 
       expect(mockAuthUseCase.login).toHaveBeenCalledWith(
         "test@example.com",
-        "password123",
+        "password123"
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        CONFIG.ACCESS_TOKEN_COOKIE_NAME,
+        "access-token",
+        expect.any(Object),
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        CONFIG.REFRESH_TOKEN_COOKIE_NAME,
+        "refresh-token",
+        expect.any(Object),
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({ token: "jwt-token" });
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Login successful",
+      });
     });
 
     it("should handle login errors", async () => {
@@ -158,6 +189,62 @@ describe("AuthController", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: "Invalid credentials",
+      });
+    });
+  });
+
+  describe("refreshAccessToken", () => {
+    it("should refresh access token successfully", async () => {
+      mockRequest.cookies = { [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-token" };
+      mockAuthUseCase.refreshAccessToken.mockResolvedValue("new-access-token");
+
+      await authController.refreshAccessToken(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockAuthUseCase.refreshAccessToken).toHaveBeenCalledWith(
+        "valid-token"
+      );
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        CONFIG.ACCESS_TOKEN_COOKIE_NAME,
+        "new-access-token",
+        expect.any(Object),
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Token refreshed successfully",
+      });
+    });
+
+    it("should handle missing refresh token", async () => {
+      mockRequest.cookies = {};
+
+      await authController.refreshAccessToken(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "No refresh token provided",
+      });
+    });
+
+    it("should handle token refresh errors", async () => {
+      mockRequest.cookies = { [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-token" };
+      mockAuthUseCase.refreshAccessToken.mockRejectedValue(
+        new Error("Invalid refresh token")
+      );
+
+      await authController.refreshAccessToken(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Invalid refresh token",
       });
     });
   });
@@ -193,7 +280,7 @@ describe("AuthController", () => {
         newPassword: "newpass",
       };
       mockAuthUseCase.changePassword.mockRejectedValue(
-        new Error("Current password is incorrect"),
+        new Error("Current password is incorrect")
       );
 
       await authController.changePassword(
@@ -218,7 +305,7 @@ describe("AuthController", () => {
       );
 
       expect(mockAuthUseCase.forgotPassword).toHaveBeenCalledWith(
-        "test@example.com",
+        "test@example.com"
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -229,7 +316,7 @@ describe("AuthController", () => {
     it("should handle forgot password errors", async () => {
       mockRequest.body = { email: "nonexistent@example.com" };
       mockAuthUseCase.forgotPassword.mockRejectedValue(
-        new Error("User not found"),
+        new Error("User not found")
       );
 
       await authController.forgotPassword(
@@ -256,7 +343,7 @@ describe("AuthController", () => {
 
       expect(mockAuthUseCase.resetPassword).toHaveBeenCalledWith(
         "valid-reset-token",
-        "newpassword123",
+        "newpassword123"
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -269,7 +356,7 @@ describe("AuthController", () => {
       mockRequest.params = { token: "invalid-reset-token" };
       mockRequest.body = { newPassword: "newpassword123" };
       mockAuthUseCase.resetPassword.mockRejectedValue(
-        new Error("Invalid or expired reset token"),
+        new Error("Invalid or expired reset token")
       );
 
       await authController.resetPassword(

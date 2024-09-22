@@ -1,7 +1,7 @@
 // src/application/use-cases/ShareBusinessSheetUseCase.ts
 
-import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
-import { CONFIG } from "../../main/config/config";
+import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRepository";
+import { CONFIG } from "../../../main/config/config";
 
 export class ShareBusinessSheetUseCase {
   constructor(private businessSheetRepository: IBusinessSheetRepository) {}
