@@ -2,7 +2,7 @@
 
 import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { User } from "../../domain/entities/User";
-import { UserDocument, UserModel } from "../models/UserSchema";
+import { UserModel, UserDocument } from "../database/models/UserModel";
 
 export class UserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
@@ -45,6 +45,7 @@ export class UserRepository implements IUserRepository {
       password: userDoc.password,
       isEmailVerified: userDoc.isEmailVerified,
       verificationToken: userDoc.verificationToken || undefined,
+      stripeCustomerId: userDoc.stripeCustomerId || undefined,
     };
   }
 }

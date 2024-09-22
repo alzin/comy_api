@@ -5,7 +5,6 @@ import { setupRoutes } from "../presentation/routes/setupRoutes";
 import { setupDependencies } from "./config/setupDependencies";
 import { connectToDatabase } from "../infra/database/connection";
 import { setupSwagger } from "./config/swagger";
-import { setupStripe } from "../infra/services/setupStripe";
 
 export async function startServer() {
   const app = express();
@@ -14,7 +13,6 @@ export async function startServer() {
   setupSwagger(app);
   const dependencies = setupDependencies();
   setupRoutes(app, dependencies);
-  setupStripe(app);
 
   await connectToDatabase();
 
