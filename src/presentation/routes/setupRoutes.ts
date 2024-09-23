@@ -13,7 +13,10 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     authMiddleware(dependencies.tokenService, dependencies.userRepository),
   );
 
-  app.use("/create-checkout-session", setupStripeRoutes(dependencies.stripeController));
+  app.use(
+    "/create-checkout-session",
+    setupStripeRoutes(dependencies.stripeController),
+  );
 
   // Business sheet routes
   app.use(

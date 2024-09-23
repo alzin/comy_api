@@ -31,7 +31,9 @@ export const authMiddleware = (
     }
 
     if (!token) {
-      console.log("The access token has expired, should be updated using the refresh token!");
+      console.log(
+        "The access token has expired, should be updated using the refresh token!",
+      );
       return res.status(401).json({ error: "No token provided" });
     }
 

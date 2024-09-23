@@ -48,13 +48,6 @@ export class AuthUseCase implements IAuthUseCase {
     const hashedPassword = await this.encryptionService.hash(password);
     const verificationToken = this.randomStringGenerator.generate(32);
 
-    const verificationUrl = `${CONFIG.BASE_URL}auth/verify-email?token=${verificationToken}`;
-    await this.emailService.sendEmail(
-      email,
-      "Account Verification",
-      `Please verify your account by clicking the link: \n${verificationUrl}`,
-    );
-
     await this.userRepository.create({
       id: "",
       email,
@@ -64,6 +57,14 @@ export class AuthUseCase implements IAuthUseCase {
       isEmailVerified: false,
       verificationToken,
     });
+
+    const verificationUrl = `${CONFIG.BASE_URL}auth/verify-email?token=${verificationToken}`;
+    await this.emailService.sendEmail(
+      email,
+      "Account Verification",
+      `Please verify your account by clicking the link: \n${verificationUrl}`,
+    );
+
   }
 
   async verifyEmail(

@@ -49,7 +49,7 @@ describe("AuthController", () => {
         "test@example.com",
         "Test User",
         "AI engineer",
-        "password123"
+        "password123",
       );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -66,7 +66,7 @@ describe("AuthController", () => {
         password: "password123",
       };
       mockAuthUseCase.register.mockRejectedValue(
-        new Error("Registration failed")
+        new Error("Registration failed"),
       );
 
       await authController.register(
@@ -126,7 +126,7 @@ describe("AuthController", () => {
     it("should handle verification errors", async () => {
       mockRequest.query = { token: "invalid-token" };
       mockAuthUseCase.verifyEmail.mockRejectedValue(
-        new Error("Verification failed")
+        new Error("Verification failed"),
       );
 
       await authController.verifyEmail(
@@ -156,7 +156,7 @@ describe("AuthController", () => {
 
       expect(mockAuthUseCase.login).toHaveBeenCalledWith(
         "test@example.com",
-        "password123"
+        "password123",
       );
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         CONFIG.ACCESS_TOKEN_COOKIE_NAME,
@@ -195,7 +195,9 @@ describe("AuthController", () => {
 
   describe("refreshAccessToken", () => {
     it("should refresh access token successfully", async () => {
-      mockRequest.cookies = { [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-token" };
+      mockRequest.cookies = {
+        [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-token",
+      };
       mockAuthUseCase.refreshAccessToken.mockResolvedValue("new-access-token");
 
       await authController.refreshAccessToken(
@@ -204,7 +206,7 @@ describe("AuthController", () => {
       );
 
       expect(mockAuthUseCase.refreshAccessToken).toHaveBeenCalledWith(
-        "valid-token"
+        "valid-token",
       );
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         CONFIG.ACCESS_TOKEN_COOKIE_NAME,
@@ -232,9 +234,11 @@ describe("AuthController", () => {
     });
 
     it("should handle token refresh errors", async () => {
-      mockRequest.cookies = { [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-token" };
+      mockRequest.cookies = {
+        [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-token",
+      };
       mockAuthUseCase.refreshAccessToken.mockRejectedValue(
-        new Error("Invalid refresh token")
+        new Error("Invalid refresh token"),
       );
 
       await authController.refreshAccessToken(
@@ -280,7 +284,7 @@ describe("AuthController", () => {
         newPassword: "newpass",
       };
       mockAuthUseCase.changePassword.mockRejectedValue(
-        new Error("Current password is incorrect")
+        new Error("Current password is incorrect"),
       );
 
       await authController.changePassword(
@@ -305,7 +309,7 @@ describe("AuthController", () => {
       );
 
       expect(mockAuthUseCase.forgotPassword).toHaveBeenCalledWith(
-        "test@example.com"
+        "test@example.com",
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -316,7 +320,7 @@ describe("AuthController", () => {
     it("should handle forgot password errors", async () => {
       mockRequest.body = { email: "nonexistent@example.com" };
       mockAuthUseCase.forgotPassword.mockRejectedValue(
-        new Error("User not found")
+        new Error("User not found"),
       );
 
       await authController.forgotPassword(
@@ -343,7 +347,7 @@ describe("AuthController", () => {
 
       expect(mockAuthUseCase.resetPassword).toHaveBeenCalledWith(
         "valid-reset-token",
-        "newpassword123"
+        "newpassword123",
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
@@ -356,7 +360,7 @@ describe("AuthController", () => {
       mockRequest.params = { token: "invalid-reset-token" };
       mockRequest.body = { newPassword: "newpassword123" };
       mockAuthUseCase.resetPassword.mockRejectedValue(
-        new Error("Invalid or expired reset token")
+        new Error("Invalid or expired reset token"),
       );
 
       await authController.resetPassword(

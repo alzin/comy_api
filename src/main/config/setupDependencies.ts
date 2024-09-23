@@ -60,7 +60,10 @@ export function setupDependencies() {
   );
 
   const stripeGateway = new StripeGateway();
-  const createCheckoutSessionUseCase = new CreateCheckoutSessionUseCase(userRepository, stripeGateway);
+  const createCheckoutSessionUseCase = new CreateCheckoutSessionUseCase(
+    userRepository,
+    stripeGateway,
+  );
   const stripeController = new StripeController(createCheckoutSessionUseCase);
 
   return {

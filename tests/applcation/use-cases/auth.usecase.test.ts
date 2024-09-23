@@ -48,7 +48,7 @@ describe("AuthUseCase", () => {
         "test@example.com",
         "Test User",
         "AI engineer",
-        "password123"
+        "password123",
       );
 
       expect(mockUserRepository.create).toHaveBeenCalledWith(
@@ -59,7 +59,7 @@ describe("AuthUseCase", () => {
           password: "hashed_password",
           isEmailVerified: false,
           verificationToken: "verification_token",
-        })
+        }),
       );
       expect(mockEmailService.sendEmail).toHaveBeenCalled();
     });
@@ -75,8 +75,8 @@ describe("AuthUseCase", () => {
           "test@example.com",
           "Test User",
           "AI engineer",
-          "password123"
-        )
+          "password123",
+        ),
       ).rejects.toThrow("User already exists");
     });
   });
@@ -90,7 +90,7 @@ describe("AuthUseCase", () => {
         verificationToken: "valid_token",
       };
       mockUserRepository.findByVerificationToken.mockResolvedValue(
-        mockUser as any
+        mockUser as any,
       );
 
       await authUseCase.verifyEmail("valid_token");
@@ -100,7 +100,7 @@ describe("AuthUseCase", () => {
           id: "1",
           isEmailVerified: true,
           verificationToken: null,
-        })
+        }),
       );
     });
 
@@ -108,7 +108,7 @@ describe("AuthUseCase", () => {
       mockUserRepository.findByVerificationToken.mockResolvedValue(null);
 
       await expect(authUseCase.verifyEmail("invalid_token")).rejects.toThrow(
-        "Invalid or expired token"
+        "Invalid or expired token",
       );
     });
   });
@@ -121,34 +121,34 @@ describe("AuthUseCase", () => {
         password: "hashed_password",
         isEmailVerified: true,
       };
-      
+
       mockUserRepository.findByEmail.mockResolvedValue(mockUser as any);
       mockEncryptionService.compare.mockResolvedValue(true);
-      
+
       // Mock the token generation responses
       mockTokenService.generate
-        .mockResolvedValueOnce("access_token")  // First call: for access token
-        .mockResolvedValueOnce("refresh_token");  // Second call: for refresh token
-  
+        .mockResolvedValueOnce("access_token") // First call: for access token
+        .mockResolvedValueOnce("refresh_token"); // Second call: for refresh token
+
       const result = await authUseCase.login("test@example.com", "password123");
-  
+
       expect(result.accessToken).toBe("access_token");
       expect(result.refreshToken).toBe("refresh_token");
-  
+
       // Verify first call (access token generation)
       expect(mockTokenService.generate).toHaveBeenNthCalledWith(
         1,
-        { userId: "1" },  // Payload
-        CONFIG.JWT_SECRET,  // Secret
-        CONFIG.JWT_EXPIRATION  // Expiration time
+        { userId: "1" }, // Payload
+        CONFIG.JWT_SECRET, // Secret
+        CONFIG.JWT_EXPIRATION, // Expiration time
       );
-  
+
       // Verify second call (refresh token generation)
       expect(mockTokenService.generate).toHaveBeenNthCalledWith(
         2,
-        { userId: "1" },  // Payload
-        CONFIG.REFRESH_TOKEN_SECRET,  // Secret
-        CONFIG.REFRESH_TOKEN_EXPIRATION  // Expiration time
+        { userId: "1" }, // Payload
+        CONFIG.REFRESH_TOKEN_SECRET, // Secret
+        CONFIG.REFRESH_TOKEN_EXPIRATION, // Expiration time
       );
     });
 
@@ -156,7 +156,7 @@ describe("AuthUseCase", () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
       await expect(
-        authUseCase.login("nonexistent@example.com", "password123")
+        authUseCase.login("nonexistent@example.com", "password123"),
       ).rejects.toThrow("Invalid credentials");
     });
 
@@ -170,7 +170,7 @@ describe("AuthUseCase", () => {
       mockUserRepository.findByEmail.mockResolvedValue(mockUser as any);
 
       await expect(
-        authUseCase.login("test@example.com", "password123")
+        authUseCase.login("test@example.com", "password123"),
       ).rejects.toThrow("Please verify your email before logging in");
     });
 
@@ -185,7 +185,7 @@ describe("AuthUseCase", () => {
       mockEncryptionService.compare.mockResolvedValue(false);
 
       await expect(
-        authUseCase.login("test@example.com", "wrong_password")
+        authUseCase.login("test@example.com", "wrong_password"),
       ).rejects.toThrow("Invalid credentials");
     });
   });
@@ -204,14 +204,14 @@ describe("AuthUseCase", () => {
       await authUseCase.changePassword(
         "test@example.com",
         "old_password",
-        "new_password"
+        "new_password",
       );
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
         expect.objectContaining({
           id: "1",
           password: "new_hashed_password",
-        })
+        }),
       );
     });
 
@@ -222,8 +222,8 @@ describe("AuthUseCase", () => {
         authUseCase.changePassword(
           "nonexistent@example.com",
           "old_password",
-          "new_password"
-        )
+          "new_password",
+        ),
       ).rejects.toThrow("User not found");
     });
 
@@ -240,8 +240,8 @@ describe("AuthUseCase", () => {
         authUseCase.changePassword(
           "test@example.com",
           "wrong_password",
-          "new_password"
-        )
+          "new_password",
+        ),
       ).rejects.toThrow("Current password is incorrect");
     });
   });
@@ -258,7 +258,7 @@ describe("AuthUseCase", () => {
         expect.objectContaining({
           id: "1",
           verificationToken: "reset_token",
-        })
+        }),
       );
       expect(mockEmailService.sendEmail).toHaveBeenCalled();
     });
@@ -267,7 +267,7 @@ describe("AuthUseCase", () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
       await expect(
-        authUseCase.forgotPassword("nonexistent@example.com")
+        authUseCase.forgotPassword("nonexistent@example.com"),
       ).rejects.toThrow("User not found");
     });
   });
@@ -280,7 +280,7 @@ describe("AuthUseCase", () => {
         verificationToken: "valid_token",
       };
       mockUserRepository.findByVerificationToken.mockResolvedValue(
-        mockUser as any
+        mockUser as any,
       );
       mockEncryptionService.hash.mockResolvedValue("new_hashed_password");
 
@@ -291,7 +291,7 @@ describe("AuthUseCase", () => {
           id: "1",
           password: "new_hashed_password",
           verificationToken: null,
-        })
+        }),
       );
     });
 
@@ -299,7 +299,7 @@ describe("AuthUseCase", () => {
       mockUserRepository.findByVerificationToken.mockResolvedValue(null);
 
       await expect(
-        authUseCase.resetPassword("invalid_token", "new_password")
+        authUseCase.resetPassword("invalid_token", "new_password"),
       ).rejects.toThrow("Invalid or expired token");
     });
   });
@@ -309,13 +309,15 @@ describe("AuthUseCase", () => {
       mockTokenService.verify.mockResolvedValue({ userId: "1" });
       mockTokenService.generate.mockResolvedValue("new_access_token");
 
-      const result = await authUseCase.refreshAccessToken("valid_refresh_token");
+      const result = await authUseCase.refreshAccessToken(
+        "valid_refresh_token",
+      );
 
       expect(result).toBe("new_access_token");
       expect(mockTokenService.generate).toHaveBeenCalledWith(
         { userId: "1" },
         CONFIG.JWT_SECRET,
-        CONFIG.JWT_EXPIRATION
+        CONFIG.JWT_EXPIRATION,
       );
     });
 
@@ -323,7 +325,7 @@ describe("AuthUseCase", () => {
       mockTokenService.verify.mockResolvedValue(null);
 
       await expect(
-        authUseCase.refreshAccessToken("invalid_refresh_token")
+        authUseCase.refreshAccessToken("invalid_refresh_token"),
       ).rejects.toThrow("Invalid refresh token");
     });
   });

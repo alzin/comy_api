@@ -3,7 +3,6 @@
 import { BusinessSheet } from "../../../domain/entities/BusinessSheet";
 import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRepository";
 
-
 export class GetBusinessSheetUseCase {
   constructor(private businessSheetRepository: IBusinessSheetRepository) {}
 
