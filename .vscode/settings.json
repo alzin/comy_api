@@ -1,4 +1,4 @@
 {
-    "javascript.experimental.updateImportsOnPaste": true,
-    "typescript.experimental.updateImportsOnPaste": true
+  "javascript.experimental.updateImportsOnPaste": true,
+  "typescript.experimental.updateImportsOnPaste": true
 }

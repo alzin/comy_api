@@ -17,7 +17,7 @@ const UserSchema: Schema<UserDocument> = new Schema(
     password: { type: String, required: true },
     isEmailVerified: { type: Boolean, default: false },
     verificationToken: { type: String, default: null },
-    stripeCustomerId: { type: String, default: null },
+    stripeCustomerId: { type: String, unique: true },
   },
   { timestamps: true },
 );

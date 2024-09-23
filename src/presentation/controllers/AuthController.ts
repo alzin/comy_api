@@ -27,6 +27,7 @@ export class AuthController {
           "User registered successfully. Please check your email for verification.",
       });
     } catch (error) {
+      console.log(error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
