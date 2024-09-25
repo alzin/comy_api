@@ -17,6 +17,8 @@ import { ShareBusinessSheetUseCase } from "../../application/use-cases/business-
 import { StripeController } from "../../presentation/controllers/StripeController";
 import { CreateCheckoutSessionUseCase } from "../../application/use-cases/payment/CreateCheckoutSessionUseCase";
 import { StripeGateway } from "../../infra/gateways/StripeGateway";
+import { GetAllUsersInfoUseCase } from "../../application/use-cases/users/GetAllUsersInfoUseCase";
+import { GetAllUsersInfoController } from "../../presentation/controllers/GetAllUsersInfoController";
 
 export function setupDependencies() {
   const userRepository = new UserRepository();
@@ -66,11 +68,17 @@ export function setupDependencies() {
   );
   const stripeController = new StripeController(createCheckoutSessionUseCase);
 
+  const getAllUsersInfoUseCase = new GetAllUsersInfoUseCase(userRepository);
+  const getAllUsersInfoController = new GetAllUsersInfoController(
+    getAllUsersInfoUseCase,
+  );
+
   return {
     userRepository,
     tokenService,
     authController,
     businessSheetController,
     stripeController,
+    getAllUsersInfoController,
   };
 }

@@ -5,6 +5,7 @@ export interface User {
   email: string;
   name: string;
   category: string;
+  profileImageUrl?: string | null;
   password: string;
   isEmailVerified: boolean;
   verificationToken?: string | null;

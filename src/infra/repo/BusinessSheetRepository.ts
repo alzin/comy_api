@@ -3,6 +3,7 @@
 import { IBusinessSheetRepository } from "../../domain/repo/IBusinessSheetRepository";
 import { BusinessSheet } from "../../domain/entities/BusinessSheet";
 import { BusinessSheetModel } from "../database/models/BusinessSheetModel";
+import { UserModel } from "../database/models/UserModel";
 
 export class BusinessSheetRepository implements IBusinessSheetRepository {
   async create(
@@ -10,6 +11,13 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
   ): Promise<BusinessSheet> {
     const newBusinessSheet = new BusinessSheetModel(businessSheet);
     const savedBusinessSheet = await newBusinessSheet.save();
+
+    // Call helper function to update profileImageUrl in User
+    await this.updateUserProfileImageUrl(
+      savedBusinessSheet.userId,
+      savedBusinessSheet.profileImageUrl,
+    );
+
     return this.mapToDomain(savedBusinessSheet);
   }
 
@@ -24,15 +32,36 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
   }
 
   async update(id: string, updates: Partial<BusinessSheet>): Promise<void> {
-    await BusinessSheetModel.updateOne(
+    const updatedBusinessSheet = await BusinessSheetModel.findByIdAndUpdate(
       { _id: id },
       { $set: updates },
-      { runValidators: true },
+      { new: true, runValidators: true },
     ).exec();
+
+    // If the update contains profileImageUrl, sync it with the User model
+    if (updatedBusinessSheet && updates.profileImageUrl) {
+      await this.updateUserProfileImageUrl(
+        updatedBusinessSheet.userId,
+        updates.profileImageUrl,
+      );
+    }
   }
 
   async delete(id: string): Promise<void> {
     await BusinessSheetModel.findByIdAndDelete(id).exec();
+  }
+
+  // Helper function to update the user's profileImageUrl
+  private async updateUserProfileImageUrl(
+    userId: string,
+    profileImageUrl?: string,
+  ): Promise<void> {
+    if (profileImageUrl) {
+      await UserModel.updateOne(
+        { _id: userId },
+        { $set: { profileImageUrl } },
+      ).exec();
+    }
   }
 
   private mapToDomain(bsDoc: any): BusinessSheet {

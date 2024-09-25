@@ -1,4 +1,3 @@
-
 import { log } from "console";
 import { IAuthUseCase } from "../../../domain/interfaces/IAuthUseCase";
 import { IUserRepository } from "../../../domain/repo/IUserRepository";
@@ -39,7 +38,12 @@ export class AuthUseCase implements IAuthUseCase {
     }
   }
 
-  async register(email: string, name: string, category: string, password: string): Promise<void> {
+  async register(
+    email: string,
+    name: string,
+    category: string,
+    password: string,
+  ): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new Error("User already exists");
@@ -64,7 +68,6 @@ export class AuthUseCase implements IAuthUseCase {
       "Account Verification",
       `Please verify your account by clicking the link: \n${verificationUrl}`,
     );
-
   }
 
   async verifyEmail(

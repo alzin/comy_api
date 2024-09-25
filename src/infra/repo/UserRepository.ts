@@ -3,6 +3,7 @@
 import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { User } from "../../domain/entities/User";
 import { UserModel, UserDocument } from "../database/models/UserModel";
+import { UserInfo } from "../../domain/entities/UserInfo";
 
 export class UserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
@@ -26,6 +27,18 @@ export class UserRepository implements IUserRepository {
       verificationToken: token,
     }).exec();
     return userDoc ? this.mapToDomain(userDoc) : null;
+  }
+
+  async getAllUsersInfo(): Promise<UserInfo[]> {
+    const users = await UserModel.find({}, "name category profileImageUrl")
+      .lean()
+      .exec();
+    return users.map((user) => ({
+      id: user._id.toString(),
+      name: user.name,
+      category: user.category,
+      profileImageUrl: user.profileImageUrl || null,
+    }));
   }
 
   async update(user: User): Promise<void> {
