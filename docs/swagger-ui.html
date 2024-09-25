@@ -15,7 +15,11 @@
     <div id="swagger-ui"></div>
     <script>
       window.onload = async function () {
-        const urls = ["/auth-swagger.json", "/business-sheet-swagger.json"];
+        const urls = [
+          "/auth-swagger.json",
+          "/business-sheet-swagger.json",
+          "/users-swagger.json",
+        ];
 
         try {
           const responses = await Promise.all(urls.map((url) => fetch(url)));
