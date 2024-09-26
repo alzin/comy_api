@@ -31,8 +31,5 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     res.json({ isAuthenticated: !!(req as any).user });
   });
 
-  app.use(
-    "/users",
-    setupUserInfoRoutes(dependencies.getAllUsersInfoController),
-  );
+  app.use("/user", setupUserInfoRoutes(dependencies.getAllUsersInfoController, dependencies.updateUserNameController));
 }
