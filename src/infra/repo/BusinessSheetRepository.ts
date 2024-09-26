@@ -8,9 +8,11 @@ import { UserModel } from "../database/models/UserModel";
 export class BusinessSheetRepository implements IBusinessSheetRepository {
   async create(
     businessSheet: Omit<BusinessSheet, "id">,
-  ): Promise<BusinessSheet> {
+  ): Promise<BusinessSheet & { userName: string }> {
     const newBusinessSheet = new BusinessSheetModel(businessSheet);
     const savedBusinessSheet = await newBusinessSheet.save();
+
+    const user = await this.findUserById(savedBusinessSheet.userId);
 
     // Call helper function to update profileImageUrl in User
     await this.updateUserProfileImageUrl(
@@ -18,7 +20,7 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
       savedBusinessSheet.profileImageUrl,
     );
 
-    return this.mapToDomain(savedBusinessSheet);
+    return { ...this.mapToDomain(savedBusinessSheet), userName: user.name };
   }
 
   async findById(id: string): Promise<BusinessSheet | null> {
@@ -26,9 +28,13 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
     return bsDoc ? this.mapToDomain(bsDoc) : null;
   }
 
-  async findByUserId(userId: string): Promise<BusinessSheet | null> {
+  async findByUserId(userId: string): Promise<(BusinessSheet & { userName: string }) | null> {
     const bsDoc = await BusinessSheetModel.findOne({ userId }).exec();
-    return bsDoc ? this.mapToDomain(bsDoc) : null;
+    if (!bsDoc) return null;
+
+    const user = await this.findUserById(userId);
+
+    return { ...this.mapToDomain(bsDoc), userName: user.name };
   }
 
   async update(id: string, updates: Partial<BusinessSheet>): Promise<void> {
@@ -49,6 +55,14 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
 
   async delete(id: string): Promise<void> {
     await BusinessSheetModel.findByIdAndDelete(id).exec();
+  }
+
+  private async findUserById(userId: string) {
+    const user = await UserModel.findById(userId).exec();
+    if (!user) {
+      throw new Error(`User not found for ID: ${userId}`);
+    }
+    return user;
   }
 
   // Helper function to update the user's profileImageUrl

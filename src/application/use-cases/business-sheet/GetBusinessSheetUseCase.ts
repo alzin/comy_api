@@ -6,7 +6,7 @@ import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRep
 export class GetBusinessSheetUseCase {
   constructor(private businessSheetRepository: IBusinessSheetRepository) {}
 
-  async execute(userId: string): Promise<BusinessSheet | null> {
+  async execute(userId: string): Promise<(BusinessSheet & { userName: string }) | null> {
     return await this.businessSheetRepository.findByUserId(userId);
   }
 }

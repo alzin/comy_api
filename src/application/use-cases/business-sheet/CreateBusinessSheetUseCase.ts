@@ -17,7 +17,7 @@ export class CreateBusinessSheetUseCase {
       profileImage?: Buffer;
       referralSheetBackgroundImage?: Buffer;
     },
-  ): Promise<BusinessSheet> {
+  ): Promise<BusinessSheet & { userName: string }>{
     const imageUrls = await this.uploadImages(images, businessSheetData.userId);
 
     const completeBusinessSheetData = { ...businessSheetData, ...imageUrls };
