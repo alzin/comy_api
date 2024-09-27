@@ -28,7 +28,9 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
     return bsDoc ? this.mapToDomain(bsDoc) : null;
   }
 
-  async findByUserId(userId: string): Promise<(BusinessSheet & { userName: string }) | null> {
+  async findByUserId(
+    userId: string,
+  ): Promise<(BusinessSheet & { userName: string }) | null> {
     const bsDoc = await BusinessSheetModel.findOne({ userId }).exec();
     if (!bsDoc) return null;
 

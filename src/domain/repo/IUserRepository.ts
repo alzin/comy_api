@@ -8,4 +8,5 @@ export interface IUserRepository {
   findByVerificationToken(token: string): Promise<User | null>;
   getAllUsersInfo(): Promise<UserInfo[]>;
   update(user: User): Promise<void>;
+  searchUsers(searchTerm: string): Promise<UserInfo[]>;
 }

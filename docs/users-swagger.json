@@ -15,7 +15,7 @@
       "get": {
         "summary": "Get basic info for all users",
         "description": "Retrieves basic information for all users in the system.",
-        "tags": ["UserInfo"],
+        "tags": ["User"],
         "security": [
           {
             "BearerAuth": []
@@ -58,11 +58,80 @@
         }
       }
     },
+
+    "/user/search": {
+      "get": {
+        "summary": "Search users by name or category",
+        "description": "Searches for users based on a query string matching either name or category.",
+        "tags": ["User"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Search term to match against user names or categories"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing search term",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/user/name": {
       "patch": {
         "summary": "Update user name",
         "description": "Updates the name of the authenticated user.",
-        "tags": ["UserInfo"],
+        "tags": ["User"],
         "security": [
           {
             "BearerAuth": []
