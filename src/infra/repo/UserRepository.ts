@@ -4,6 +4,7 @@ import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { User } from "../../domain/entities/User";
 import { UserModel, UserDocument } from "../database/models/UserModel";
 import { UserInfo } from "../../domain/entities/UserInfo";
+import { PipelineStage } from "mongoose";
 
 export class UserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
@@ -33,10 +34,52 @@ export class UserRepository implements IUserRepository {
   }
 
   async searchUsers(searchTerm: string): Promise<UserInfo[]> {
-    const searchRegex = { $regex: searchTerm, $options: "i" };
-    return this.findAndMapToUserInfo({
-      $or: [{ name: searchRegex }, { category: searchRegex }],
-    });
+    const searchWords = searchTerm.split(" ").filter((word) => word.length > 0);
+    const searchRegex = searchWords.map((word) => new RegExp(word, "i"));
+
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          $or: [
+            { name: { $in: searchRegex } },
+            { category: { $in: searchRegex } },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          exactMatchScore: {
+            $add: [
+              { $cond: [{ $eq: ["$name", searchTerm] }, 2, 0] },
+              { $cond: [{ $eq: ["$category", searchTerm] }, 2, 0] },
+            ],
+          },
+          partialMatchScore: {
+            $add: [
+              { $size: { $setIntersection: [searchRegex, ["$name"]] } },
+              { $size: { $setIntersection: [searchRegex, ["$category"]] } },
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          totalScore: { $add: ["$exactMatchScore", "$partialMatchScore"] },
+        },
+      },
+      { $sort: { totalScore: -1 } as any },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          category: 1,
+          profileImageUrl: 1,
+        },
+      },
+    ];
+
+    const users = await UserModel.aggregate(pipeline).exec();
+    return users.map(this.mapToUserInfo);
   }
 
   async delete(id: string): Promise<void> {
