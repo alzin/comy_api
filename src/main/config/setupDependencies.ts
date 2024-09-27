@@ -21,6 +21,8 @@ import { GetAllUsersInfoUseCase } from "../../application/use-cases/users/GetAll
 import { GetAllUsersInfoController } from "../../presentation/controllers/GetAllUsersInfoController";
 import { UpdateUserNameUseCase } from "../../application/use-cases/users/UpdateUserNameUseCase";
 import { UpdateUserNameController } from "../../presentation/controllers/UpdateUserNameController";
+import { SearchUsersUseCase } from "../../application/use-cases/users/SearchUsersUseCase";
+import { SearchUsersController } from "../../presentation/controllers/SearchUsersController";
 
 export function setupDependencies() {
   const userRepository = new UserRepository();
@@ -76,7 +78,12 @@ export function setupDependencies() {
   );
 
   const updateUserNameUseCase = new UpdateUserNameUseCase(userRepository);
-  const updateUserNameController = new UpdateUserNameController(updateUserNameUseCase);
+  const updateUserNameController = new UpdateUserNameController(
+    updateUserNameUseCase,
+  );
+
+  const searchUsersUseCase = new SearchUsersUseCase(userRepository);
+  const searchUsersController = new SearchUsersController(searchUsersUseCase);
 
   return {
     userRepository,
@@ -85,6 +92,7 @@ export function setupDependencies() {
     businessSheetController,
     stripeController,
     getAllUsersInfoController,
-    updateUserNameController
+    updateUserNameController,
+    searchUsersController,
   };
 }

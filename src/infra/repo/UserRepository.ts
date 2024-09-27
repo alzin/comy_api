@@ -13,40 +13,46 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    const userDoc = await UserModel.findById(id).exec();
-    return userDoc ? this.mapToDomain(userDoc) : null;
+    return this.findOneAndMap({ _id: id });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const userDoc = await UserModel.findOne({ email }).exec();
-    return userDoc ? this.mapToDomain(userDoc) : null;
+    return this.findOneAndMap({ email });
   }
 
   async findByVerificationToken(token: string): Promise<User | null> {
-    const userDoc = await UserModel.findOne({
-      verificationToken: token,
-    }).exec();
-    return userDoc ? this.mapToDomain(userDoc) : null;
+    return this.findOneAndMap({ verificationToken: token });
   }
 
   async getAllUsersInfo(): Promise<UserInfo[]> {
-    const users = await UserModel.find({}, "name category profileImageUrl")
-      .lean()
-      .exec();
-    return users.map((user) => ({
-      id: user._id.toString(),
-      name: user.name,
-      category: user.category,
-      profileImageUrl: user.profileImageUrl || null,
-    }));
+    return this.findAndMapToUserInfo({});
   }
 
   async update(user: User): Promise<void> {
     await UserModel.findByIdAndUpdate(user.id, user).exec();
   }
 
+  async searchUsers(searchTerm: string): Promise<UserInfo[]> {
+    const searchRegex = { $regex: searchTerm, $options: "i" };
+    return this.findAndMapToUserInfo({
+      $or: [{ name: searchRegex }, { category: searchRegex }],
+    });
+  }
+
   async delete(id: string): Promise<void> {
     await UserModel.findByIdAndDelete(id).exec();
+  }
+
+  private async findOneAndMap(query: object): Promise<User | null> {
+    const userDoc = await UserModel.findOne(query).exec();
+    return userDoc ? this.mapToDomain(userDoc) : null;
+  }
+
+  private async findAndMapToUserInfo(query: object): Promise<UserInfo[]> {
+    const users = await UserModel.find(query, "name category profileImageUrl")
+      .lean()
+      .exec();
+    return users.map(this.mapToUserInfo);
   }
 
   private mapToDomain(userDoc: UserDocument): User {
@@ -59,6 +65,15 @@ export class UserRepository implements IUserRepository {
       isEmailVerified: userDoc.isEmailVerified,
       verificationToken: userDoc.verificationToken || undefined,
       stripeCustomerId: userDoc.stripeCustomerId || undefined,
+    };
+  }
+
+  private mapToUserInfo(user: any): UserInfo {
+    return {
+      id: user._id.toString(),
+      name: user.name,
+      category: user.category,
+      profileImageUrl: user.profileImageUrl || null,
     };
   }
 }
