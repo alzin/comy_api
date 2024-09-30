@@ -10,6 +10,15 @@ export function setupMiddlewares(app: express.Application) {
   };
 
   app.use(cors(corsOptions));
-  app.use(express.json());
+
+  // Apply the JSON middleware globally, but it will be excluded for the webhook route.
+  app.use((req, res, next) => {
+    if (req.originalUrl === "/webhook") {
+      next();
+    } else {
+      express.json()(req, res, next);
+    }
+  });
+
   app.use(cookieParser());
 }

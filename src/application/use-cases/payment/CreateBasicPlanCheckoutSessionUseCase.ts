@@ -3,13 +3,16 @@
 import { IUserRepository } from "../../../domain/repo/IUserRepository";
 import { IStripeGateway } from "../../../domain/services/IStripeGateway";
 
-export class CreateCheckoutSessionUseCase {
+export class CreateBasicPlanCheckoutSessionUseCase {
   constructor(
     private userRepository: IUserRepository,
     private stripeGateway: IStripeGateway,
   ) {}
 
-  async execute(userId: string): Promise<{ sessionId: string }> {
+  async execute(
+    userId: string,
+    priceId: string,
+  ): Promise<{ sessionId: string }> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new Error("User not found");
@@ -25,7 +28,10 @@ export class CreateCheckoutSessionUseCase {
       await this.userRepository.update(user);
     }
 
-    const session = await this.stripeGateway.createCheckoutSession(customerId);
+    const session = await this.stripeGateway.createCheckoutSession(
+      customerId,
+      priceId,
+    );
     return { sessionId: session.id };
   }
 }

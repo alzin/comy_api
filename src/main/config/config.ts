@@ -21,4 +21,6 @@ export const CONFIG = {
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
   AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME || "",
+  BASIC_PLAN_PRICE_ID: "price_1Q4EKPI6nAuCGeztX9VXBXL7",
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
 };

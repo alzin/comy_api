@@ -15,7 +15,7 @@ import { EditBusinessSheetUseCase } from "../../application/use-cases/business-s
 import { GetBusinessSheetUseCase } from "../../application/use-cases/business-sheet/GetBusinessSheetUseCase";
 import { ShareBusinessSheetUseCase } from "../../application/use-cases/business-sheet/ShareBusinessSheetUseCase";
 import { StripeController } from "../../presentation/controllers/StripeController";
-import { CreateCheckoutSessionUseCase } from "../../application/use-cases/payment/CreateCheckoutSessionUseCase";
+import { CreateBasicPlanCheckoutSessionUseCase } from "../../application/use-cases/payment/CreateBasicPlanCheckoutSessionUseCase";
 import { StripeGateway } from "../../infra/gateways/StripeGateway";
 import { GetAllUsersInfoUseCase } from "../../application/use-cases/users/GetAllUsersInfoUseCase";
 import { GetAllUsersInfoController } from "../../presentation/controllers/GetAllUsersInfoController";
@@ -23,6 +23,9 @@ import { UpdateUserNameUseCase } from "../../application/use-cases/users/UpdateU
 import { UpdateUserNameController } from "../../presentation/controllers/UpdateUserNameController";
 import { SearchUsersUseCase } from "../../application/use-cases/users/SearchUsersUseCase";
 import { SearchUsersController } from "../../presentation/controllers/SearchUsersController";
+import { UpdateSubscriptionStatusUseCase } from "../../application/use-cases/payment/UpdateSubscriptionStatusUseCase";
+import { StripeService } from "../../infra/services/StripeService";
+import { WebhookController } from "../../presentation/controllers/WebhookController";
 
 export function setupDependencies() {
   const userRepository = new UserRepository();
@@ -66,10 +69,8 @@ export function setupDependencies() {
   );
 
   const stripeGateway = new StripeGateway();
-  const createCheckoutSessionUseCase = new CreateCheckoutSessionUseCase(
-    userRepository,
-    stripeGateway,
-  );
+  const createCheckoutSessionUseCase =
+    new CreateBasicPlanCheckoutSessionUseCase(userRepository, stripeGateway);
   const stripeController = new StripeController(createCheckoutSessionUseCase);
 
   const getAllUsersInfoUseCase = new GetAllUsersInfoUseCase(userRepository);
@@ -85,6 +86,15 @@ export function setupDependencies() {
   const searchUsersUseCase = new SearchUsersUseCase(userRepository);
   const searchUsersController = new SearchUsersController(searchUsersUseCase);
 
+  const stripeService = new StripeService();
+  const updateSubscriptionStatusUseCase = new UpdateSubscriptionStatusUseCase(
+    userRepository,
+  );
+  const webhookController = new WebhookController(
+    stripeService,
+    updateSubscriptionStatusUseCase,
+  );
+
   return {
     userRepository,
     tokenService,
@@ -94,5 +104,6 @@ export function setupDependencies() {
     getAllUsersInfoController,
     updateUserNameController,
     searchUsersController,
+    webhookController,
   };
 }
