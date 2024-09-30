@@ -25,6 +25,10 @@ export class UserRepository implements IUserRepository {
     return this.findOneAndMap({ verificationToken: token });
   }
 
+  async findByStripeCustomerId(stripeCustomerId: string): Promise<User | null> {
+    return this.findOneAndMap({ stripeCustomerId });
+  }
+
   async getAllUsersInfo(): Promise<UserInfo[]> {
     return this.findAndMapToUserInfo({});
   }

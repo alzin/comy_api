@@ -18,28 +18,27 @@ export class StripeGateway implements IStripeGateway {
     return customer.id;
   }
 
-  async createCheckoutSession(customerId: string): Promise<{ id: string }> {
+  async createCheckoutSession(
+    customerId: string,
+    priceId: string,
+  ): Promise<{ id: string }> {
     const session = await this.stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
-          price_data: {
-            currency: "jpy",
-            product_data: {
-              name: "One Year Subscription",
-            },
-            unit_amount: 13200,
-            recurring: {
-              interval: "year",
-            },
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
       success_url: `${CONFIG.ORIGIN_URL}/account-creation-completed`,
       cancel_url: `${CONFIG.ORIGIN_URL}/stripe-payment`,
+      automatic_tax: { enabled: true },
+      customer_update: {
+        address: "auto",
+      },
       customer: customerId,
+      locale: "ja",
     });
     return { id: session.id };
   }

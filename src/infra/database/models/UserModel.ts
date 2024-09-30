@@ -2,6 +2,7 @@
 
 import mongoose, { Schema, Document, Types } from "mongoose";
 import { User } from "../../../domain/entities/User";
+import { SubscriptionStatus } from "../../../domain/entities/SubscriptionStatus";
 
 export interface UserDocument
   extends Omit<User, "id">,
@@ -19,6 +20,14 @@ const UserSchema: Schema<UserDocument> = new Schema(
     isEmailVerified: { type: Boolean, default: false },
     verificationToken: { type: String, default: null },
     stripeCustomerId: { type: String, unique: true },
+    stripeSubscriptionId: { type: String, unique: true },
+    subscriptionStatus: {
+      type: String,
+      enum: Object.values(SubscriptionStatus),
+      default: SubscriptionStatus.Incomplete,
+    },
+    currentPeriodEnd: { type: Date },
+    subscriptionPlan: { type: String },
   },
   { timestamps: true },
 );
