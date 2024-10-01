@@ -1,7 +1,8 @@
 // src/presentation/middlewares/validationMiddleware.ts
 
 import { Request, Response, NextFunction } from "express";
-import { body, query, validationResult } from "express-validator";
+import { body, cookie, query, validationResult } from "express-validator";
+import { CONFIG } from "../../main/config/config";
 
 const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
@@ -63,5 +64,12 @@ export const validateResetPasswordInput = [
 
 export const validateVerifyEmailInput = [
   query("token").notEmpty().withMessage("Token is required"),
+  validateRequest,
+];
+
+export const validateRefreshTokenInput = [
+  cookie(CONFIG.REFRESH_TOKEN_COOKIE_NAME)
+    .notEmpty()
+    .withMessage("Refresh token is required"),
   validateRequest,
 ];

@@ -9,6 +9,7 @@ import {
   validateForgotPasswordInput,
   validateResetPasswordInput,
   validateVerifyEmailInput,
+  validateRefreshTokenInput,
 } from "../middlewares/validationMiddleware";
 
 export const setupAuthRoutes = (authController: AuthController): Router => {
@@ -30,9 +31,12 @@ export const setupAuthRoutes = (authController: AuthController): Router => {
     authController.login(req, res),
   );
 
-  router.post("/refresh", (req: Request, res: Response) => {
-    authController.refreshAccessToken(req, res);
-  });
+  router.post(
+    "/refresh",
+    validateRefreshTokenInput,
+    (req: Request, res: Response) =>
+      authController.refreshAccessToken(req, res),
+  );
 
   router.post(
     "/change-password",
