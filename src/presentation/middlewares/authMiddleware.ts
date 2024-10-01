@@ -16,13 +16,14 @@ export const authMiddleware = (
   userRepository: IUserRepository,
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Skip authMiddleware for /auth/refresh
-    console.log(req.path);
+    // Skip authMiddleware for these paths
     if (
       req.path === "/auth/refresh" ||
       req.path === "/auth/register" ||
       req.path === "/auth/login" ||
-      req.path === "/auth/verify-email"
+      req.path === "/auth/verify-email" ||
+      req.path === "/auth/forgot" ||
+      req.path === "/auth/reset-password"
     ) {
       return next();
     }
