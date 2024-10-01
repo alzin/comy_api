@@ -22,7 +22,7 @@ export const authMiddleware = (
       req.path === "/auth/register" ||
       req.path === "/auth/login" ||
       req.path === "/auth/verify-email" ||
-      req.path === "/auth/forgot" ||
+      req.path === "/auth/forgot-password" ||
       req.path === "/auth/reset-password"
     ) {
       return next();
