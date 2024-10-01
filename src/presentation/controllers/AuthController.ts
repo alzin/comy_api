@@ -7,14 +7,19 @@ export class AuthController {
   constructor(private authUseCase: IAuthUseCase) {}
 
   private setTokenCookie(res: Response, name: string, token: string): void {
+    const ONE_MINUTE_IN_MS = 60 * 1000;
+    const ONE_HOUR_IN_MS = 60 * ONE_MINUTE_IN_MS;
+    const ONE_DAY_IN_MS = 24 * ONE_HOUR_IN_MS;
+    const ONE_WEEK_IN_MS = 7 * ONE_DAY_IN_MS;
+
     res.cookie(name, token, {
       httpOnly: true,
       secure: CONFIG.NODE_ENV === "production",
       sameSite: "none",
       maxAge:
         name === CONFIG.REFRESH_TOKEN_COOKIE_NAME
-          ? 7 * 24 * 60 * 60 * 1000
-          : 60 * 60 * 1000, // 7 days for refresh, 1 hour for access
+          ? ONE_WEEK_IN_MS
+          : ONE_DAY_IN_MS,
     });
   }
 
@@ -27,7 +32,6 @@ export class AuthController {
           "User registered successfully. Please check your email for verification.",
       });
     } catch (error) {
-      console.log(error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
@@ -76,7 +80,7 @@ export class AuthController {
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Please verify your email before logging in") {
-          res.status(401).json({ message: error.message });
+          res.status(403).json({ message: error.message });
         } else {
           res.status(400).json({ message: error.message });
         }
@@ -89,10 +93,6 @@ export class AuthController {
   async refreshAccessToken(req: Request, res: Response): Promise<void> {
     try {
       const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
-
-      if (!refreshToken) {
-        throw new Error("No refresh token provided");
-      }
 
       const newAccessToken =
         await this.authUseCase.refreshAccessToken(refreshToken);
