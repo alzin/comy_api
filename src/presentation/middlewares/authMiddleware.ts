@@ -13,6 +13,7 @@ declare global {
 
 // Define a regex pattern for paths that should be excluded
 const excludedPaths = [
+  "/webhook",
   "/auth/refresh",
   "/auth/register",
   "/auth/login",
