@@ -12,7 +12,8 @@ export class UpdateSubscriptionStatusUseCase {
 
     const updatedFields = {
       stripeSubscriptionId: subscription.id,
-      subscriptionPlan: subscription.items.data[0].plan.nickname || "Unknown Plan",
+      subscriptionPlan:
+        subscription.items.data[0].plan.nickname || "Unknown Plan",
       subscriptionStatus: this.mapSubscriptionStatus(subscription.status),
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
     };

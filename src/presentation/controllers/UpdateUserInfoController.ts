@@ -21,7 +21,9 @@ export class UpdateUserInfoController {
 
     try {
       await this.updateUserInfoUseCase.execute(req.user.id, updateData);
-      res.status(200).json({ message: "User information updated successfully" });
+      res
+        .status(200)
+        .json({ message: "User information updated successfully" });
     } catch (error) {
       if (error instanceof Error && error.message === "User not found") {
         res.status(404).json({ message: "User not found" });

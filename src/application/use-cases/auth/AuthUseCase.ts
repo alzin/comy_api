@@ -161,7 +161,9 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const resetToken = this.randomStringGenerator.generate(32);
-    await this.userRepository.update(user.id!, { verificationToken: resetToken });
+    await this.userRepository.update(user.id!, {
+      verificationToken: resetToken,
+    });
 
     const resetUrl = `${CONFIG.ORIGIN_URL}/update-password?token=${resetToken}`;
     await this.emailService.sendEmail(
