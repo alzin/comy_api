@@ -8,7 +8,7 @@ import { UserModel } from "../database/models/UserModel";
 export class BusinessSheetRepository implements IBusinessSheetRepository {
   async create(
     businessSheet: Omit<BusinessSheet, "id">,
-  ): Promise<BusinessSheet & { userName: string }> {
+  ): Promise<BusinessSheet & { userName: string, userCategory: string }> {
     const newBusinessSheet = new BusinessSheetModel(businessSheet);
     const savedBusinessSheet = await newBusinessSheet.save();
 
@@ -20,7 +20,7 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
       savedBusinessSheet.profileImageUrl,
     );
 
-    return { ...this.mapToDomain(savedBusinessSheet), userName: user.name };
+    return { ...this.mapToDomain(savedBusinessSheet), userName: user.name, userCategory: user.category };
   }
 
   async findById(id: string): Promise<BusinessSheet | null> {
@@ -30,13 +30,13 @@ export class BusinessSheetRepository implements IBusinessSheetRepository {
 
   async findByUserId(
     userId: string,
-  ): Promise<(BusinessSheet & { userName: string }) | null> {
+  ): Promise<(BusinessSheet & { userName: string, userCategory: string }) | null> {
     const bsDoc = await BusinessSheetModel.findOne({ userId }).exec();
     if (!bsDoc) return null;
 
     const user = await this.findUserById(userId);
 
-    return { ...this.mapToDomain(bsDoc), userName: user.name };
+    return { ...this.mapToDomain(bsDoc), userName: user.name, userCategory: user.category };
   }
 
   async update(id: string, updates: Partial<BusinessSheet>): Promise<void> {
