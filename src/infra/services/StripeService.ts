@@ -10,7 +10,7 @@ export class StripeService {
     });
   }
 
-  verifyWebhookSignature(payload: string, signature: string): Stripe.Event {
+  verifyWebhookSignature(payload: Buffer, signature: string): Stripe.Event {
     const endpointSecret = CONFIG.STRIPE_WEBHOOK_SECRET;
     return this.stripe.webhooks.constructEvent(
       payload,
