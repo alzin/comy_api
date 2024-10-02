@@ -78,9 +78,9 @@ export function setupDependencies() {
     getAllUsersInfoUseCase,
   );
 
-  const updateUserNameUseCase = new UpdateUserInfoUseCase(userRepository);
-  const updateUserNameController = new UpdateUserInfoController(
-    updateUserNameUseCase,
+  const updateUserInfoUseCase = new UpdateUserInfoUseCase(userRepository);
+  const updateUserInfoController = new UpdateUserInfoController(
+    updateUserInfoUseCase,
   );
 
   const searchUsersUseCase = new SearchUsersUseCase(userRepository);
@@ -102,7 +102,7 @@ export function setupDependencies() {
     businessSheetController,
     stripeController,
     getAllUsersInfoController,
-    updateUserNameController,
+    updateUserInfoController,
     searchUsersController,
     webhookController,
   };

@@ -35,7 +35,7 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     "/user",
     setupUserInfoRoutes(
       dependencies.getAllUsersInfoController,
-      dependencies.updateUserNameController,
+      dependencies.updateUserInfoController,
       dependencies.searchUsersController,
     ),
   );
