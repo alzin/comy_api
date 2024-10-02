@@ -3,7 +3,7 @@
   "info": {
     "title": "COMY Business Matching Platform - User API",
     "description": "This API provides endpoints for user-related operations in the COMY business matching platform.",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "contact": {
       "name": "API Support",
       "url": "https://github.com/alzin",
@@ -58,7 +58,6 @@
         }
       }
     },
-
     "/user/search": {
       "get": {
         "summary": "Search users by name or category",
@@ -127,10 +126,10 @@
         }
       }
     },
-    "/user/name": {
+    "/user": {
       "patch": {
-        "summary": "Update user name",
-        "description": "Updates the name of the authenticated user.",
+        "summary": "Update user information",
+        "description": "Updates the name and/or category of the authenticated user.",
         "tags": ["User"],
         "security": [
           {
@@ -146,16 +145,18 @@
                 "properties": {
                   "name": {
                     "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
                   }
-                },
-                "required": ["name"]
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "User name updated successfully",
+            "description": "User information updated successfully",
             "content": {
               "application/json": {
                 "schema": {

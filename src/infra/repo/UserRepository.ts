@@ -33,8 +33,8 @@ export class UserRepository implements IUserRepository {
     return this.findAndMapToUserInfo({});
   }
 
-  async update(user: User): Promise<void> {
-    await UserModel.findByIdAndUpdate(user.id, user).exec();
+  async update(userId: string, userData: Partial<User>): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, { $set: userData }).exec();
   }
 
   async searchUsers(searchTerm: string): Promise<UserInfo[]> {
