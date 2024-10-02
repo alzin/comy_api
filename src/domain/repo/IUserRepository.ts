@@ -8,6 +8,6 @@ export interface IUserRepository {
   findByVerificationToken(token: string): Promise<User | null>;
   findByStripeCustomerId(stripeCustomerId: string): Promise<User | null>;
   getAllUsersInfo(): Promise<UserInfo[]>;
-  update(user: User): Promise<void>;
+  update(userId: string, userData: Partial<User>): Promise<void>;
   searchUsers(searchTerm: string): Promise<UserInfo[]>;
 }

@@ -10,13 +10,14 @@ export class UpdateSubscriptionStatusUseCase {
     );
     if (!user) return;
 
-    user.stripeSubscriptionId = subscription.id;
-    user.subscriptionPlan =
-      subscription.items.data[0].plan.nickname || "Unknown Plan";
-    user.subscriptionStatus = this.mapSubscriptionStatus(subscription.status);
-    user.currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+    const updatedFields = {
+      stripeSubscriptionId: subscription.id,
+      subscriptionPlan: subscription.items.data[0].plan.nickname || "Unknown Plan",
+      subscriptionStatus: this.mapSubscriptionStatus(subscription.status),
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    };
 
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id!, updatedFields);
   }
 
   private mapSubscriptionStatus(status: string): SubscriptionStatus {

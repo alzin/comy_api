@@ -78,9 +78,10 @@ export class AuthUseCase implements IAuthUseCase {
       throw new Error("Invalid or expired token");
     }
 
-    user.isEmailVerified = true;
-    user.verificationToken = null;
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id!, {
+      isEmailVerified: true,
+      verificationToken: null,
+    });
 
     const accessToken = await this.tokenService.generate(
       { userId: user.id },
@@ -150,8 +151,7 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const hashedNewPassword = await this.encryptionService.hash(newPassword);
-    user.password = hashedNewPassword;
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id!, { password: hashedNewPassword });
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -161,8 +161,7 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const resetToken = this.randomStringGenerator.generate(32);
-    user.verificationToken = resetToken;
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id!, { verificationToken: resetToken });
 
     const resetUrl = `${CONFIG.ORIGIN_URL}/update-password?token=${resetToken}`;
     await this.emailService.sendEmail(
@@ -179,8 +178,9 @@ export class AuthUseCase implements IAuthUseCase {
     }
 
     const hashedNewPassword = await this.encryptionService.hash(newPassword);
-    user.password = hashedNewPassword;
-    user.verificationToken = null;
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id!, {
+      password: hashedNewPassword,
+      verificationToken: null,
+    });
   }
 }

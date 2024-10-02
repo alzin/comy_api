@@ -19,8 +19,8 @@ import { CreateBasicPlanCheckoutSessionUseCase } from "../../application/use-cas
 import { StripeGateway } from "../../infra/gateways/StripeGateway";
 import { GetAllUsersInfoUseCase } from "../../application/use-cases/users/GetAllUsersInfoUseCase";
 import { GetAllUsersInfoController } from "../../presentation/controllers/GetAllUsersInfoController";
-import { UpdateUserNameUseCase } from "../../application/use-cases/users/UpdateUserNameUseCase";
-import { UpdateUserNameController } from "../../presentation/controllers/UpdateUserNameController";
+import { UpdateUserInfoUseCase } from "../../application/use-cases/users/UpdateUserInfoUseCase";
+import { UpdateUserInfoController } from "../../presentation/controllers/UpdateUserInfoController";
 import { SearchUsersUseCase } from "../../application/use-cases/users/SearchUsersUseCase";
 import { SearchUsersController } from "../../presentation/controllers/SearchUsersController";
 import { UpdateSubscriptionStatusUseCase } from "../../application/use-cases/payment/UpdateSubscriptionStatusUseCase";
@@ -78,8 +78,8 @@ export function setupDependencies() {
     getAllUsersInfoUseCase,
   );
 
-  const updateUserNameUseCase = new UpdateUserNameUseCase(userRepository);
-  const updateUserNameController = new UpdateUserNameController(
+  const updateUserNameUseCase = new UpdateUserInfoUseCase(userRepository);
+  const updateUserNameController = new UpdateUserInfoController(
     updateUserNameUseCase,
   );
 
