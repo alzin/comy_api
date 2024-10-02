@@ -13,7 +13,7 @@ export const CONFIG = {
   PROD_MONGODB_URI: process.env.PROD_MONGODB_URI,
   TERMS_URL: process.env.TERMS_URL,
   JWT_SECRET: process.env.JWT_SECRET || "",
-  JWT_EXPIRATION: "1h",
+  JWT_EXPIRATION: "24h",
   REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || "",
   REFRESH_TOKEN_EXPIRATION: "7d",
   ACCESS_TOKEN_COOKIE_NAME: "access_token",
