@@ -19,8 +19,8 @@ const UserSchema: Schema<UserDocument> = new Schema(
     password: { type: String, required: true },
     isEmailVerified: { type: Boolean, default: false },
     verificationToken: { type: String, default: null },
-    stripeCustomerId: { type: String, unique: true },
-    stripeSubscriptionId: { type: String, unique: true },
+    stripeCustomerId: { type: String, unique: true, sparse: true },
+    stripeSubscriptionId: { type: String, unique: true, sparse: true },
     subscriptionStatus: {
       type: String,
       enum: Object.values(SubscriptionStatus),

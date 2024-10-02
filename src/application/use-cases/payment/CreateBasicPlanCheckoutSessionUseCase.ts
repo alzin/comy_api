@@ -24,7 +24,9 @@ export class CreateBasicPlanCheckoutSessionUseCase {
         user.email,
         user.name,
       );
-      await this.userRepository.update(userId, { stripeCustomerId: customerId });
+      await this.userRepository.update(userId, {
+        stripeCustomerId: customerId,
+      });
     }
 
     const session = await this.stripeGateway.createCheckoutSession(
