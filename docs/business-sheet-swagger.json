@@ -16,158 +16,17 @@
         "summary": "Create a new BusinessSheet with all fields and image uploads",
         "description": "Creates a new BusinessSheet and allows filling in all fields, including image uploads for profile and header background.",
         "tags": ["BusinessSheet"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "shortBiography": {
-                    "type": "string",
-                    "description": "Short biography of the member",
-                    "maxLength": 400
-                  },
-                  "businessDescription": {
-                    "type": "string",
-                    "description": "Business description",
-                    "maxLength": 400
-                  },
-                  "personalInformation": {
-                    "type": "string",
-                    "description": "Personal information",
-                    "maxLength": 200
-                  },
-                  "goals": {
-                    "type": "string",
-                    "description": "Goals",
-                    "maxLength": 1000
-                  },
-                  "accomplishments": {
-                    "type": "string",
-                    "description": "Accomplishments",
-                    "maxLength": 1000
-                  },
-                  "interests": {
-                    "type": "string",
-                    "description": "Interests",
-                    "maxLength": 1000
-                  },
-                  "networks": {
-                    "type": "string",
-                    "description": "Networks",
-                    "maxLength": 1000
-                  },
-                  "skills": {
-                    "type": "string",
-                    "description": "Skills",
-                    "maxLength": 1000
-                  },
-                  "goldenEgg": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 10
-                    },
-                    "description": "Fields for golden egg",
-                    "maxItems": 3
-                  },
-                  "goldenGoose": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 40
-                    },
-                    "description": "Fields for golden goose",
-                    "maxItems": 3
-                  },
-                  "goldenFarmer": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 10
-                    },
-                    "description": "Fields for golden farmer",
-                    "maxItems": 3
-                  },
-                  "companyStrengths": {
-                    "type": "string",
-                    "description": "Company strengths",
-                    "maxLength": 1000
-                  },
-                  "powerWords": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 10
-                    },
-                    "description": "Power words",
-                    "maxItems": 3
-                  },
-                  "itemsProducts": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 40
-                    },
-                    "description": "Items and products",
-                    "maxItems": 3
-                  },
-                  "fontPreference": {
-                    "type": "string",
-                    "description": "Font preference"
-                  },
-                  "colorPreference": {
-                    "type": "string",
-                    "description": "Color preference"
-                  },
-                  "sharingUrl": {
-                    "type": "string",
-                    "description": "Sharing URL"
-                  },
-                  "sharingQrCode": {
-                    "type": "string",
-                    "description": "QR code"
-                  },
-                  "headerBackgroundImage": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Upload header background image"
-                  },
-                  "profileImage": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Upload profile image"
-                  },
-                  "referralSheetBackgroundImage": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Upload referral sheet background image"
-                  }
-                },
-                "required": ["shortBiography", "businessDescription"]
-              },
-              "encoding": {
-                "goldenEgg": {
-                  "style": "form",
-                  "explode": true
-                },
-                "goldenGoose": {
-                  "style": "form",
-                  "explode": true
-                },
-                "goldenFarmer": {
-                  "style": "form",
-                  "explode": true
-                },
-                "powerWords": {
-                  "style": "form",
-                  "explode": true
-                },
-                "itemsProducts": {
-                  "style": "form",
-                  "explode": true
-                }
+                "$ref": "#/components/schemas/BusinessSheet"
               }
             }
           }
@@ -178,6 +37,9 @@
           },
           "400": {
             "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       },
@@ -220,16 +82,6 @@
                 }
               }
             }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           }
         }
       },
@@ -247,152 +99,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "shortBiography": {
-                    "type": "string",
-                    "description": "Short biography of the member",
-                    "maxLength": 400
-                  },
-                  "businessDescription": {
-                    "type": "string",
-                    "description": "Business description",
-                    "maxLength": 400
-                  },
-                  "personalInformation": {
-                    "type": "string",
-                    "description": "Personal information",
-                    "maxLength": 200
-                  },
-                  "goals": {
-                    "type": "string",
-                    "description": "Goals",
-                    "maxLength": 1000
-                  },
-                  "accomplishments": {
-                    "type": "string",
-                    "description": "Accomplishments",
-                    "maxLength": 1000
-                  },
-                  "interests": {
-                    "type": "string",
-                    "description": "Interests",
-                    "maxLength": 1000
-                  },
-                  "networks": {
-                    "type": "string",
-                    "description": "Networks",
-                    "maxLength": 1000
-                  },
-                  "skills": {
-                    "type": "string",
-                    "description": "Skills",
-                    "maxLength": 1000
-                  },
-                  "goldenEgg": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 10
-                    },
-                    "description": "Fields for golden goose",
-                    "maxItems": 3
-                  },
-                  "goldenGoose": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 40
-                    },
-                    "description": "Fields for golden goose",
-                    "maxItems": 3
-                  },
-                  "goldenFarmer": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 10
-                    },
-                    "description": "Fields for golden farmer",
-                    "maxItems": 3
-                  },
-                  "companyStrengths": {
-                    "type": "string",
-                    "description": "Company strengths",
-                    "maxLength": 1000
-                  },
-                  "powerWords": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 10
-                    },
-                    "description": "Power words",
-                    "maxItems": 3
-                  },
-                  "itemsProducts": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 40
-                    },
-                    "description": "Items and products",
-                    "maxItems": 3
-                  },
-                  "fontPreference": {
-                    "type": "string",
-                    "description": "Font preference"
-                  },
-                  "colorPreference": {
-                    "type": "string",
-                    "description": "Color preference"
-                  },
-                  "sharingUrl": {
-                    "type": "string",
-                    "description": "Sharing URL"
-                  },
-                  "sharingQrCode": {
-                    "type": "string",
-                    "description": "QR code"
-                  },
-                  "headerBackgroundImage": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Upload header background image"
-                  },
-                  "profileImage": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Upload profile image"
-                  },
-                  "referralSheetBackgroundImage": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Upload referral sheet background image"
-                  }
-                }
-              },
-              "encoding": {
-                "goldenEgg": {
-                  "style": "form",
-                  "explode": true
-                },
-                "goldenGoose": {
-                  "style": "form",
-                  "explode": true
-                },
-                "goldenFarmer": {
-                  "style": "form",
-                  "explode": true
-                },
-                "powerWords": {
-                  "style": "form",
-                  "explode": true
-                },
-                "itemsProducts": {
-                  "style": "form",
-                  "explode": true
-                }
+                "$ref": "#/components/schemas/BusinessSheet"
               }
             }
           }
@@ -409,9 +116,46 @@
           },
           "404": {
             "description": "BusinessSheet not found"
+          }
+        }
+      }
+    },
+    "/business-sheets/{userId}": {
+      "get": {
+        "summary": "Get a user's Business Sheet by userId",
+        "description": "Retrieves the business sheet for a specific user by their userId. This endpoint is publicly accessible.",
+        "tags": ["BusinessSheet"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the user whose business sheet is being requested"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business sheet retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessSheet"
+                }
+              }
+            }
           },
-          "500": {
-            "description": "Internal server error"
+          "404": {
+            "description": "Business sheet not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }

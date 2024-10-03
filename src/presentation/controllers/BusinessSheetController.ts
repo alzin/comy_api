@@ -75,13 +75,20 @@ export class BusinessSheetController {
 
   async getBusinessSheet(req: Request, res: Response): Promise<void> {
     try {
-      const businessSheet = await this.getBusinessSheetUseCase.execute(
-        req.user.id,
-      );
+      const userId = req.params.userId || req.user?.id;
+
+      if (!userId) {
+        res.status(400).json({ error: "User ID is required" });
+        return;
+      }
+
+      const businessSheet = await this.getBusinessSheetUseCase.execute(userId);
+
       if (!businessSheet) {
         res.status(404).json({ error: "BusinessSheet not found" });
         return;
       }
+
       res.status(200).json(businessSheet);
     } catch (error) {
       res.status(400).json({ error: error });

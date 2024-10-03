@@ -27,7 +27,10 @@ export function setupBusinessSheetRoutes(
     ]),
     (req, res) => controller.editBusinessSheet(req, res),
   );
+
   router.get("/", (req, res) => controller.getBusinessSheet(req, res));
+  router.get("/:userId", (req, res) => controller.getBusinessSheet(req, res));
+
   router.post("/:id/share", (req, res) =>
     controller.shareBusinessSheet(req, res),
   );

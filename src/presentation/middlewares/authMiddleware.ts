@@ -20,6 +20,7 @@ const excludedPaths = [
   "/auth/verify-email",
   "/auth/forgot-password",
   /^\/auth\/reset-password\/[^\/]+$/, // Matches /auth/reset-password/<token> where <token> is any non-empty string
+  /^\/business-sheets\/[^\/]+$/,
 ];
 
 export const authMiddleware = (
