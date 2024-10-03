@@ -12,6 +12,7 @@ export async function connectToDatabase() {
   }
 
   try {
+    console.log(`DB Connection state: ${mongoose.connection.readyState}`)
     if (mongoose.connection.readyState === 1) {
       console.log("✅ Already connected to DB ✅");
     } else {
