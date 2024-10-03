@@ -8,7 +8,9 @@ export class GetBusinessSheetUseCase {
 
   async execute(
     userId: string,
-  ): Promise<(BusinessSheet & { userName: string, userCategory: string }) | null> {
+  ): Promise<
+    (BusinessSheet & { userName: string; userCategory: string }) | null
+  > {
     return await this.businessSheetRepository.findByUserId(userId);
   }
 }

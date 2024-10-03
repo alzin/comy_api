@@ -12,8 +12,12 @@ export async function connectToDatabase() {
   }
 
   try {
-    await mongoose.connect(databaseUri);
-    console.log(`Connected to MongoDB (${CONFIG.NODE_ENV} environment)`);
+    if (mongoose.connection.readyState === 1) {
+      console.log("✅ Already connected to DB ✅");
+    } else {
+      await mongoose.connect(databaseUri);
+      console.log(`Connected to MongoDB (${CONFIG.NODE_ENV} environment)`);
+    }
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
     process.exit(1);
