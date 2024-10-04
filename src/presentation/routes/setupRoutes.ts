@@ -1,7 +1,7 @@
 // src/presentation/routes/setupRoutes.ts
 
 import express from "express";
-// import { dbConnectMiddleware } from '../middlewares/dbConnectMiddleware';
+import { dbConnectMiddleware } from '../middlewares/dbConnectMiddleware';
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
@@ -10,7 +10,7 @@ import { setupUserInfoRoutes } from "./userRoutes";
 
 export function setupRoutes(app: express.Application, dependencies: any) {
   // Apply the dbConnectMiddleware to all routes
-  // app.use(dbConnectMiddleware);
+  app.use(dbConnectMiddleware);
 
   app.get("/", (_, res) => res.status(200).send("OK"));
 
