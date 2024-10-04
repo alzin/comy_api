@@ -6,9 +6,13 @@ import { setupMiddlewares } from "../presentation/middlewares/setupMiddlewares";
 import { setupRoutes } from "../presentation/routes/setupRoutes";
 import { setupDependencies } from "./config/setupDependencies";
 import { setupSwagger } from "./config/swagger";
+import { dbConnectMiddleware } from "../presentation/middlewares/dbConnectMiddleware";
 
 export async function startServer() {
   const app = express();
+
+  // Apply the database connection middleware
+  app.use(dbConnectMiddleware);
 
   setupMiddlewares(app);
   setupSwagger(app);
