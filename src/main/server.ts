@@ -1,9 +1,10 @@
+// src/main/server.ts
+
 import { CONFIG } from "./config/config";
 import express from "express";
 import { setupMiddlewares } from "../presentation/middlewares/setupMiddlewares";
 import { setupRoutes } from "../presentation/routes/setupRoutes";
 import { setupDependencies } from "./config/setupDependencies";
-import { connectToDatabase } from "../infra/database/connection";
 import { setupSwagger } from "./config/swagger";
 
 export async function startServer() {
@@ -13,8 +14,6 @@ export async function startServer() {
   setupSwagger(app);
   const dependencies = setupDependencies();
   setupRoutes(app, dependencies);
-
-  await connectToDatabase();
 
   return new Promise<void>((resolve) => {
     app.listen(CONFIG.PORT, () => {
