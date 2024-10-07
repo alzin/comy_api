@@ -4,7 +4,17 @@ import { CONFIG } from "../../main/config/config";
 import { log } from "console";
 
 export class NodemailerEmailService implements IEmailService {
-  sendEmail = async (email: string, subject: string, text: string) => {
+  sendEmail = async (
+    email: string,
+    subject: string,
+    content: string,
+    isHtml: boolean = false,
+    attachments?: Array<{
+      filename: string;
+      content: Buffer;
+      cid: string;
+    }>,
+  ) => {
     try {
       const transporter = nodemailer.createTransport({
         service: "gmail",
@@ -18,7 +28,8 @@ export class NodemailerEmailService implements IEmailService {
         from: CONFIG.EMAIL_USER,
         to: email,
         subject,
-        text,
+        [isHtml ? "html" : "text"]: content,
+        attachments: attachments,
       };
 
       await transporter.sendMail(mailOptions);
