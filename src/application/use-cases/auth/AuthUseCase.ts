@@ -6,6 +6,8 @@ import { IEncryptionService } from "../../../domain/services/IEncryptionService"
 import { IRandomStringGenerator } from "../../../domain/services/IRandomStrGeneratorService";
 import { ITokenService } from "../../../domain/services/ITokenService";
 import { CONFIG } from "../../../main/config/config";
+import fs from "fs";
+import path from "path";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -63,10 +65,30 @@ export class AuthUseCase implements IAuthUseCase {
     });
 
     const verificationUrl = `${CONFIG.BASE_URL}auth/verify-email?token=${verificationToken}`;
+
+    const templatePath = path.join(__dirname, "email-template.html");
+    let emailTemplate = fs.readFileSync(templatePath, "utf8");
+
+    const re = /{{verificationUrl}}/g;
+    emailTemplate = emailTemplate.replace(re, verificationUrl);
+    emailTemplate = emailTemplate.replace("{{USER_NAME}}", name);
+
+    // Read the logo file
+    const logoPath = path.join(__dirname, "logo.jpg");
+    const logoAttachment = fs.readFileSync(logoPath);
+
     await this.emailService.sendEmail(
       email,
-      "Account Verification",
-      `Please verify your account by clicking the link: \n${verificationUrl}`,
+      "【COMY】メールアドレスの確認",
+      emailTemplate,
+      true, // Set to true for HTML email
+      [
+        {
+          filename: "logo.jpg",
+          content: logoAttachment,
+          cid: "companyLogo",
+        },
+      ],
     );
   }
 
@@ -165,11 +187,31 @@ export class AuthUseCase implements IAuthUseCase {
       verificationToken: resetToken,
     });
 
-    const resetUrl = `${CONFIG.ORIGIN_URL}/update-password?token=${resetToken}`;
+    const resetUrl = `${CONFIG.ORIGIN_URL}/reset-password?token=${resetToken}`;
+    // Read the forgot password email template
+    const templatePath = path.join(__dirname, "forgot-password-template.html");
+    let emailTemplate = fs.readFileSync(templatePath, "utf8");
+
+    // Replace placeholders in the template
+    emailTemplate = emailTemplate.replace("{{resetUrl}}", resetUrl);
+    emailTemplate = emailTemplate.replace("{{USER_NAME}}", user.name);
+
+    // Read the logo file
+    const logoPath = path.join(__dirname, "logo.jpg");
+    const logoAttachment = fs.readFileSync(logoPath);
+
     await this.emailService.sendEmail(
       email,
-      "Password Reset",
-      `You requested a password reset. Please click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request a password reset, please ignore this email.`,
+      "【COMY】パスワードリセットのご案内",
+      emailTemplate,
+      true, // Set to true for HTML email
+      [
+        {
+          filename: "logo.jpg",
+          content: logoAttachment,
+          cid: "companyLogo",
+        },
+      ],
     );
   }
 
