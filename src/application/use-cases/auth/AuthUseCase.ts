@@ -8,6 +8,7 @@ import { ITokenService } from "../../../domain/services/ITokenService";
 import { CONFIG } from "../../../main/config/config";
 import fs from "fs";
 import path from "path";
+import { SubscriptionStatus } from "../../../domain/entities/SubscriptionStatus";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -55,13 +56,18 @@ export class AuthUseCase implements IAuthUseCase {
     const verificationToken = this.randomStringGenerator.generate(32);
 
     await this.userRepository.create({
-      id: "",
       email,
       name,
       category,
       password: hashedPassword,
       isEmailVerified: false,
       verificationToken,
+      subscriptionStatus: SubscriptionStatus.Incomplete,
+      profileImageUrl: undefined,
+      stripeCustomerId: undefined,
+      stripeSubscriptionId: undefined,
+      currentPeriodEnd: undefined,
+      subscriptionPlan: undefined,
     });
 
     const verificationUrl = `${CONFIG.BASE_URL}auth/verify-email?token=${verificationToken}`;

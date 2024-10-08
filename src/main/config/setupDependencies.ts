@@ -1,6 +1,6 @@
 // src/main/config/setupDependencies.ts
 
-import { UserRepository } from "../../infra/repo/UserRepository";
+import { MongoUserRepository } from "../../infra/repo/MongoUserRepository";
 import { NodemailerEmailService } from "../../infra/services/NodemailerEmailService";
 import { BcryptPasswordHasher } from "../../infra/services/BcryptPasswordHasher";
 import { JwtTokenService } from "../../infra/services/JwtTokenService";
@@ -26,9 +26,11 @@ import { SearchUsersController } from "../../presentation/controllers/SearchUser
 import { UpdateSubscriptionStatusUseCase } from "../../application/use-cases/payment/UpdateSubscriptionStatusUseCase";
 import { StripeService } from "../../infra/services/StripeService";
 import { WebhookController } from "../../presentation/controllers/WebhookController";
+import { CheckSubscriptionStatusUseCase } from "../../application/use-cases/users/CheckSubscriptionStatusUseCase";
+import { CheckSubscriptionStatusController } from "../../presentation/controllers/CheckSubscriptionStatusController";
 
 export function setupDependencies() {
-  const userRepository = new UserRepository();
+  const userRepository = new MongoUserRepository();
   const emailService = new NodemailerEmailService();
   const encryptionService = new BcryptPasswordHasher();
   const tokenService = new JwtTokenService();
@@ -95,6 +97,12 @@ export function setupDependencies() {
     updateSubscriptionStatusUseCase,
   );
 
+  const checkSubscriptionStatusUseCase = new CheckSubscriptionStatusUseCase(
+    userRepository,
+  );
+  const checkSubscriptionStatusController =
+    new CheckSubscriptionStatusController(checkSubscriptionStatusUseCase);
+
   return {
     userRepository,
     tokenService,
@@ -105,5 +113,6 @@ export function setupDependencies() {
     updateUserInfoController,
     searchUsersController,
     webhookController,
+    checkSubscriptionStatusController,
   };
 }
