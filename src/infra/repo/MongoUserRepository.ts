@@ -1,12 +1,11 @@
-// src/infrastructure/repositories/UserRepository.ts
-
 import { IUserRepository } from "../../domain/repo/IUserRepository";
 import { User } from "../../domain/entities/User";
 import { UserModel, UserDocument } from "../database/models/UserModel";
 import { UserInfo } from "../../domain/entities/UserInfo";
 import { PipelineStage } from "mongoose";
+import { SubscriptionStatus } from "../../domain/entities/SubscriptionStatus";
 
-export class UserRepository implements IUserRepository {
+export class MongoUserRepository implements IUserRepository {
   async create(user: User): Promise<User> {
     const newUser = new UserModel(user);
     const savedUser = await newUser.save();
@@ -112,6 +111,12 @@ export class UserRepository implements IUserRepository {
       isEmailVerified: userDoc.isEmailVerified,
       verificationToken: userDoc.verificationToken || undefined,
       stripeCustomerId: userDoc.stripeCustomerId || undefined,
+      stripeSubscriptionId: userDoc.stripeSubscriptionId || undefined,
+      subscriptionStatus:
+        userDoc.subscriptionStatus || SubscriptionStatus.Incomplete,
+      currentPeriodEnd: userDoc.currentPeriodEnd,
+      subscriptionPlan: userDoc.subscriptionPlan,
+      profileImageUrl: userDoc.profileImageUrl,
     };
   }
 

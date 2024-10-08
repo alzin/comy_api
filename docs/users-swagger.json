@@ -3,7 +3,7 @@
   "info": {
     "title": "COMY Business Matching Platform - User API",
     "description": "This API provides endpoints for user-related operations in the COMY business matching platform.",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "contact": {
       "name": "API Support",
       "url": "https://github.com/alzin",
@@ -197,6 +197,50 @@
           }
         }
       }
+    },
+    "/user/subscription-status": {
+      "get": {
+        "summary": "Check user's subscription status",
+        "description": "Retrieves the subscription status of the authenticated user.",
+        "tags": ["User"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -218,6 +262,12 @@
             "type": "string",
             "nullable": true
           }
+        }
+      },
+      "SubscriptionStatus": {
+        "type": "object",
+        "properties": {
+          "isActive": { "type": "boolean" }
         }
       },
       "ErrorResponse": {

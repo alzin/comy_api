@@ -41,6 +41,7 @@ export function setupRoutes(app: express.Application, dependencies: any) {
       dependencies.getAllUsersInfoController,
       dependencies.updateUserInfoController,
       dependencies.searchUsersController,
+      dependencies.checkSubscriptionStatusController,
     ),
   );
 

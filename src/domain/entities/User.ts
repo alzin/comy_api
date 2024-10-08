@@ -13,7 +13,7 @@ export interface User {
   verificationToken?: string | null;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
-  subscriptionStatus?: SubscriptionStatus;
+  subscriptionStatus: SubscriptionStatus;
   currentPeriodEnd?: Date;
   subscriptionPlan?: String;
 }

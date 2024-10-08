@@ -3,7 +3,7 @@
   "info": {
     "title": "COMY Business Matching Platform - Authentication",
     "description": "This API supports the authentication functionality of COMY, a business matching platform inspired by BNI's 1-to-1 sheets. The API provides endpoints for user registration, authentication, email verification, and password management.",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "contact": {
       "name": "API Support",
       "url": "https://github.com/alzin",
