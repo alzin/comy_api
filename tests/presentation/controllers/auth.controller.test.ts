@@ -106,7 +106,9 @@ describe("AuthController", () => {
         expect.any(Object),
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.redirect).toHaveBeenCalledWith(CONFIG.TERMS_URL);
+      expect(mockResponse.redirect).toHaveBeenCalledWith(
+        `${CONFIG.FRONT_URL}/terms-of-use`,
+      );
     });
 
     it("should handle invalid token", async () => {
