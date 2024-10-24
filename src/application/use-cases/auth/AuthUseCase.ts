@@ -70,9 +70,12 @@ export class AuthUseCase implements IAuthUseCase {
       subscriptionPlan: undefined,
     });
 
-    const verificationUrl = `${CONFIG.BASE_URL}auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${CONFIG.SERVER_URL}auth/verify-email?token=${verificationToken}`;
 
-    const templatePath = path.join(__dirname, "email-template.html");
+    const templatePath = path.resolve(
+      __dirname,
+      "../../../../assets/html/email-template.html",
+    );
     let emailTemplate = fs.readFileSync(templatePath, "utf8");
 
     const re = /{{verificationUrl}}/g;
@@ -80,7 +83,7 @@ export class AuthUseCase implements IAuthUseCase {
     emailTemplate = emailTemplate.replace("{{USER_NAME}}", name);
 
     // Read the logo file
-    const logoPath = path.join(__dirname, "logo.jpg");
+    const logoPath = path.join(__dirname, "../../../../assets/images/logo.jpg");
     const logoAttachment = fs.readFileSync(logoPath);
 
     await this.emailService.sendEmail(
@@ -193,9 +196,12 @@ export class AuthUseCase implements IAuthUseCase {
       verificationToken: resetToken,
     });
 
-    const resetUrl = `${CONFIG.ORIGIN_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${CONFIG.FRONT_URL}/reset-password?token=${resetToken}`;
     // Read the forgot password email template
-    const templatePath = path.join(__dirname, "forgot-password-template.html");
+    const templatePath = path.join(
+      __dirname,
+      "../../../../assets/html/forgot-password-template.html",
+    );
     let emailTemplate = fs.readFileSync(templatePath, "utf8");
 
     // Replace placeholders in the template
@@ -203,7 +209,7 @@ export class AuthUseCase implements IAuthUseCase {
     emailTemplate = emailTemplate.replace("{{USER_NAME}}", user.name);
 
     // Read the logo file
-    const logoPath = path.join(__dirname, "logo.jpg");
+    const logoPath = path.join(__dirname, "../../../../assets/images/logo.jpg");
     const logoAttachment = fs.readFileSync(logoPath);
 
     await this.emailService.sendEmail(

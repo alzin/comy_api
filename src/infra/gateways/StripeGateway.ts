@@ -31,8 +31,8 @@ export class StripeGateway implements IStripeGateway {
         },
       ],
       mode: "subscription",
-      success_url: `${CONFIG.ORIGIN_URL}/account-creation-completed`,
-      cancel_url: `${CONFIG.ORIGIN_URL}/stripe-payment`,
+      success_url: `${CONFIG.FRONT_URL}/account-creation-completed`,
+      cancel_url: `${CONFIG.FRONT_URL}/stripe-payment`,
       automatic_tax: { enabled: true },
       customer_update: {
         address: "auto",

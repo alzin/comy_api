@@ -5,7 +5,7 @@ import { CONFIG } from "../../main/config/config";
 
 export function setupMiddlewares(app: express.Application) {
   const corsOptions = {
-    origin: CONFIG.ORIGIN_URL,
+    origin: CONFIG.FRONT_URL,
     credentials: true,
   };
 

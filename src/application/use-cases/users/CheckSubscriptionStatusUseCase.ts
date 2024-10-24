@@ -16,8 +16,10 @@ export class CheckSubscriptionStatusUseCase {
     ];
 
     const isStatusActive = activeStatuses.includes(user.subscriptionStatus);
-    const isWithinPeriod = user.currentPeriodEnd ? new Date() < user.currentPeriodEnd : false;
-    
+    const isWithinPeriod = user.currentPeriodEnd
+      ? new Date() < user.currentPeriodEnd
+      : false;
+
     return isStatusActive && isWithinPeriod;
   }
 }

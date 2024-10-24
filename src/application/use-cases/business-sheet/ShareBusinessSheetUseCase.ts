@@ -16,7 +16,7 @@ export class ShareBusinessSheetUseCase {
     }
 
     // Generate sharing information (e.g., URL and QR code)
-    const url = `${CONFIG.ORIGIN_URL}/business-sheets/${businessSheetId}`;
+    const url = `${CONFIG.FRONT_URL}/business-sheets/${businessSheetId}`;
     const qrCode = this.generateQRCode(url);
 
     // Update the business sheet with sharing information

@@ -19,13 +19,13 @@ export class NodemailerEmailService implements IEmailService {
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: CONFIG.EMAIL_USER,
-          pass: CONFIG.EMAIL_PASS,
+          user: CONFIG.GMAIL_USER,
+          pass: CONFIG.GMAIL_PASS,
         },
       });
 
       const mailOptions = {
-        from: CONFIG.EMAIL_USER,
+        from: CONFIG.GMAIL_USER,
         to: email,
         subject,
         [isHtml ? "html" : "text"]: content,
