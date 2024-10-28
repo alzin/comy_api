@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { json, Request, Response } from "express";
 import { IAuthUseCase } from "../../../src/domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../../src/main/config/config";
 import { AuthController } from "../../../src/presentation/controllers/AuthController";
@@ -18,6 +18,7 @@ describe("AuthController", () => {
       changePassword: jest.fn(),
       forgotPassword: jest.fn(),
       resetPassword: jest.fn(),
+      logout:jest.fn(),
     };
 
     authController = new AuthController(mockAuthUseCase);
@@ -376,4 +377,57 @@ describe("AuthController", () => {
       });
     });
   });
+
+  describe("logout", () => {
+    it("should logout successfully by clearing cookies", async () => {
+        mockRequest.cookies = {
+            [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-refresh-token",
+        };
+
+        await authController.logout(
+            mockRequest as Request,
+            mockResponse as Response,
+        );
+
+        expect(mockAuthUseCase.logout).toHaveBeenCalledWith("valid-refresh-token");
+        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
+        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+        expect(mockResponse.status).toHaveBeenCalledWith(200);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+            message: "Logged out successfully",
+        });
+    });
+
+    it("should handle missing refresh token", async () => {
+        mockRequest.cookies = {};
+
+        await authController.logout(
+            mockRequest as Request,
+            mockResponse as Response,
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(400);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+            message: "No refresh token provided",
+        });
+    });
+
+    it("should handle logout errors", async () => {
+        mockRequest.cookies = {
+            [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-refresh-token",
+        };
+        mockAuthUseCase.logout.mockRejectedValue(new Error("Logout failed"));
+
+        await authController.logout(
+            mockRequest as Request,
+            mockResponse as Response,
+        );
+
+        expect(mockResponse.status).toHaveBeenCalledWith(400);
+        expect(mockResponse.json).toHaveBeenCalledWith({
+            message: "Logout failed",
+        });
+    });
+});
+
 });

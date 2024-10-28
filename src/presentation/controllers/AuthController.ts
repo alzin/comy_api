@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { json, Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../main/config/config";
 import { log } from "console";
@@ -162,4 +162,24 @@ export class AuthController {
       }
     }
   }
+
+   async logout(req: Request, res: Response): Promise<void> {
+    const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
+
+    if (!refreshToken) {
+         res.status(400).json({ message: "No refresh token provided" });
+    }
+
+    try {
+        await this.authUseCase.logout(refreshToken);
+        res.clearCookie(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
+        res.clearCookie(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+         res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+      if (error instanceof Error) {
+         res.status(400).json({ message: error.message });
+      }
+    }
+}
+
 }
