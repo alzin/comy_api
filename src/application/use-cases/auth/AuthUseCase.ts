@@ -239,7 +239,4 @@ export class AuthUseCase implements IAuthUseCase {
       verificationToken: null,
     });
   }
-  async logout(refreshToken: string): Promise<void> {
-    console.log(`Logging out user with token: ${refreshToken}`);
-  }
 }

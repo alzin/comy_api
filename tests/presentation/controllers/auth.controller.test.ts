@@ -18,7 +18,6 @@ describe("AuthController", () => {
       changePassword: jest.fn(),
       forgotPassword: jest.fn(),
       resetPassword: jest.fn(),
-      logout:jest.fn(),
     };
 
     authController = new AuthController(mockAuthUseCase);
@@ -388,8 +387,6 @@ describe("AuthController", () => {
             mockRequest as Request,
             mockResponse as Response,
         );
-
-        expect(mockAuthUseCase.logout).toHaveBeenCalledWith("valid-refresh-token");
         expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
         expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
         expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -416,7 +413,6 @@ describe("AuthController", () => {
         mockRequest.cookies = {
             [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-refresh-token",
         };
-        mockAuthUseCase.logout.mockRejectedValue(new Error("Logout failed"));
 
         await authController.logout(
             mockRequest as Request,

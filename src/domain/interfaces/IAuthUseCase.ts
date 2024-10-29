@@ -20,8 +20,5 @@ export interface IAuthUseCase {
   ): Promise<void>;
   forgotPassword(email: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
-  logout (
-    refreshToken: string
-  ) :Promise<void>;
 
 }
