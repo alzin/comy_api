@@ -97,7 +97,9 @@ export class AuthController {
   async refreshAccessToken(req: Request, res: Response): Promise<void> {
     try {
       const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
-
+      if (!refreshToken) {
+        res.status(400).json({ message: "No refresh token provided" });
+      }
       const newAccessToken =
         await this.authUseCase.refreshAccessToken(refreshToken);
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
@@ -164,11 +166,14 @@ export class AuthController {
   }
 
    async logout(req: Request, res: Response): Promise<void> {
-    const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
-
     try {
-        res.clearCookie(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
-        res.clearCookie(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+      const cookieOptions = {
+        httpOnly: true,
+        secure: CONFIG.NODE_ENV === "production",
+        sameSite: "none" as const
+      }
+      res.clearCookie(CONFIG.ACCESS_TOKEN_COOKIE_NAME, cookieOptions);
+      res.clearCookie(CONFIG.REFRESH_TOKEN_COOKIE_NAME, cookieOptions);
          res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
       if (error instanceof Error) {

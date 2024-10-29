@@ -28,6 +28,7 @@ describe("AuthController", () => {
       json: jest.fn(),
       redirect: jest.fn(),
       cookie: jest.fn(),
+      clearCookie: jest.fn(),
     };
   });
 
@@ -379,51 +380,64 @@ describe("AuthController", () => {
 
   describe("logout", () => {
     it("should logout successfully by clearing cookies", async () => {
+        // إعداد كوكيز صالح للـ refresh token
         mockRequest.cookies = {
             [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-refresh-token",
         };
-
+  
         await authController.logout(
             mockRequest as Request,
             mockResponse as Response,
         );
+  
         expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
         expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+  
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith({
             message: "Logged out successfully",
         });
     });
+  
+    it("should logout successfully even if refresh token is missing", async () => {
 
-    it("should handle missing refresh token", async () => {
         mockRequest.cookies = {};
-
+  
         await authController.logout(
             mockRequest as Request,
             mockResponse as Response,
         );
-
-        expect(mockResponse.status).toHaveBeenCalledWith(400);
+  
+        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
+        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+  
+        expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "No refresh token provided",
+            message: "Logged out successfully",
         });
     });
-
+  
     it("should handle logout errors", async () => {
         mockRequest.cookies = {
             [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-refresh-token",
         };
-
+  
+        const errorMessage = "Logout failed";
+        jest.spyOn(mockResponse, 'clearCookie').mockImplementation(() => {
+            throw new Error(errorMessage);
+        });
+  
         await authController.logout(
             mockRequest as Request,
             mockResponse as Response,
         );
-
+  
         expect(mockResponse.status).toHaveBeenCalledWith(400);
         expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "Logout failed",
+            message: errorMessage,
         });
     });
-});
+  });
+  
 
 });
