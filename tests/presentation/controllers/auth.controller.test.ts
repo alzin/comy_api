@@ -1,4 +1,4 @@
-import { json, Request, Response } from "express";
+import {  Request, Response } from "express";
 import { IAuthUseCase } from "../../../src/domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../../src/main/config/config";
 import { AuthController } from "../../../src/presentation/controllers/AuthController";
@@ -380,7 +380,6 @@ describe("AuthController", () => {
 
   describe("logout", () => {
     it("should logout successfully by clearing cookies", async () => {
-        // إعداد كوكيز صالح للـ refresh token
         mockRequest.cookies = {
             [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-refresh-token",
         };
@@ -390,8 +389,17 @@ describe("AuthController", () => {
             mockResponse as Response,
         );
   
-        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
-        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME, {
+          httpOnly: true,
+          secure: CONFIG.NODE_ENV === "production",
+          sameSite: "none"
+      });
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME, {
+          httpOnly: true,
+          secure: CONFIG.NODE_ENV === "production",
+          sameSite: "none"
+      });
+      
   
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith({
@@ -408,8 +416,17 @@ describe("AuthController", () => {
             mockResponse as Response,
         );
   
-        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME);
-        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME);
+        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME, {
+          httpOnly: true,
+          secure: CONFIG.NODE_ENV === "production",
+          sameSite: "none"
+      });
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME, {
+          httpOnly: true,
+          secure: CONFIG.NODE_ENV === "production",
+          sameSite: "none"
+      });
+      
   
         expect(mockResponse.status).toHaveBeenCalledWith(200);
         expect(mockResponse.json).toHaveBeenCalledWith({
