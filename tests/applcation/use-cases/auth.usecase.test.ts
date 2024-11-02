@@ -96,8 +96,8 @@ describe("AuthUseCase", () => {
       await authUseCase.verifyEmail("valid_token");
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
+        "1",
         expect.objectContaining({
-          id: "1",
           isEmailVerified: true,
           verificationToken: null,
         }),
@@ -208,8 +208,8 @@ describe("AuthUseCase", () => {
       );
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
+        mockUser.id,
         expect.objectContaining({
-          id: "1",
           password: "new_hashed_password",
         }),
       );
@@ -255,8 +255,8 @@ describe("AuthUseCase", () => {
       await authUseCase.forgotPassword("test@example.com");
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
+        mockUser.id,
         expect.objectContaining({
-          id: "1",
           verificationToken: "reset_token",
         }),
       );
@@ -287,8 +287,8 @@ describe("AuthUseCase", () => {
       await authUseCase.resetPassword("valid_token", "new_password");
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
+        mockUser.id,
         expect.objectContaining({
-          id: "1",
           password: "new_hashed_password",
           verificationToken: null,
         }),
