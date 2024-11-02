@@ -55,7 +55,7 @@ export const setupAuthRoutes = (authController: AuthController): Router => {
     validateResetPasswordInput,
     (req: Request, res: Response) => authController.resetPassword(req, res),
   );
-  router.post("/logout", (req: Request, res: Response) => 
+  router.post("/logout", (req: Request, res: Response) =>
     authController.logout(req, res),
   );
 

@@ -1,4 +1,4 @@
-import {  Request, Response } from "express";
+import { Request, Response } from "express";
 import { IAuthUseCase } from "../../../src/domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../../src/main/config/config";
 import { AuthController } from "../../../src/presentation/controllers/AuthController";
@@ -380,81 +380,88 @@ describe("AuthController", () => {
 
   describe("logout", () => {
     it("should logout successfully by clearing cookies", async () => {
-        mockRequest.cookies = {
-            [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-refresh-token",
-        };
-  
-        await authController.logout(
-            mockRequest as Request,
-            mockResponse as Response,
-        );
-  
-        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME, {
-          httpOnly: true,
-          secure: CONFIG.NODE_ENV === "production",
-          sameSite: "none"
-      });
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME, {
-          httpOnly: true,
-          secure: CONFIG.NODE_ENV === "production",
-          sameSite: "none"
-      });
-      
-  
-        expect(mockResponse.status).toHaveBeenCalledWith(200);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "Logged out successfully",
-        });
-    });
-  
-    it("should logout successfully even if refresh token is missing", async () => {
+      mockRequest.cookies = {
+        [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "valid-refresh-token",
+      };
 
-        mockRequest.cookies = {};
-  
-        await authController.logout(
-            mockRequest as Request,
-            mockResponse as Response,
-        );
-  
-        expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.ACCESS_TOKEN_COOKIE_NAME, {
+      await authController.logout(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        CONFIG.ACCESS_TOKEN_COOKIE_NAME,
+        {
           httpOnly: true,
           secure: CONFIG.NODE_ENV === "production",
-          sameSite: "none"
-      });
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith(CONFIG.REFRESH_TOKEN_COOKIE_NAME, {
+          sameSite: "none",
+        },
+      );
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        CONFIG.REFRESH_TOKEN_COOKIE_NAME,
+        {
           httpOnly: true,
           secure: CONFIG.NODE_ENV === "production",
-          sameSite: "none"
+          sameSite: "none",
+        },
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Logged out successfully",
       });
-      
-  
-        expect(mockResponse.status).toHaveBeenCalledWith(200);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-            message: "Logged out successfully",
-        });
     });
-  
+
+    it("should logout successfully even if refresh token is missing", async () => {
+      mockRequest.cookies = {};
+
+      await authController.logout(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        CONFIG.ACCESS_TOKEN_COOKIE_NAME,
+        {
+          httpOnly: true,
+          secure: CONFIG.NODE_ENV === "production",
+          sameSite: "none",
+        },
+      );
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        CONFIG.REFRESH_TOKEN_COOKIE_NAME,
+        {
+          httpOnly: true,
+          secure: CONFIG.NODE_ENV === "production",
+          sameSite: "none",
+        },
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: "Logged out successfully",
+      });
+    });
+
     it("should handle logout errors", async () => {
-        mockRequest.cookies = {
-            [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-refresh-token",
-        };
-  
-        const errorMessage = "Logout failed";
-        jest.spyOn(mockResponse, 'clearCookie').mockImplementation(() => {
-            throw new Error(errorMessage);
-        });
-  
-        await authController.logout(
-            mockRequest as Request,
-            mockResponse as Response,
-        );
-  
-        expect(mockResponse.status).toHaveBeenCalledWith(400);
-        expect(mockResponse.json).toHaveBeenCalledWith({
-            message: errorMessage,
-        });
+      mockRequest.cookies = {
+        [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-refresh-token",
+      };
+
+      const errorMessage = "Logout failed";
+      jest.spyOn(mockResponse, "clearCookie").mockImplementation(() => {
+        throw new Error(errorMessage);
+      });
+
+      await authController.logout(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: errorMessage,
+      });
     });
   });
-  
-
 });
