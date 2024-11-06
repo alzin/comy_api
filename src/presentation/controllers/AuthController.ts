@@ -171,8 +171,8 @@ export class AuthController {
       const cookieOptions = {
         httpOnly: true,
         secure: CONFIG.NODE_ENV === "production",
-        sameSite: "none" as const,
-      };
+        sameSite: "none" as const
+      }
       res.clearCookie(CONFIG.ACCESS_TOKEN_COOKIE_NAME, cookieOptions);
       res.clearCookie(CONFIG.REFRESH_TOKEN_COOKIE_NAME, cookieOptions);
       res.status(200).json({ message: "Logged out successfully" });
