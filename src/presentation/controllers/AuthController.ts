@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { json, Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../main/config/config";
 import { log } from "console";
@@ -102,8 +102,15 @@ export class AuthController {
       }
       const newAccessToken =
         await this.authUseCase.refreshAccessToken(refreshToken);
+        if (!newAccessToken) {
+            res.status(400).json({ message: "Invalid refresh token" });
+            return;
+        }
+        if (typeof newAccessToken === "string" && newAccessToken === "Invalid refresh token") {
+          res.status(400).json({ message: newAccessToken });
+          return;
+      }
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
-
       res.status(200).json({ message: "Token refreshed successfully" });
     } catch (error) {
       log(error);

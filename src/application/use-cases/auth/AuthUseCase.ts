@@ -27,7 +27,7 @@ export class AuthUseCase implements IAuthUseCase {
       )) as { userId: string } | null;
 
       if (!decoded || !decoded.userId) {
-        throw new Error("Invalid refresh token");
+        return "Invalid refresh token";
       }
 
       return await this.tokenService.generate(
@@ -37,7 +37,7 @@ export class AuthUseCase implements IAuthUseCase {
       );
     } catch (error) {
       log(error);
-      throw new Error("Invalid refresh token");
+      return "Invalid refresh token";
     }
   }
 

@@ -326,7 +326,7 @@ describe("AuthUseCase", () => {
 
       await expect(
         authUseCase.refreshAccessToken("invalid_refresh_token"),
-      ).rejects.toThrow("Invalid refresh token");
+        ).resolves.toEqual("Invalid refresh token");
     });
   });
 });

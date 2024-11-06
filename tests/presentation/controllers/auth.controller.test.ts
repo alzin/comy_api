@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { json, Request, Response } from "express";
 import { IAuthUseCase } from "../../../src/domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../../src/main/config/config";
 import { AuthController } from "../../../src/presentation/controllers/AuthController";
-
+import mockConsole from 'jest-mock-console';
 describe("AuthController", () => {
   let authController: AuthController;
   let mockAuthUseCase: jest.Mocked<IAuthUseCase>;
@@ -239,21 +239,18 @@ describe("AuthController", () => {
     it("should handle token refresh errors", async () => {
       mockRequest.cookies = {
         [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-token",
-      };
-      mockAuthUseCase.refreshAccessToken.mockRejectedValue(
-        new Error("Invalid refresh token"),
-      );
-
+    };
+      mockAuthUseCase.refreshAccessToken.mockResolvedValueOnce("Invalid refresh token");
       await authController.refreshAccessToken(
-        mockRequest as Request,
-        mockResponse as Response,
+          mockRequest as Request,
+          mockResponse as Response
       );
-
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        message: "Invalid refresh token",
+          message: "Invalid refresh token",
       });
-    });
+  });
+  
   });
 
   describe("changePassword", () => {
