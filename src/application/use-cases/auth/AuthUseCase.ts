@@ -9,6 +9,7 @@ import { CONFIG } from "../../../main/config/config";
 import fs from "fs";
 import path from "path";
 import { SubscriptionStatus } from "../../../domain/entities/SubscriptionStatus";
+import { verify } from "crypto";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -19,7 +20,7 @@ export class AuthUseCase implements IAuthUseCase {
     private randomStringGenerator: IRandomStringGenerator,
   ) {}
 
-  async refreshAccessToken(refreshToken: string): Promise<string> {
+   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
       const decoded = (await this.tokenService.verify(
         refreshToken,
@@ -27,7 +28,7 @@ export class AuthUseCase implements IAuthUseCase {
       )) as { userId: string } | null;
 
       if (!decoded || !decoded.userId) {
-        return "Invalid refresh token";
+        throw new Error("Invalid refresh token");
       }
 
       return await this.tokenService.generate(
@@ -37,7 +38,7 @@ export class AuthUseCase implements IAuthUseCase {
       );
     } catch (error) {
       log(error);
-      return "Invalid refresh token";
+      throw new Error("Invalid refresh token");
     }
   }
 

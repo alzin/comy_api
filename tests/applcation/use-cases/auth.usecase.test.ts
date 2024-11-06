@@ -1,3 +1,4 @@
+import { rejects } from "assert";
 import { AuthUseCase } from "../../../src/application/use-cases/auth/AuthUseCase";
 import { IUserRepository } from "../../../src/domain/repo/IUserRepository";
 import { IEmailService } from "../../../src/domain/services/IEmailService";
@@ -324,9 +325,9 @@ describe("AuthUseCase", () => {
     it("should throw an error for invalid refresh token", async () => {
       mockTokenService.verify.mockResolvedValue(null);
 
-      await expect(
-        authUseCase.refreshAccessToken("invalid_refresh_token"),
-        ).resolves.toEqual("Invalid refresh token");
+     await expect(
+    authUseCase.refreshAccessToken("invalid_refresh_token"),
+    ).rejects.toThrow("Invalid refresh token");
     });
   });
 });

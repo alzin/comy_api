@@ -102,15 +102,8 @@ export class AuthController {
       }
       const newAccessToken =
         await this.authUseCase.refreshAccessToken(refreshToken);
-        if (!newAccessToken) {
-            res.status(400).json({ message: "Invalid refresh token" });
-            return;
-        }
-        if (typeof newAccessToken === "string" && newAccessToken === "Invalid refresh token") {
-          res.status(400).json({ message: newAccessToken });
-          return;
-      }
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
+
       res.status(200).json({ message: "Token refreshed successfully" });
     } catch (error) {
       log(error);
@@ -119,6 +112,7 @@ export class AuthController {
       }
     }
   }
+
 
   async changePassword(req: Request, res: Response): Promise<void> {
     try {

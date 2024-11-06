@@ -239,18 +239,23 @@ describe("AuthController", () => {
     it("should handle token refresh errors", async () => {
       mockRequest.cookies = {
         [CONFIG.REFRESH_TOKEN_COOKIE_NAME]: "invalid-token",
-    };
-      mockAuthUseCase.refreshAccessToken.mockResolvedValueOnce("Invalid refresh token");
-      await authController.refreshAccessToken(
-          mockRequest as Request,
-          mockResponse as Response
+      };
+      mockAuthUseCase.refreshAccessToken.mockRejectedValue(
+        new Error("Invalid refresh token"),
       );
+
+      await authController.refreshAccessToken(
+        mockRequest as Request,
+        mockResponse as Response,
+      );
+
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-          message: "Invalid refresh token",
+        message: "Invalid refresh token",
       });
-  });
-  
+      
+    });
+
   });
 
   describe("changePassword", () => {
