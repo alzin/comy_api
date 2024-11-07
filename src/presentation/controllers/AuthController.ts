@@ -18,7 +18,7 @@ export class AuthController {
       sameSite: "none",
       maxAge:
         name === CONFIG.REFRESH_TOKEN_COOKIE_NAME
-          ? ONE_WEEK_IN_MS
+          ? ONE_WEEK_IN_MS 
           : ONE_DAY_IN_MS,
     });
   }
