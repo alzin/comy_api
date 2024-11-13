@@ -7,6 +7,7 @@ import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
 import { setupStripeRoutes } from "./StripeRoutes";
 import { setupUserInfoRoutes } from "./userRoutes";
+import { setupAdminRoutes } from "./adminRoutes";
 
 export function setupRoutes(app: express.Application, dependencies: any) {
   // // Apply the dbConnectMiddleware to all routes
@@ -43,6 +44,11 @@ export function setupRoutes(app: express.Application, dependencies: any) {
       dependencies.searchUsersController,
       dependencies.checkSubscriptionStatusController,
     ),
+  );
+
+  app.use(
+    "/admin",
+    setupAdminRoutes(),
   );
 
   app.post("/webhook", express.raw({ type: "application/json" }), (req, res) =>
