@@ -49,10 +49,10 @@ export class AuthUseCase implements IAuthUseCase {
     if (existingUser) {
       throw new Error("User already exists");
     }
-  
+
     const hashedPassword = await this.encryptionService.hash(password);
     const verificationToken = this.randomStringGenerator.generate(32);
-  
+
     await this.userRepository.create({
       email,
       name,
@@ -67,7 +67,7 @@ export class AuthUseCase implements IAuthUseCase {
       currentPeriodEnd: undefined,
       subscriptionPlan: undefined,
     });
-  
+
     const verificationUrl = `${CONFIG.SERVER_URL}auth/verify-email?token=${verificationToken}`;
 
     const templatePath = path.resolve(
@@ -75,40 +75,20 @@ export class AuthUseCase implements IAuthUseCase {
       "../../../../assets/html/email-template.html",
     );
     let emailTemplate = fs.readFileSync(templatePath, "utf8");
-  
-    emailTemplate = emailTemplate.replace("{{title}}", "【COMY】メールアドレスの確認");
-    emailTemplate = emailTemplate.replace("{{userName}}", name);
-    emailTemplate = emailTemplate.replace(
-      "{{message1}}",
-      "この度は、【COMY】にご登録いただきまして誠にありがとうございます。<br>※このメールは、【COMY】にご登録いただいたメールアドレス宛に自動的に送信しています。"
-    );
-    emailTemplate = emailTemplate.replace(
-      "{{message2}}",
-      "以下のリンクをクリックして、メールアドレスの認証を完了してください。<br>メールアドレスの認証リンク:"
-    );
-    emailTemplate = emailTemplate.replace("{{buttonUrl}}", verificationUrl);
-    emailTemplate = emailTemplate.replace("{{buttonText}}", "アカウントを有効化する");
-    emailTemplate = emailTemplate.replace(
-      "{{message3}}",
-      "このリンクの有効期限は24時間です。期限を過ぎますと、再度登録手続きを行っていただく必要がございますのでご注意ください。"
-    );
-    emailTemplate = emailTemplate.replace(
-      "{{message4}}",
-      "もし本メールにお心当たりがない場合は、お手数ですがこのまま削除いただきますようお願い申し上げます。"
-    );
-    emailTemplate = emailTemplate.replace(
-      "{{message5}}",
-      "ご不明な点やお困りの際は、以下のメールアドレスまでお問い合わせください。"
-    );
-  
+
+    const re = /{{verificationUrl}}/g;
+    emailTemplate = emailTemplate.replace(re, verificationUrl);
+    emailTemplate = emailTemplate.replace("{{USER_NAME}}", name);
+
+    // Read the logo file
     const logoPath = path.join(__dirname, "../../../../assets/images/logo.jpg");
     const logoAttachment = fs.readFileSync(logoPath);
-  
+
     await this.emailService.sendEmail(
       email,
       "【COMY】メールアドレスの確認",
       emailTemplate,
-      true,
+      true, // Set to true for HTML email
       [
         {
           filename: "logo.jpg",
@@ -205,50 +185,46 @@ export class AuthUseCase implements IAuthUseCase {
 
  
   async forgotPassword(email: string): Promise<void> {
-  const user = await this.userRepository.findByEmail(email);
-  if (!user) {
-    throw new Error("User not found");
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const resetToken = this.randomStringGenerator.generate(32);
+    await this.userRepository.update(user.id!, {
+      verificationToken: resetToken,
+    });
+
+    const resetUrl = `${CONFIG.FRONT_URL}/reset-password?token=${resetToken}`;
+    // Read the forgot password email template
+    const templatePath = path.join(
+      __dirname,
+      "../../../../assets/html/forgot-password-template.html",
+    );
+    let emailTemplate = fs.readFileSync(templatePath, "utf8");
+
+    // Replace placeholders in the template
+    emailTemplate = emailTemplate.replace("{{resetUrl}}", resetUrl);
+    emailTemplate = emailTemplate.replace("{{USER_NAME}}", user.name);
+
+    // Read the logo file
+    const logoPath = path.join(__dirname, "../../../../assets/images/logo.jpg");
+    const logoAttachment = fs.readFileSync(logoPath);
+
+    await this.emailService.sendEmail(
+      email,
+      "【COMY】パスワードリセットのご案内",
+      emailTemplate,
+      true, // Set to true for HTML email
+      [
+        {
+          filename: "logo.jpg",
+          content: logoAttachment,
+          cid: "companyLogo",
+        },
+      ],
+    );
   }
-  const resetToken = this.randomStringGenerator.generate(32);
-  await this.userRepository.update(user.id!, {
-    verificationToken: resetToken,
-  });
-
-  const resetUrl = `${CONFIG.FRONT_URL}/reset-password?token=${resetToken}`;
-
-  const templatePath = path.join(
-    __dirname,
-    "../../../../assets/html/email-template.html",
-  );
-  let emailTemplate = fs.readFileSync(templatePath, "utf8");
-
-  emailTemplate = emailTemplate.replace("{{title}}", "【COMY】パスワードリセットのご案内");
-  emailTemplate = emailTemplate.replace("{{userName}}", user.name);
-  emailTemplate = emailTemplate.replace("{{message1}}", "【COMY】をご利用いただき、誠にありがとうございます");
-  emailTemplate = emailTemplate.replace("{{message2}}"," パスワードリセットのリクエストを受け付けました。以下のボタンをクリックして、新しいパスワードを設定してください。");
-  emailTemplate = emailTemplate.replace("{{buttonUrl}}", resetUrl);
-  emailTemplate = emailTemplate.replace("{{buttonText}}"," パスワードをリセット");
-  emailTemplate = emailTemplate.replace("{{message3}}", "このリンクの有効期限は24時間です。期限を過ぎますと、再度パスワードリセットの手続きを行っていただく必要がございますのでご注意ください。");
-  emailTemplate=emailTemplate.replace("{{message4}}","もしパスワードリセットをリクエストした覚えがない場合は、このメールを無視していただいて構いません。アカウントは安全な状態が保たれています。");
-  emailTemplate=emailTemplate.replace("{{message5}}","ご不明な点やお困りの際は、以下のメールアドレスまでお問い合わせください。");
-  const logoPath = path.join(__dirname, "../../../../assets/images/logo.jpg");
-  const logoAttachment = fs.readFileSync(logoPath);
-
-  await this.emailService.sendEmail(
-    email,
-    "【COMY】パスワードリセットのご案内",
-    emailTemplate,
-    true,
-    [
-      {
-        filename: "logo.jpg",
-        content: logoAttachment,
-        cid: "companyLogo",
-      },
-    ],
-  );
-}
-
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.userRepository.findByVerificationToken(token);

@@ -7,15 +7,14 @@ export class AdminRepository implements IAdminRepository {
   
   async create(admin: Admin): Promise<Admin> {
     
-    const hashedPassword = await bcrypt.hash(admin.password as string, 10);
+    //const hashedPassword = await bcrypt.hash(admin.password as string, 10);
     const newAdmin = new AdminModel({
       email: admin.email,
       name: admin.name,
-      password: hashedPassword,
+      password: admin.password,
       IsSuperAdmin: admin.IsSuperAdmin,
     });
 
-    
     await newAdmin.save();
     return newAdmin.toObject(); 
   }

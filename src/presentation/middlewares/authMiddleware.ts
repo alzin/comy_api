@@ -7,6 +7,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: any;
+      adminId?: string;
     }
   }
 }
@@ -20,6 +21,7 @@ const excludedPaths = [
   "/auth/verify-email",
   "/auth/forgot-password",
   "/admin/create",
+  "/admin/login",
   /^\/auth\/reset-password\/[^\/]+$/, // Matches /auth/reset-password/<token> where <token> is any non-empty string
   /^\/business-sheets\/[^\/]+$/,
 ];
@@ -57,7 +59,11 @@ export const authMiddleware = (
         CONFIG.JWT_SECRET,
       )) as {
         userId: string;
+        adminId?: string;
       };
+      if (decoded.adminId) {
+        req.adminId = decoded.adminId; 
+      }
       const user = await userRepository.findById(decoded.userId);
       if (user) {
         req.user = user;

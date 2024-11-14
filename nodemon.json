@@ -1,8 +1,0 @@
-{
-    "watch": ["index.ts", "routes/", "models/"],
-    "ext": "ts",
-    "ignore": ["node_modules/"],
-    "events": {
-      "restart": "npx kill-port 8080"
-    }
-  }

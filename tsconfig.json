@@ -9,7 +9,8 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+   // "typeRoots": ["./node_modules/@types", "./src/infra/customTypes"]
   },
   "include": ["src/**/*", "tests/**/*", "jest.config.js"],
   "exclude": ["node_modules"]

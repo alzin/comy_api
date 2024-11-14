@@ -1,6 +1,7 @@
-import { sign } from "crypto";
+import { hash, sign } from "crypto";
 import mongoose,{Schema,Document,Types, ObjectId, model} from "mongoose";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import { env } from "process";
 export interface AdminDocument extends Document<Types.ObjectId> {
   _id: Types.ObjectId;
@@ -21,6 +22,14 @@ const AdminSchema: Schema<AdminDocument> = new Schema(
   },
   { timestamps: true,collection: "admins" }
 );
+AdminSchema.pre("save", async function (next) {
+  const admin = this as AdminDocument;
+  if (admin.isModified("password")) {
+    const hashedPassword = await bcrypt.hash(admin.password, 10);
+    admin.password = hashedPassword;
+  }
+  next();
+});
 AdminSchema.methods.generateAccessToken = function () {
   const admin = this;
   const token = jwt.sign(
@@ -29,4 +38,4 @@ AdminSchema.methods.generateAccessToken = function () {
   );
   return token;
 };
-export const AdminModel = mongoose.model<AdminDocument>("test", AdminSchema);
+export const AdminModel = mongoose.model<AdminDocument>("Admin", AdminSchema);
