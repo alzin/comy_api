@@ -11,10 +11,10 @@ export class AdminController{
      async createAdmin(req:Request,res:Response):Promise<Response>{
         const {email,name,password,IsSuperAdmin}= req.body;
         try {
-            const currentAdmin = await AdminModel.findById(req.adminId);
-            if (!currentAdmin || currentAdmin.IsSuperAdmin !== "yes") {
-            return res.status(403).json({ message: "Unauthorized: Only Super Admin can create new admins" });
-            }
+           // const currentAdmin = await AdminModel.findById(req.adminId);
+            //if (!currentAdmin || currentAdmin.IsSuperAdmin !== "yes") {
+            //return res.status(403).json({ message: "Unauthorized: Only Super Admin can create new admins" });
+            //}
             const newAdminData: Partial<AdminDocument> = { email, name, password, IsSuperAdmin };
             const createdAdmin = await AdminModel.create(newAdminData);
             const token = createdAdmin.generateAccessToken();
