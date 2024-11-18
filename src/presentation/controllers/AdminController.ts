@@ -30,9 +30,9 @@ export class AdminController{
     }
 
     async adminLogin(req:Request,res:Response):Promise<Response>{
-        const {email,password}=req.body;
+        const {name,password}=req.body;
         try{
-             const admin =await this.adminRepository.login(email,password);
+             const admin =await this.adminRepository.login(name,password);
             if(admin ===null)
                 return res.status(401).json({message:"Invalid credentials"}) ;
             return res.status(200).json({message:"Login successful",admin});
