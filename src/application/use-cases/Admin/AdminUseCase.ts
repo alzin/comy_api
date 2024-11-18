@@ -6,7 +6,7 @@ export class AdminUseCase{
     async createAdmin(adminData:Admin):Promise<Admin>{
         return await this.adminRepository.create(adminData); 
     }
-    async loginAdmin (email:string,password:string):Promise<Admin|null>{
-        return await this.adminRepository.login(email,password);
+    async loginAdmin (name:string,password:string):Promise<Admin|null>{
+        return await this.adminRepository.login(name,password);
     }
 }
