@@ -20,9 +20,9 @@ export class AdminRepository implements IAdminRepository {
   }
 
   
-  async login(name: string, password: string): Promise<Admin |null> {
+  async login(email: string, password: string): Promise<Admin |null> {
     
-    const admin = await AdminModel.findOne({ name });
+    const admin = await AdminModel.findOne({ email });
     if (!admin) return null;
     
     const isPasswordValid = await bcrypt.compare(password, admin.password as string);
