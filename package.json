@@ -24,7 +24,7 @@
     "@types/mongodb": "^4.0.6",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
-    "@types/node": "^22.1.0",
+    "@types/node": "^22.13.10",
     "@types/nodemailer": "^6.4.15",
     "@types/supertest": "^6.0.2",
     "@zenstackhq/openapi": "^2.4.1",
@@ -38,6 +38,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.651.1",
     "@aws-sdk/lib-storage": "^3.651.1",
+    "@copilotkit/runtime": "^1.7.1",
     "@types/stripe": "^8.0.417",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
