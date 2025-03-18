@@ -9,6 +9,13 @@ import { setupStripeRoutes } from "./StripeRoutes";
 import { setupUserInfoRoutes } from "./userRoutes";
 import { setupAdminRoutes } from "./adminRoutes";
 
+import { 
+  CopilotRuntime, 
+  OpenAIAdapter, 
+  copilotRuntimeNodeHttpEndpoint 
+} from '@copilotkit/runtime';
+
+
 export function setupRoutes(app: express.Application, dependencies: any) {
   // // Apply the dbConnectMiddleware to all routes
   // app.use(dbConnectMiddleware);
@@ -54,4 +61,22 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   app.post("/webhook", express.raw({ type: "application/json" }), (req, res) =>
     dependencies.webhookController.handleWebhook(req, res),
   );
+
+  // Initialize OpenAI Adapter
+  const serviceAdapter = new OpenAIAdapter();
+  // Set up the CopilotKit endpoint
+  app.use('/copilotkit', (req, res, next) => {
+    (async () => {
+      const runtime = new CopilotRuntime();
+      
+      // Create the handler for CopilotKit requests
+      const handler = copilotRuntimeNodeHttpEndpoint({
+        endpoint: '/copilotkit',
+        runtime,
+        serviceAdapter,
+      });
+    
+      return handler(req, res);
+    })().catch(next); 
+  });
 }
