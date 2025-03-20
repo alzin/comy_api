@@ -15,6 +15,7 @@ import {
   copilotRuntimeNodeHttpEndpoint 
 } from '@copilotkit/runtime';
 
+import { LiteralClient } from '@literalai/client';
 
 export function setupRoutes(app: express.Application, dependencies: any) {
   // // Apply the dbConnectMiddleware to all routes
@@ -64,6 +65,13 @@ export function setupRoutes(app: express.Application, dependencies: any) {
 
   // Initialize OpenAI Adapter
   const serviceAdapter = new OpenAIAdapter();
+
+  const literalAiClient = new LiteralClient({
+    apiKey: process.env.LITERAL_API_KEY,
+  });
+
+  literalAiClient.instrumentation.openai( { client: serviceAdapter } );
+
   // Set up the CopilotKit endpoint
   app.use('/copilotkit', (req, res, next) => {
     (async () => {
