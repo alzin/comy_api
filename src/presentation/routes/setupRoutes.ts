@@ -17,6 +17,28 @@ import {
 
 import { LiteralClient } from '@literalai/client';
 
+
+// Initialize OpenAI Adapter
+const serviceAdapter = new OpenAIAdapter({
+  model: "gpt-4o-mini"
+});
+
+const literalAiClient = new LiteralClient({
+  apiKey: process.env.LITERAL_API_KEY,
+});
+
+literalAiClient.instrumentation.openai( { client: serviceAdapter } );
+
+
+const runtime = new CopilotRuntime();
+      
+// Create the handler for CopilotKit requests
+const handler = copilotRuntimeNodeHttpEndpoint({
+  endpoint: '/copilotkit',
+  runtime,
+  serviceAdapter,
+});
+
 export function setupRoutes(app: express.Application, dependencies: any) {
   // // Apply the dbConnectMiddleware to all routes
   // app.use(dbConnectMiddleware);
@@ -63,27 +85,9 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     dependencies.webhookController.handleWebhook(req, res),
   );
 
-  // Initialize OpenAI Adapter
-  const serviceAdapter = new OpenAIAdapter();
-
-  const literalAiClient = new LiteralClient({
-    apiKey: process.env.LITERAL_API_KEY,
-  });
-
-  literalAiClient.instrumentation.openai( { client: serviceAdapter } );
-
   // Set up the CopilotKit endpoint
   app.use('/copilotkit', (req, res, next) => {
     (async () => {
-      const runtime = new CopilotRuntime();
-      
-      // Create the handler for CopilotKit requests
-      const handler = copilotRuntimeNodeHttpEndpoint({
-        endpoint: '/copilotkit',
-        runtime,
-        serviceAdapter,
-      });
-    
       return handler(req, res);
     })().catch(next); 
   });
