@@ -186,8 +186,12 @@ export class AuthUseCase implements IAuthUseCase {
  
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepository.findByEmail(email);
+    
     if (!user) {
       throw new Error("User not found");
+    }
+    if (!user.isEmailVerified) {
+      throw new Error("Please verify your email before resetting your password");
     }
 
     const resetToken = this.randomStringGenerator.generate(32);
