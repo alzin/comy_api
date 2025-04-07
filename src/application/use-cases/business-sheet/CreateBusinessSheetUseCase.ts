@@ -1,13 +1,12 @@
-// src/application/use-cases/CreateBusinessSheetUseCase.ts
-
+// src/application/use-cases/business-sheet/CreateBusinessSheetUseCass.ts
 import { BusinessSheet } from "../../../domain/entities/BusinessSheet";
 import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRepository";
-import { IImageUploadService } from "../../../domain/services/IImageUploadService";
+import { BusinessSheetImageUploader } from "./BusinessSheetImageUploader";
 
 export class CreateBusinessSheetUseCase {
   constructor(
     private businessSheetRepository: IBusinessSheetRepository,
-    private imageUploadService: IImageUploadService,
+    private imageUploader: BusinessSheetImageUploader,
   ) {}
 
   async execute(
@@ -18,7 +17,10 @@ export class CreateBusinessSheetUseCase {
       referralSheetBackgroundImage?: Buffer;
     },
   ): Promise<BusinessSheet & { userName: string; userCategory: string }> {
-    const imageUrls = await this.uploadImages(images, businessSheetData.userId);
+    const imageUrls = await this.imageUploader.upload({
+      ...images,
+      userId: businessSheetData.userId,
+    });
 
     const completeBusinessSheetData = { ...businessSheetData, ...imageUrls };
 
@@ -28,40 +30,5 @@ export class CreateBusinessSheetUseCase {
 
     return businessSheet;
   }
-
-  private async uploadImages(
-    images: {
-      headerBackgroundImage?: Buffer;
-      profileImage?: Buffer;
-      referralSheetBackgroundImage?: Buffer;
-    },
-    userId: string,
-  ): Promise<Partial<BusinessSheet>> {
-    const imageUrls: Partial<BusinessSheet> = {};
-
-    if (images.headerBackgroundImage) {
-      imageUrls.headerBackgroundImageUrl =
-        await this.imageUploadService.uploadImage(
-          images.headerBackgroundImage,
-          `users/${userId}/header-background`,
-        );
-    }
-
-    if (images.profileImage) {
-      imageUrls.profileImageUrl = await this.imageUploadService.uploadImage(
-        images.profileImage,
-        `users/${userId}/profile`,
-      );
-    }
-
-    if (images.referralSheetBackgroundImage) {
-      imageUrls.referralSheetBackgroundImageUrl =
-        await this.imageUploadService.uploadImage(
-          images.referralSheetBackgroundImage,
-          `users/${userId}/referral-background`,
-        );
-    }
-
-    return imageUrls;
-  }
 }
+

@@ -10,6 +10,7 @@ import { BusinessSheetRepository } from "../../infra/repo/BusinessSheetRepositor
 import { BusinessSheetController } from "../../presentation/controllers/BusinessSheetController";
 import { AWSImageUploadService } from "../../infra/services/AWSImageUploadService";
 import { AuthUseCase } from "../../application/use-cases/auth/AuthUseCase";
+import { BusinessSheetImageUploader } from "../../application/use-cases/business-sheet/BusinessSheetImageUploader";
 import { CreateBusinessSheetUseCase } from "../../application/use-cases/business-sheet/CreateBusinessSheetUseCase";
 import { EditBusinessSheetUseCase } from "../../application/use-cases/business-sheet/EditBusinessSheetUseCase";
 import { GetBusinessSheetUseCase } from "../../application/use-cases/business-sheet/GetBusinessSheetUseCase";
@@ -48,13 +49,16 @@ export function setupDependencies() {
   const businessSheetRepository = new BusinessSheetRepository();
   const imageUploadService = new AWSImageUploadService();
 
+  
+  const businessSheetImageUploader = new BusinessSheetImageUploader(imageUploadService);
+
   const createBusinessSheetUseCase = new CreateBusinessSheetUseCase(
     businessSheetRepository,
-    imageUploadService,
+    businessSheetImageUploader,
   );
   const editBusinessSheetUseCase = new EditBusinessSheetUseCase(
     businessSheetRepository,
-    imageUploadService,
+    businessSheetImageUploader,
   );
   const getBusinessSheetUseCase = new GetBusinessSheetUseCase(
     businessSheetRepository,
