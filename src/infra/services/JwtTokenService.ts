@@ -9,9 +9,10 @@ export class JwtTokenService implements ITokenService {
     expiresIn: string,
   ): Promise<string> {
     return jwt.sign(payload, key, {
-      expiresIn: expiresIn,
+      expiresIn,
     });
   }
+
   async verify(token: string, key: string): Promise<object | null> {
     try {
       return jwt.verify(token, key) as object;
@@ -21,3 +22,4 @@ export class JwtTokenService implements ITokenService {
     }
   }
 }
+
