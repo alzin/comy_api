@@ -50,7 +50,6 @@ export function setupDependencies() {
   const imageUploadService = new AWSImageUploadService();
 
   
-  // إضافة BusinessSheetImageUploader هنا
   const businessSheetImageUploader = new BusinessSheetImageUploader(imageUploadService);
 
   const createBusinessSheetUseCase = new CreateBusinessSheetUseCase(
