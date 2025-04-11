@@ -30,6 +30,14 @@ import { WebhookController } from "../../presentation/controllers/WebhookControl
 import { CheckSubscriptionStatusUseCase } from "../../application/use-cases/users/CheckSubscriptionStatusUseCase";
 import { CheckSubscriptionStatusController } from "../../presentation/controllers/CheckSubscriptionStatusController";
 
+import { EmailSender } from "../../modules/active-users-email/infra/EmailSender";
+import { ActiveUsersFetcher } from "../../modules/active-users-email/infra/ActiveUsersFetcher";
+import { SendActiveUsersEmailUseCase } from "../../modules/active-users-email/application/SendActiveUsersEmailUseCase";
+import { ActiveUsersEmailController } from "../../modules/active-users-email/presentation/ActiveUsersEmailController";
+
+
+
+
 export function setupDependencies() {
   const userRepository = new MongoUserRepository();
   const emailService = new NodemailerEmailService();
@@ -106,7 +114,18 @@ export function setupDependencies() {
   );
   const checkSubscriptionStatusController =
     new CheckSubscriptionStatusController(checkSubscriptionStatusUseCase);
+  
 
+  const emailSender = new EmailSender();
+  const activeUsersFetcher = new ActiveUsersFetcher();
+  const sendActiveUsersEmailUseCase = new SendActiveUsersEmailUseCase(
+    activeUsersFetcher,
+    emailSender
+    );
+  const activeUsersEmailController = new ActiveUsersEmailController(
+    sendActiveUsersEmailUseCase
+    );
+    
   return {
     userRepository,
     tokenService,
@@ -118,5 +137,6 @@ export function setupDependencies() {
     searchUsersController,
     webhookController,
     checkSubscriptionStatusController,
+    activeUsersEmailController,
   };
 }

@@ -1,13 +1,12 @@
 // src/presentation/routes/setupRoutes.ts
-
 import express from "express";
-// import { dbConnectMiddleware } from '../middlewares/dbConnectMiddleware';
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
 import { setupStripeRoutes } from "./StripeRoutes";
 import { setupUserInfoRoutes } from "./userRoutes";
 import { setupAdminRoutes } from "./adminRoutes";
+import { createActiveUsersEmailRoutes } from "../../modules/active-users-email/presentation/activeUsersEmailRoutes";
 
 import { 
   CopilotRuntime, 
@@ -16,7 +15,6 @@ import {
 } from '@copilotkit/runtime';
 
 import { LiteralClient } from '@literalai/client';
-
 
 // Initialize OpenAI Adapter
 const serviceAdapter = new OpenAIAdapter({
@@ -27,8 +25,7 @@ const literalAiClient = new LiteralClient({
   apiKey: process.env.LITERAL_API_KEY,
 });
 
-literalAiClient.instrumentation.openai( { client: serviceAdapter } );
-
+literalAiClient.instrumentation.openai({ client: serviceAdapter });
 
 const runtime = new CopilotRuntime();
       
@@ -40,14 +37,13 @@ const handler = copilotRuntimeNodeHttpEndpoint({
 });
 
 export function setupRoutes(app: express.Application, dependencies: any) {
-  // // Apply the dbConnectMiddleware to all routes
-  // app.use(dbConnectMiddleware);
+  // Create ready-to-use auth middleware
+  const readyAuthMiddleware = authMiddleware(dependencies.tokenService, dependencies.userRepository);
 
   app.get("/", (_, res) => res.status(200).send("OK"));
 
-  app.use(
-    authMiddleware(dependencies.tokenService, dependencies.userRepository),
-  );
+  // Apply auth middleware globally
+  app.use(readyAuthMiddleware);
 
   app.use(
     "/create-checkout-session",
@@ -91,4 +87,19 @@ export function setupRoutes(app: express.Application, dependencies: any) {
       return handler(req, res);
     })().catch(next); 
   });
+  
+  // Add active users email routes
+  app.use(
+    "/admin/emails",
+    createActiveUsersEmailRoutes(
+      dependencies.activeUsersEmailController,
+      readyAuthMiddleware, // Use the pre-configured middleware
+      (req, res, next) => { // Admin check middleware
+        if ((req as any).user?.role !== "admin") {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+        next();
+      }
+    )
+  );
 }
