@@ -1,5 +1,5 @@
 // src/presentation/routes/setupRoutes.ts
-import express from "express";
+import express, { Request, Response, NextFunction, RequestHandler } from "express";
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
@@ -39,7 +39,15 @@ const handler = copilotRuntimeNodeHttpEndpoint({
 export function setupRoutes(app: express.Application, dependencies: any) {
   // Create ready-to-use auth middleware
   const readyAuthMiddleware = authMiddleware(dependencies.tokenService, dependencies.userRepository);
-
+  const combinedMiddleware: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+    readyAuthMiddleware(req, res, (err?: any) => {
+      if (err) return next(err);
+      if ((req as any).user?.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      next();
+    });
+  };
   app.get("/", (_, res) => res.status(200).send("OK"));
 
   // Apply auth middleware globally
@@ -92,14 +100,8 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   app.use(
     "/admin/emails",
     createActiveUsersEmailRoutes(
-      dependencies.activeUsersEmailController,
-      readyAuthMiddleware, // Use the pre-configured middleware
-      (req, res, next) => { // Admin check middleware
-        if ((req as any).user?.role !== "admin") {
-          return res.status(403).json({ error: "Forbidden" });
-        }
-        next();
-      }
+      dependencies.activeUsersEmailController 
     )
   );
+  
 }
