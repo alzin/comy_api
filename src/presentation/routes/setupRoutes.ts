@@ -1,19 +1,14 @@
 // src/presentation/routes/setupRoutes.ts
+import express, { Request, Response, NextFunction } from "express";
 
-import express from "express";
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
 import { setupStripeRoutes } from "./StripeRoutes";
 import { setupUserInfoRoutes } from "./userRoutes";
 import { setupAdminRoutes } from "./adminRoutes";
-
-import { 
-  CopilotRuntime, 
-  OpenAIAdapter, 
-  copilotRuntimeNodeHttpEndpoint 
-} from '@copilotkit/runtime';
-
+import { createActiveUsersEmailRoutes } from "./activeUsersEmailRoutes";
+import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNodeHttpEndpoint } from '@copilotkit/runtime';
 import { LiteralClient } from '@literalai/client';
 
 const serviceAdapter = new OpenAIAdapter({
@@ -23,6 +18,7 @@ const serviceAdapter = new OpenAIAdapter({
 const literalAiClient = new LiteralClient({
   apiKey: process.env.LITERAL_API_KEY,
 });
+
 literalAiClient.instrumentation.openai( { client: serviceAdapter } );
 
 export function setupRoutes(app: express.Application, dependencies: any) {
@@ -31,7 +27,6 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   app.use(
     authMiddleware(dependencies.tokenService, dependencies.userRepository),
   );
-
   app.use(
     "/create-checkout-session",
     setupStripeRoutes(dependencies.stripeController),
@@ -67,6 +62,8 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     dependencies.webhookController.handleWebhook(req, res),
   );
 
+  // Set up the CopilotKit endpoint
+
   app.use('/copilotkit', async (req, res) => {
     try {
       const runtime = new CopilotRuntime();
@@ -82,4 +79,13 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     }
   });
   
+  // Add active users email routes
+  app.use(
+    "/admin/emails", 
+    createActiveUsersEmailRoutes(
+      dependencies.activeUsersEmailController 
+    )
+  );
+  
 }
+

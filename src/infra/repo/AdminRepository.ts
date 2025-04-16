@@ -30,4 +30,5 @@ export class AdminRepository implements IAdminRepository {
 
     return admin.toObject();
   }
+  
 }
