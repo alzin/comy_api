@@ -1,5 +1,6 @@
 // src/presentation/routes/setupRoutes.ts
 import express, { Request, Response, NextFunction } from "express";
+
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
@@ -10,20 +11,17 @@ import { createActiveUsersEmailRoutes } from "./activeUsersEmailRoutes";
 import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNodeHttpEndpoint } from '@copilotkit/runtime';
 import { LiteralClient } from '@literalai/client';
 
-
-// Initialize OpenAI Adapter
 const serviceAdapter = new OpenAIAdapter({
-  model: "gpt-4o-mini"
+  model: "gpt-4o-mini",
 });
 
 const literalAiClient = new LiteralClient({
   apiKey: process.env.LITERAL_API_KEY,
 });
 
-literalAiClient.instrumentation.openai({ client: serviceAdapter });
+literalAiClient.instrumentation.openai( { client: serviceAdapter } );
 
 export function setupRoutes(app: express.Application, dependencies: any) {
-  
   app.get("/", (_, res) => res.status(200).send("OK"));
 
   app.use(
@@ -34,7 +32,6 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     setupStripeRoutes(dependencies.stripeController),
   );
 
-  // Business sheet routes
   app.use(
     "/business-sheets",
     setupBusinessSheetRoutes(dependencies.businessSheetController),
@@ -66,6 +63,7 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   );
 
   // Set up the CopilotKit endpoint
+
   app.use('/copilotkit', async (req, res) => {
     try {
       const runtime = new CopilotRuntime();
@@ -90,3 +88,4 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   );
   
 }
+
