@@ -3,8 +3,11 @@ import { CONFIG } from "../../main/config/config";
 import { EmailSenderContract } from "../../domain/services/IEmailSender";
 import { ActiveUser } from "../../domain/services/IActiveUsersFetcher";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
 
-export class BulkEmailSender implements EmailSenderContract  {
+dotenv.config();
+
+export class BulkEmailSender implements EmailSenderContract {
   private transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user: CONFIG.GMAIL_USER, pass: CONFIG.GMAIL_PASS },
