@@ -1,7 +1,6 @@
 // src/modules/active-users-email/presentation/ActiveUsersEmailController.ts
-// src/modules/active-users-email/presentation/ActiveUsersEmailController.ts
 import { Request, Response } from "express";
-import { SendActiveUsersEmailUseCase } from "../application/SendActiveUsersEmailUseCase";
+import { SendActiveUsersEmailUseCase } from "../../application/use-cases/users/SendActiveUsersEmailUseCase";
 
 export class ActiveUsersEmailController {
   constructor(private sendEmailUseCase: SendActiveUsersEmailUseCase) {}
@@ -9,7 +8,6 @@ export class ActiveUsersEmailController {
   async handle(req: Request, res: Response): Promise<Response> {
     const { subject, htmlContent } = req.body;
 
-    // التحقق الصحيح من الحقول المطلوبة
     if (!subject || typeof subject !== "string") {
       return res.status(400).json({ 
         success: false,

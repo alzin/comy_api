@@ -1,7 +1,7 @@
-// src/modules/active-users-email/infra/ActiveUsersFetcher.ts
-import { UserModel } from "../../../infra/database/models/UserModel";
-import { SubscriptionStatus } from "../../../domain/entities/SubscriptionStatus";
-import { ActiveUsersFetcherContract, ActiveUser } from "../domain/types";
+//src/infra/services/ActiveUsersFetcher.ts
+import { UserModel } from "../database/models/UserModel";
+import { SubscriptionStatus } from "../../domain/entities/SubscriptionStatus";
+import { ActiveUsersFetcherContract, ActiveUser } from "../../domain/services/IActiveUsersFetcher";
 
 export class ActiveUsersFetcher implements ActiveUsersFetcherContract {
   async getActiveUsers(): Promise<ActiveUser[]> {

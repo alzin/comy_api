@@ -1,6 +1,6 @@
-// src/modules/active-users-email/presentation/activeUsersEmailRoutes.ts
+//src/presentation/routes/activeUsersEmailRoutes.ts
 import { Router } from "express";
-import { ActiveUsersEmailController } from "./ActiveUsersEmailController";
+import { ActiveUsersEmailController } from "../controllers/ActiveUsersEmailController";
 import { RequestHandler } from "express-serve-static-core";
 
 const apiKeyMiddleware: RequestHandler = (req, res, next) => {

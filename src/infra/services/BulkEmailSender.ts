@@ -1,9 +1,10 @@
-// src/modules/active-users-email/infra/EmailSender.ts
+//src/infra/services/BulkEmailSender.ts
+import { CONFIG } from "../../main/config/config";
+import { EmailSenderContract } from "../../domain/services/IEmailSender";
+import { ActiveUser } from "../../domain/services/IActiveUsersFetcher";
 import nodemailer from "nodemailer";
-import { CONFIG } from "../../../main/config/config";
-import { EmailSenderContract, ActiveUser } from "../domain/types";
 
-export class EmailSender implements EmailSenderContract {
+export class BulkEmailSender implements EmailSenderContract  {
   private transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user: CONFIG.GMAIL_USER, pass: CONFIG.GMAIL_PASS },

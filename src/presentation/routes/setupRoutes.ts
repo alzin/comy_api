@@ -1,20 +1,15 @@
 // src/presentation/routes/setupRoutes.ts
-import express, { Request, Response, NextFunction, RequestHandler } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { setupBusinessSheetRoutes } from "./BusinessSheetRoutes";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { setupAuthRoutes } from "./authRoutes";
 import { setupStripeRoutes } from "./StripeRoutes";
 import { setupUserInfoRoutes } from "./userRoutes";
 import { setupAdminRoutes } from "./adminRoutes";
-import { createActiveUsersEmailRoutes } from "../../modules/active-users-email/presentation/activeUsersEmailRoutes";
-
-import { 
-  CopilotRuntime, 
-  OpenAIAdapter, 
-  copilotRuntimeNodeHttpEndpoint 
-} from '@copilotkit/runtime';
-
+import { createActiveUsersEmailRoutes } from "./activeUsersEmailRoutes";
+import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNodeHttpEndpoint } from '@copilotkit/runtime';
 import { LiteralClient } from '@literalai/client';
+
 
 // Initialize OpenAI Adapter
 const serviceAdapter = new OpenAIAdapter({
@@ -27,32 +22,13 @@ const literalAiClient = new LiteralClient({
 
 literalAiClient.instrumentation.openai({ client: serviceAdapter });
 
-const runtime = new CopilotRuntime();
-      
-// Create the handler for CopilotKit requests
-const handler = copilotRuntimeNodeHttpEndpoint({
-  endpoint: '/copilotkit',
-  runtime,
-  serviceAdapter,
-});
-
 export function setupRoutes(app: express.Application, dependencies: any) {
-  // Create ready-to-use auth middleware
-  const readyAuthMiddleware = authMiddleware(dependencies.tokenService, dependencies.userRepository);
-  const combinedMiddleware: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
-    readyAuthMiddleware(req, res, (err?: any) => {
-      if (err) return next(err);
-      if ((req as any).user?.role !== "admin") {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-      next();
-    });
-  };
+  
   app.get("/", (_, res) => res.status(200).send("OK"));
 
-  // Apply auth middleware globally
-  app.use(readyAuthMiddleware);
-
+  app.use(
+    authMiddleware(dependencies.tokenService, dependencies.userRepository),
+  );
   app.use(
     "/create-checkout-session",
     setupStripeRoutes(dependencies.stripeController),
@@ -90,15 +66,24 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   );
 
   // Set up the CopilotKit endpoint
-  app.use('/copilotkit', (req, res, next) => {
-    (async () => {
-      return handler(req, res);
-    })().catch(next); 
+  app.use('/copilotkit', async (req, res) => {
+    try {
+      const runtime = new CopilotRuntime();
+  
+      const handler = copilotRuntimeNodeHttpEndpoint({
+        endpoint: '/copilotkit',
+        runtime,
+        serviceAdapter,
+      });
+      await handler(req, res);
+    } catch (err) {
+      console.error("CopilotKit error:", err);
+    }
   });
   
   // Add active users email routes
   app.use(
-    "/admin/emails",
+    "/admin/emails", 
     createActiveUsersEmailRoutes(
       dependencies.activeUsersEmailController 
     )

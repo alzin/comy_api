@@ -1,5 +1,6 @@
-// src/modules/active-users-email/application/SendActiveUsersEmailUseCase.ts
-import { EmailSenderContract, ActiveUsersFetcherContract } from "../domain/types";
+//src/application/use-cases/users/SendActiveUsersEmailUseCase.ts
+import { EmailSenderContract } from "../../../domain/services/IEmailSender";
+import { ActiveUsersFetcherContract } from "../../../domain/services/IActiveUsersFetcher";
 
 export class SendActiveUsersEmailUseCase {
   constructor(
