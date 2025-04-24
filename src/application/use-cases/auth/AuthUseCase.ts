@@ -66,6 +66,8 @@ export class AuthUseCase implements IAuthUseCase {
       stripeSubscriptionId: undefined,
       currentPeriodEnd: undefined,
       subscriptionPlan: undefined,
+      isOnline: false,
+      lastActive: new Date(),
     });
 
     const verificationUrl = `${CONFIG.SERVER_URL}auth/verify-email?token=${verificationToken}`;

@@ -10,4 +10,9 @@ export interface IUserRepository {
   getAllUsersInfo(): Promise<UserInfo[]>;
   update(userId: string, userData: Partial<User>): Promise<void>;
   searchUsers(searchTerm: string): Promise<UserInfo[]>;
+  //chat
+  update(id: string, update: Partial<User>): Promise<User | null>;
+  update(userId: string, userData: Partial<User>): Promise<void>;
+  updateUserStatus(userId: string, isOnline: boolean): Promise<boolean>;
+  delete(id: string): Promise<void>;
 }
