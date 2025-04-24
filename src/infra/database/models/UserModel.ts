@@ -12,7 +12,6 @@ const UserSchema: Schema<UserDocument> = new Schema(
     name: { type: String, required: true },
     category: { type: String, required: true },
     profileImageUrl: { type: String },
-    avatar: { type: String },
     password: { type: String, required: true }, 
     isEmailVerified: { type: Boolean, default: false },
     verificationToken: { type: String, default: null },

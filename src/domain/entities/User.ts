@@ -9,7 +9,6 @@ export interface User {
   category: string;
   profileImageUrl?: string | null;
   password: string;
-  avatar?: string;
   isEmailVerified?: boolean;
   verificationToken?: string | null;
   stripeCustomerId?: string;

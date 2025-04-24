@@ -21,7 +21,6 @@ export class MongoUserRepository implements IUserRepository {
       currentPeriodEnd: userDoc.currentPeriodEnd,
       subscriptionPlan: userDoc.subscriptionPlan,
       profileImageUrl: userDoc.profileImageUrl,
-      avatar: userDoc.avatar,
       isOnline: userDoc.isOnline,
       lastActive: userDoc.lastActive,
     };
