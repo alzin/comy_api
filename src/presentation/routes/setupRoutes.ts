@@ -12,7 +12,7 @@ import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNodeHttpEndpoint } from '@
 import { LiteralClient } from '@literalai/client';
 
 const serviceAdapter = new OpenAIAdapter({
-  model: "gpt-4o-mini",
+  model: "gpt-4.1-nano",
 });
 
 const literalAiClient = new LiteralClient({
@@ -22,6 +22,7 @@ const literalAiClient = new LiteralClient({
 literalAiClient.instrumentation.openai( { client: serviceAdapter } );
 
 export function setupRoutes(app: express.Application, dependencies: any) {
+
   app.get("/", (_, res) => res.status(200).send("OK"));
 
   app.use(
@@ -88,4 +89,3 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   );
   
 }
-
