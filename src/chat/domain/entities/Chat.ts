@@ -1,9 +1,9 @@
 export interface Chat {
-    id?: string;
-    name: string | null;
-    isGroupChat: boolean;
-    users: string[];
-    admin?: string | null;
-    latestMessage?: string | null;
-    createdAt?: Date;
-  }
+  id: string;
+  name: string;
+  isGroupChat: boolean;
+  users: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  latestMessage?: string | null;
+}

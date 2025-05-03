@@ -57,11 +57,22 @@ export class MongoUserRepository implements IUserRepository {
     return this.findOneAndMap({ stripeCustomerId });
   }
 
+  async findActiveUsers(): Promise<User[]> {
+    const users = await UserModel.find({ 
+      email: { $ne: 'virtual@chat.com' },
+      isEmailVerified: true
+    }).exec();
+    const mappedUsers = users.map(user => this.mapToDomain(user));
+    console.log('Active users fetched:', mappedUsers.map(u => ({ id: u.id, email: u.email, name: u.name, isEmailVerified: u.isEmailVerified })));
+    return mappedUsers;
+  }
+
   async getAllUsersInfo(): Promise<UserInfo[]> {
     return this.findAndMapToUserInfo({});
   }
+
   async update(id: string, update: Partial<User>): Promise<User | null>;
- async update(userId: string, userData: Partial<User>): Promise<void>;
+  async update(userId: string, userData: Partial<User>): Promise<void>;
   async update(id: string, update: Partial<User>): Promise<User | null | void> {
     const updatedUser = await UserModel.findByIdAndUpdate(id, { $set: update }, { new: true }).exec();
     if (arguments.length === 2 && arguments[1] === update) {

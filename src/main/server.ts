@@ -4,19 +4,20 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { CONFIG } from './config/config';
+import { CONFIG } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/main/config/config';
 import { setupMiddlewares } from '../presentation/middlewares/setupMiddlewares';
 import { setupRoutes } from '../presentation/routes/setupRoutes';
-import { setupDependencies } from './config/setupDependencies';
-import { setupSwagger } from './config/swagger';
+import { setupDependencies } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/main/config/setupDependencies';
+import { setupSwagger } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/main/config/swagger';
 import { dbConnectMiddleware } from '../presentation/middlewares/dbConnectMiddleware';
 import { setupChatRoutes } from '../chat/presentation/routes/chatRoutes';
 import { setupSocketHandlers } from '../chat/presentation/socket/socketManager';
 import { ChatController } from '../chat/presentation/controllers/ChatController';
 import { MessageController } from '../chat/presentation/controllers/MessageController';
+import { VirtualChatService } from '../chat/infra/services/VirtualChatService';
 
 dotenv.config();
-
+console.log('API_KEY:', process.env.API_KEY);
 export async function startServer() {
   const app = express();
   const server = http.createServer(app);
@@ -36,15 +37,34 @@ export async function startServer() {
 
   const dependencies = setupDependencies(server);
 
+  // Set up bot service
+  const virtualChatService = new VirtualChatService(
+    dependencies.socketService,
+    dependencies.userRepository,
+    dependencies.botMessageRepository,
+    dependencies.chatRepository,
+    dependencies.blacklistRepository,
+    dependencies.chatService.createChatUseCase
+  );
+  await virtualChatService.initialize();
+
+  // Store virtualChatService in app.locals.dependencies
+  app.locals.dependencies = {
+    ...dependencies,
+    virtualChatService
+  };
+  console.log('VirtualChatService initialized:', app.locals.dependencies.virtualChatService);
+
   app.use('/api/chats', setupChatRoutes(
     new ChatController(dependencies.chatService.createChatUseCase, dependencies.chatService.getUserChatsUseCase),
     new MessageController(dependencies.messageService.sendMessageUseCase, dependencies.messageService.getMessagesUseCase),
-    dependencies
+    app.locals.dependencies,
+    dependencies.socketService
   ));
 
   setupRoutes(app, dependencies);
 
-  setupSocketHandlers(io, dependencies.socketService);
+  setupSocketHandlers(io, dependencies);
 
   const connectDB = async () => {
     try {

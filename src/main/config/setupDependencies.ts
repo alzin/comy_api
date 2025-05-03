@@ -33,12 +33,15 @@ import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/S
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
 import { MongoChatRepository } from '../../chat/infra/repo/MongoChatRepository';
 import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
+import { MongoBotMessageRepository } from '../../chat/infra/repo/MongoBotMessageRepository';
 import { SocketIOService } from '../../chat/infra/services/SocketIOService';
 import { CreateChatUseCase } from '../../chat/application/use-cases/CreateChatUseCase';
 import { GetUserChatsUseCase } from '../../chat/application/use-cases/GetUserChatsUseCase';
 import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessageUseCase';
 import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
 
+import { MongoBlacklistRepository } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/infra/repo/MongoBlacklistRepository';
+const VIRTUAL_USER_ID = '681547798892749fbe910c02';
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
 const sendActiveUsersEmailUseCase = new SendActiveUsersEmailUseCase(activeUsersFetcher, emailSender);
@@ -98,14 +101,16 @@ export function setupDependencies(server: any) {
 
   const chatRepository = new MongoChatRepository();
   const messageRepository = new MongoMessageRepository();
+  const botMessageRepository = new MongoBotMessageRepository();
   const socketService = new SocketIOService(server, userRepository, messageRepository);
   const createChatUseCase = new CreateChatUseCase(chatRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository);
   const sendMessageUseCase = new SendMessageUseCase(messageRepository, chatRepository, socketService);
-  const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
+  const getMessagesUseCase = new GetMessagesUseCase(botMessageRepository);
 
   const chatService = { createChatUseCase, getUserChatsUseCase };
   const messageService = { sendMessageUseCase, getMessagesUseCase };
+  const blacklistRepository = new MongoBlacklistRepository();
 
   return {
     userRepository,
@@ -122,5 +127,11 @@ export function setupDependencies(server: any) {
     socketService,
     chatService,
     messageService,
+    botMessageRepository,
+    messageRepository,
+    chatRepository,
+    sendMessageUseCase,
+    blacklistRepository,
+    virtualUserId: VIRTUAL_USER_ID
   };
 }

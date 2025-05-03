@@ -1,22 +1,26 @@
-// src/chat/infra/database/models/ChatModel.ts
 import mongoose, { Schema, Document } from 'mongoose';
-import { Chat } from '../../../domain/entities/Chat';
 
-export interface IChatModel extends Omit<Chat, 'id' | 'users' | 'latestMessage'>, Document {
+// Interface for chat model
+export interface IChatModel extends Document {
   _id: mongoose.Types.ObjectId;
+  name: string;
+  isGroupChat: boolean;
   users: mongoose.Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
   latestMessage?: mongoose.Types.ObjectId | null;
 }
 
+// Chat schema
 const ChatSchema: Schema<IChatModel> = new Schema(
   {
-    name: { type: String, required: false },
-    isGroupChat: { type: Boolean, required: true },
+    _id: { type: Schema.Types.ObjectId, auto: true },
+    name: { type: String, required: true },
+    isGroupChat: { type: Boolean, default: false },
     users: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    admin: { type: Schema.Types.ObjectId, ref: 'User', required: false },
-    latestMessage: { type: Schema.Types.ObjectId, ref: 'Message', required: false },
+    latestMessage: { type: Schema.Types.ObjectId, ref: 'Message', default: null }
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'chats' }
 );
 
 export default mongoose.model<IChatModel>('Chat', ChatSchema);

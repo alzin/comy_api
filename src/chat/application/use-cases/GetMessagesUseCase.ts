@@ -1,10 +1,17 @@
-import { Message } from '../../domain/entities/Message';
-import { IMessageRepository } from '../../domain/repo/IMessageRepository';
+import mongoose from 'mongoose';
+import { MongoBotMessageRepository } from '../../infra/repo/MongoBotMessageRepository';
 
 export class GetMessagesUseCase {
-  constructor(private messageRepository: IMessageRepository) {}
+  private botMessageRepository: MongoBotMessageRepository;
 
-  async execute(chatId: string, page: number, limit: number): Promise<Message[]> {
-    return this.messageRepository.findByChatId(chatId, page, limit);
+  constructor(botMessageRepository: MongoBotMessageRepository) {
+    this.botMessageRepository = botMessageRepository;
+  }
+
+  async execute(chatId: string) {
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      throw new Error('Invalid chat ID');
+    }
+    return await this.botMessageRepository.findByChatId(chatId);
   }
 }

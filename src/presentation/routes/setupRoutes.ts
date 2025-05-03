@@ -32,7 +32,8 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   app.use('/api/chats', setupChatRoutes(
     new ChatController(dependencies.chatService.createChatUseCase, dependencies.chatService.getUserChatsUseCase),
     new MessageController(dependencies.messageService.sendMessageUseCase, dependencies.messageService.getMessagesUseCase),
-    dependencies
+    dependencies,
+    dependencies.socketService
   ));
   app.get('/check-auth', (req, res) => {
     res.json({ isAuthenticated: !!(req as any).user });

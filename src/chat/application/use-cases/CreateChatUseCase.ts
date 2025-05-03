@@ -1,29 +1,37 @@
-import { Chat } from '../../domain/entities/Chat';
+import mongoose from 'mongoose';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
+import { Chat } from '../../domain/entities/Chat';
 
 export class CreateChatUseCase {
   constructor(private chatRepository: IChatRepository) {}
 
   async execute(
-    name: string | null,
-    isGroupChat: boolean,
-    users: string[],
-    userId: string
+    userIds: string[],
+    name: string,
+    isGroupChat: boolean
   ): Promise<Chat> {
-    const userIds = [...new Set([...users, userId])];
-    if (!isGroupChat && userIds.length === 2) {
-      const existingChat = await this.chatRepository.findByUsers(userIds);
-      if (existingChat) return existingChat;
+    // Validate inputs
+    if (!userIds || userIds.length < 2) {
+      throw new Error('At least two users are required to create a chat');
     }
 
+    // Check if chat already exists for these users
+    const existingChat = await this.chatRepository.findByUsers(userIds);
+    if (existingChat) {
+      throw new Error('Chat already exists for these users');
+    }
+
+    // Create new chat
     const chat: Chat = {
-      name: isGroupChat ? name : null,
+      id: new mongoose.Types.ObjectId().toString(),
+      name: isGroupChat ? name : 'Private Chat',
       isGroupChat,
       users: userIds,
-      admin: isGroupChat ? userId : null,
-      latestMessage: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      latestMessage: null
     };
 
-    return this.chatRepository.create(chat);
+    return await this.chatRepository.create(chat);
   }
 }

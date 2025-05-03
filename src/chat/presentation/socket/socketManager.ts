@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
-import { SocketIOService } from '../../infra/services/SocketIOService';
 
-export const setupSocketHandlers = (io: Server, socketService: SocketIOService) => {
-  socketService.initialize();
-};
+// Set up Socket.IO handlers
+export function setupSocketHandlers(io: Server, dependencies: any): void {
+  // Initialize the socket service
+  dependencies.socketService.initialize();
+}

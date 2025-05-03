@@ -40,7 +40,7 @@ export class SocketIOService implements ISocketService {
 
           this.onlineUsers.push({ userId, socketId: socket.id });
           await this.userRepository.updateUserStatus(userId, true);
-          this.io.emit('userStatusChanged', { userId, isOnline: true });
+          this.emitUserStatus(userId, true);
           socket.emit('onlineUsers', this.onlineUsers.map((u) => u.userId));
           console.log(`User ${userId} authenticated`);
         } catch (error) {
@@ -52,22 +52,24 @@ export class SocketIOService implements ISocketService {
       socket.on('sendMessage', async (data) => {
         const { chatId, content, senderId } = data;
         const message: Message = {
-          chat: chatId,
+          id: '', 
+          chatId,
           content,
           sender: senderId,
           readBy: [senderId],
+          createdAt: new Date()
         };
-        this.emitNewMessage(message);
+        this.emitMessage(message);
       });
 
       socket.on('typing', (data) => {
         const { chatId, userId } = data;
-        socket.broadcast.emit('userTyping', { chatId, userId });
+        this.emitTyping(chatId, userId);
       });
 
       socket.on('stopTyping', (data) => {
         const { chatId, userId } = data;
-        socket.broadcast.emit('userStoppedTyping', { chatId, userId });
+        this.emitStopTyping(chatId, userId);
       });
 
       socket.on('messageRead', async (data) => {
@@ -83,13 +85,13 @@ export class SocketIOService implements ISocketService {
           const userId = this.onlineUsers[userIndex].userId;
           this.onlineUsers.splice(userIndex, 1);
           await this.userRepository.updateUserStatus(userId, false);
-          this.io.emit('userStatusChanged', { userId, isOnline: false });
+          this.emitUserStatus(userId, false);
         }
       });
     });
   }
 
-  emitNewMessage(message: Message): void {
+  emitMessage(message: Message): void {
     this.io.emit('newMessage', message);
   }
 
