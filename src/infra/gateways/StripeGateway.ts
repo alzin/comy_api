@@ -39,7 +39,18 @@ export class StripeGateway implements IStripeGateway {
       },
       customer: customerId,
       locale: "ja",
+      custom_fields: [
+        {
+          key: "referrer_name",
+          label: {
+            type: "custom",
+            custom: "紹介者名",
+          },
+          type: "text",
+          optional: true,
+        },
+      ],
     });
     return { id: session.id };
-  }
+  }  
 }

@@ -14,6 +14,7 @@ import { MessageController } from '../../chat/presentation/controllers/MessageCo
 
 const serviceAdapter = new OpenAIAdapter({
   model: 'gpt-4o-mini',
+
 });
 
 const literalAiClient = new LiteralClient({
@@ -70,4 +71,5 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   });
 
   app.use('/admin/emails', createActiveUsersEmailRoutes(dependencies.activeUsersEmailController));
+
 }
