@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
-import { Message } from '../../domain/entities/Message';
+import { Message } from '../../../chat/domain/entities/Message';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 
 // Repository for managing messages

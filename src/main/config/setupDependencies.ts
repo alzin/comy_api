@@ -39,9 +39,11 @@ import { CreateChatUseCase } from '../../chat/application/use-cases/CreateChatUs
 import { GetUserChatsUseCase } from '../../chat/application/use-cases/GetUserChatsUseCase';
 import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessageUseCase';
 import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
+import { MongoBlacklistRepository } from '../../chat/infra/repo/MongoBlacklistRepository';
 
-import { MongoBlacklistRepository } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/infra/repo/MongoBlacklistRepository';
-const VIRTUAL_USER_ID = '681547798892749fbe910c02';
+// Remove the hardcoded VIRTUAL_USER_ID
+// const VIRTUAL_USER_ID = '681547798892749fbe910c02';
+
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
 const sendActiveUsersEmailUseCase = new SendActiveUsersEmailUseCase(activeUsersFetcher, emailSender);
@@ -112,6 +114,12 @@ export function setupDependencies(server: any) {
   const messageService = { sendMessageUseCase, getMessagesUseCase };
   const blacklistRepository = new MongoBlacklistRepository();
 
+  // Use process.env to get VIRTUAL_USER_ID
+  const virtualUserId = process.env.VIRTUAL_USER_ID;
+  if (!virtualUserId) {
+    throw new Error('VIRTUAL_USER_ID is not defined in .env');
+  }
+
   return {
     userRepository,
     tokenService,
@@ -132,6 +140,6 @@ export function setupDependencies(server: any) {
     chatRepository,
     sendMessageUseCase,
     blacklistRepository,
-    virtualUserId: VIRTUAL_USER_ID
+    virtualUserId
   };
 }

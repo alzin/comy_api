@@ -18,6 +18,18 @@ export class MongoChatRepository implements IChatRepository {
     };
   }
 
+  // Find chat by ID
+  async findById(chatId: string): Promise<Chat | null> {
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      return null;
+    }
+    const chatDoc = await ChatModel.findById(chatId).exec();
+    if (!chatDoc) {
+      return null;
+    }
+    return this.mapToDomain(chatDoc);
+  }
+
   // Create a new chat
   async create(chat: Chat): Promise<Chat> {
     const newChat = await ChatModel.create({

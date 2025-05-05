@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { BotMessageModel } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/infra/database/models/models/BotMessageModel';
 
 export class MessageController {
   private sendMessageUseCase: any;

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { CreateBasicPlanCheckoutSessionUseCase } from "../../application/use-cases/payment/CreateBasicPlanCheckoutSessionUseCase";
-import { CONFIG } from "../../main/config/config";
+import { CONFIG } from "/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/main/config/config";
 
 export class StripeController {
   constructor(

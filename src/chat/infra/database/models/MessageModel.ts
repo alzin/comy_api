@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Message } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/domain/entities/Message';
+import { Message } from '../../../../chat/domain/entities/Message';
 
 // Interface for message model
 export interface IMessageModel extends Omit<Message, 'id' | 'sender' | 'chat' | 'readBy'>, Document {

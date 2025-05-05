@@ -7,9 +7,9 @@ import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistReposit
 import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
-import { Message } from '../../domain/entities/Message';
+import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
-import { BotMessageModel } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/infra/database/models/models/BotMessageModel';
+import { BotMessageModel } from '../../../chat/infra/database/models/models/BotMessageModel';
 import Chat from '../../infra/database/models/ChatModel';
 
 const router = express.Router();

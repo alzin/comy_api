@@ -2,7 +2,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { body, cookie, query, validationResult } from "express-validator";
-import { CONFIG } from "../../main/config/config";
+import { CONFIG } from "/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/main/config/config";
 
 const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);

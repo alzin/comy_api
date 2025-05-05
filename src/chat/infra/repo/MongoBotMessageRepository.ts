@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
-import { BotMessageModel, IBotMessageModel } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/infra/database/models/models/BotMessageModel';
+import { BotMessageModel, IBotMessageModel } from '../../../chat/infra/database/models/models/BotMessageModel';
 
 export class MongoBotMessageRepository implements IBotMessageRepository {
   private mapToDomain(doc: IBotMessageModel): BotMessage {

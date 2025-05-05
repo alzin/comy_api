@@ -2,7 +2,7 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
-import { IBlacklistRepository } from '../../domain/repo/IBlacklistRepository';
+import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import mongoose from 'mongoose';
 import { User } from '../../../domain/entities/User';

@@ -1,7 +1,7 @@
 export interface Message {
   id: string;
-  sender: string; // معرف المستخدم
-  senderDetails?: { name: string; email: string }; // تفاصيل المستخدم (اختياري)
+  sender: string; 
+  senderDetails?: { name: string; email: string }; 
   content: string;
   chatId: string;
   createdAt: Date;

@@ -1,4 +1,4 @@
-import { Message } from '../entities/Message';
+import { Message } from '../../../chat/domain/entities/Message';
 
 export interface IMessageRepository {
   create(message: Message): Promise<Message>;

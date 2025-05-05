@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IBlacklistRepository } from '/Users/lubna/Desktop/comy_back_new/comy_api/src/chat/domain/repo/IBlacklistRepository';
+import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 
 const blacklistSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
