@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { CONFIG } from "../../main/config/config";
+import { CONFIG } from "/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/main/config/config";
 import { ITokenService } from "../../domain/services/ITokenService";
 import { IUserRepository } from "../../domain/repo/IUserRepository";
 
