@@ -145,7 +145,7 @@ export class VirtualChatService {
         console.log(`Saved suggestion message with ID: ${suggestionMessage.id}`);
         console.log(`[Bot] Suggested user ${suggestedUser.name} (ID: ${suggestedUser.id}) to user ${user.id}`);
 
-        this.socketService.emitMessage({
+        this.socketService.emitMessage(chat.id, {
           id: suggestionMessage.id,
           sender: this.virtualUserId,
           senderDetails: { name: 'Virtual Bot', email: 'virtual@chat.com' },
@@ -161,5 +161,19 @@ export class VirtualChatService {
       console.error('Error in suggestFriends:', error);
       throw error;
     }
+  }
+
+  async generateBotResponse(chatId: string, content: string, botId: string): Promise<string | null> {
+    const bot1Id = '681547798892749fbe910c02'; // Virtual Assistant
+    const bot2Id = '681c757539ec003942b3f97e'; // COMY オフィシャル AI
+
+    // Simple response logic based on bot ID
+    if (botId === bot1Id) {
+      return `Virtual Assistant: Thanks for your message "${content}"! How can I assist you today?`;
+    } else if (botId === bot2Id) {
+      return `COMY オフィシャル AI: こんにちは！ "${content}" についてもっと教えてください！`;
+    }
+
+    return null;
   }
 }

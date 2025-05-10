@@ -1,4 +1,19 @@
+import { Server } from 'socket.io';
+import { createServer } from 'http';
+import express from 'express';
+import { SocketIOService } from '../../chat/infra/services/SocketIOService';
+import { MessageController } from '../../chat/presentation/controllers/MessageController';
+import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessageUseCase';
+import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
+import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
+import { MongoChatRepository } from '../../chat/infra/repo/MongoChatRepository';
+import { VirtualChatService } from '../../chat/infra/services/VirtualChatService';
 import { MongoUserRepository } from '../../infra/repo/MongoUserRepository';
+import { CreateChatUseCase } from '../../chat/application/use-cases/CreateChatUseCase';
+import { GetUserChatsUseCase } from '../../chat/application/use-cases/GetUserChatsUseCase';
+import { MongoBotMessageRepository } from '../../chat/infra/repo/MongoBotMessageRepository';
+import { MongoBlacklistRepository } from '../../chat/infra/repo/MongoBlacklistRepository';
+import { ChatController } from '../../chat/presentation/controllers/ChatController';
 import { NodemailerEmailService } from '../../infra/services/NodemailerEmailService';
 import { BcryptPasswordHasher } from '../../infra/services/BcryptPasswordHasher';
 import { JwtTokenService } from '../../infra/services/JwtTokenService';
@@ -31,18 +46,6 @@ import { BulkEmailSender } from '../../infra/services/BulkEmailSender';
 import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
-import { MongoChatRepository } from '../../chat/infra/repo/MongoChatRepository';
-import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
-import { MongoBotMessageRepository } from '../../chat/infra/repo/MongoBotMessageRepository';
-import { SocketIOService } from '../../chat/infra/services/SocketIOService';
-import { CreateChatUseCase } from '../../chat/application/use-cases/CreateChatUseCase';
-import { GetUserChatsUseCase } from '../../chat/application/use-cases/GetUserChatsUseCase';
-import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessageUseCase';
-import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
-import { MongoBlacklistRepository } from '../../chat/infra/repo/MongoBlacklistRepository';
-
-// Remove the hardcoded VIRTUAL_USER_ID
-// const VIRTUAL_USER_ID = '681547798892749fbe910c02';
 
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
@@ -104,17 +107,38 @@ export function setupDependencies(server: any) {
   const chatRepository = new MongoChatRepository();
   const messageRepository = new MongoMessageRepository();
   const botMessageRepository = new MongoBotMessageRepository();
+  const blacklistRepository = new MongoBlacklistRepository();
   const socketService = new SocketIOService(server, userRepository, messageRepository);
   const createChatUseCase = new CreateChatUseCase(chatRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository);
-  const sendMessageUseCase = new SendMessageUseCase(messageRepository, chatRepository, socketService);
-  const getMessagesUseCase = new GetMessagesUseCase(botMessageRepository);
+  const virtualChatService = new VirtualChatService(
+    socketService,
+    userRepository,
+    botMessageRepository,
+    chatRepository,
+    blacklistRepository,
+    createChatUseCase
+  );
+  const sendMessageUseCase = new SendMessageUseCase(
+    messageRepository,
+    chatRepository,
+    socketService,
+    virtualChatService
+  );
+  const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 
-  const chatService = { createChatUseCase, getUserChatsUseCase };
-  const messageService = { sendMessageUseCase, getMessagesUseCase };
-  const blacklistRepository = new MongoBlacklistRepository();
+  const chatController = new ChatController(
+    createChatUseCase,
+    getUserChatsUseCase,
+    botMessageRepository,
+    blacklistRepository
+  );
+  const messageController = new MessageController(
+    sendMessageUseCase,
+    getMessagesUseCase,
+    socketService
+  );
 
-  // Use process.env to get VIRTUAL_USER_ID
   const virtualUserId = process.env.VIRTUAL_USER_ID;
   if (!virtualUserId) {
     throw new Error('VIRTUAL_USER_ID is not defined in .env');
@@ -133,13 +157,22 @@ export function setupDependencies(server: any) {
     checkSubscriptionStatusController,
     activeUsersEmailController,
     socketService,
-    chatService,
-    messageService,
+    chatService: {
+      createChatUseCase,
+      getUserChatsUseCase,
+    },
+    messageService: {
+      sendMessageUseCase,
+      getMessagesUseCase,
+    },
     botMessageRepository,
     messageRepository,
     chatRepository,
-    sendMessageUseCase,
     blacklistRepository,
-    virtualUserId
+    virtualChatService,
+    sendMessageUseCase,
+    virtualUserId,
+    chatController,
+    messageController,
   };
 }

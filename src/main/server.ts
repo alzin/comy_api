@@ -28,7 +28,10 @@ export async function startServer() {
     },
   });
 
-  app.use(cors({ origin: process.env.FRONT_URL }));
+  app.use(cors({
+    origin: process.env.FRONT_URL,
+    credentials: true
+  }));
   app.use(express.json());
   app.use(dbConnectMiddleware);
 
@@ -56,8 +59,17 @@ export async function startServer() {
   console.log('VirtualChatService initialized:', app.locals.dependencies.virtualChatService);
 
   app.use('/api/chats', setupChatRoutes(
-    new ChatController(dependencies.chatService.createChatUseCase, dependencies.chatService.getUserChatsUseCase),
-    new MessageController(dependencies.messageService.sendMessageUseCase, dependencies.messageService.getMessagesUseCase),
+    new ChatController(
+      dependencies.chatService.createChatUseCase,
+      dependencies.chatService.getUserChatsUseCase,
+      dependencies.botMessageRepository,
+      dependencies.blacklistRepository
+    ),
+    new MessageController(
+      dependencies.messageService.sendMessageUseCase,
+      dependencies.messageService.getMessagesUseCase,
+      dependencies.socketService
+    ),
     app.locals.dependencies,
     dependencies.socketService
   ));

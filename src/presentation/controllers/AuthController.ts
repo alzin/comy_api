@@ -1,6 +1,6 @@
 import { json, Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
-import { CONFIG } from "/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/main/config/config";
+import { CONFIG } from "../../main/config/config";
 import { log } from "console";
 
 export class AuthController {

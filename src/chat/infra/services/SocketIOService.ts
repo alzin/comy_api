@@ -4,6 +4,7 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { Message } from '../../domain/entities/Message';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
+import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
 
 interface UserSocket {
   userId: string;
@@ -15,10 +16,12 @@ export class SocketIOService implements ISocketService {
   private onlineUsers: UserSocket[] = [];
   private userRepository: IUserRepository;
   private messageRepository: IMessageRepository;
+  private chatRepository: MongoChatRepository;
 
   constructor(server: any, userRepository: IUserRepository, messageRepository: IMessageRepository) {
     this.userRepository = userRepository;
     this.messageRepository = messageRepository;
+    this.chatRepository = new MongoChatRepository();
     this.io = new Server(server, {
       cors: {
         origin: process.env.FRONT_URL,
@@ -30,6 +33,23 @@ export class SocketIOService implements ISocketService {
   initialize(): void {
     this.io.on('connection', (socket: Socket) => {
       console.log('New client connected:', socket.id);
+
+      // المستخدم ينضم لغرفة محادثة
+      socket.on('joinChat', async (chatId: string) => {
+        try {
+          const chat = await this.chatRepository.findById(chatId);
+          if (!chat) {
+            console.error(`Chat ${chatId} not found`);
+            socket.emit('error', { message: 'Chat not found' });
+            return;
+          }
+          socket.join(chatId);
+          console.log(`User ${socket.id} joined chat ${chatId}`);
+        } catch (error) {
+          console.error('Error joining chat:', error);
+          socket.emit('error', { message: 'Error joining chat' });
+        }
+      });
 
       socket.on('authenticate', async (token) => {
         try {
@@ -43,6 +63,13 @@ export class SocketIOService implements ISocketService {
           this.emitUserStatus(userId, true);
           socket.emit('onlineUsers', this.onlineUsers.map((u) => u.userId));
           console.log(`User ${userId} authenticated`);
+
+          // انضمام المستخدم لكل محادثاته
+          const userChats = await this.chatRepository.findByUserId(userId);
+          userChats.forEach((chat) => {
+            socket.join(chat.id);
+            console.log(`User ${userId} auto-joined chat ${chat.id}`);
+          });
         } catch (error) {
           console.error('Authentication error:', error);
           socket.disconnect();
@@ -51,15 +78,20 @@ export class SocketIOService implements ISocketService {
 
       socket.on('sendMessage', async (data) => {
         const { chatId, content, senderId } = data;
-        const message: Message = {
-          id: '', 
-          chatId,
-          content,
-          sender: senderId,
-          readBy: [senderId],
-          createdAt: new Date()
-        };
-        this.emitMessage(message);
+        try {
+          const message: Message = await this.messageRepository.create({
+            chatId,
+            sender: senderId,
+            content,
+            readBy: [senderId],
+            createdAt: new Date(),
+            id: ''
+          });
+          this.emitMessage(chatId, message);
+        } catch (error) {
+          console.error('Error sending message:', error);
+          socket.emit('error', { message: 'Error sending message' });
+        }
       });
 
       socket.on('typing', (data) => {
@@ -91,8 +123,8 @@ export class SocketIOService implements ISocketService {
     });
   }
 
-  emitMessage(message: Message): void {
-    this.io.emit('newMessage', message);
+  emitMessage(chatId: string, message: Message): void {
+    this.io.to(chatId).emit('newMessage', message);
   }
 
   emitUserStatus(userId: string, isOnline: boolean): void {
@@ -100,11 +132,11 @@ export class SocketIOService implements ISocketService {
   }
 
   emitTyping(chatId: string, userId: string): void {
-    this.io.emit('userTyping', { chatId, userId });
+    this.io.to(chatId).emit('userTyping', { chatId, userId });
   }
 
   emitStopTyping(chatId: string, userId: string): void {
-    this.io.emit('userStoppedTyping', { chatId, userId });
+    this.io.to(chatId).emit('userStoppedTyping', { chatId, userId });
   }
 
   emitMessageRead(messageId: string, userId: string): void {

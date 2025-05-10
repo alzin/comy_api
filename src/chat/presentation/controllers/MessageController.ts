@@ -1,13 +1,16 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { SocketIOService } from '../../infra/services/SocketIOService';
 
 export class MessageController {
   private sendMessageUseCase: any;
   private getMessagesUseCase: any;
+  private socketService: SocketIOService;
 
-  constructor(sendMessageUseCase: any, getMessagesUseCase: any) {
+  constructor(sendMessageUseCase: any, getMessagesUseCase: any, socketService: SocketIOService) {
     this.sendMessageUseCase = sendMessageUseCase;
     this.getMessagesUseCase = getMessagesUseCase;
+    this.socketService = socketService;
   }
 
   async getMessages(req: Request, res: Response): Promise<void> {
@@ -33,6 +36,7 @@ export class MessageController {
       const messageData = req.body;
       const userId = (req as any).user?.id;
       const message = await this.sendMessageUseCase.execute({ ...messageData, senderId: userId });
+      this.socketService.emitMessage(messageData.chatId, message);
       res.status(200).json(message);
     } catch (error: any) {
       console.error('Error sending message:', error);

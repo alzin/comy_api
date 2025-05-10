@@ -10,7 +10,7 @@ import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
 import { BotMessageModel } from '../../../chat/infra/database/models/models/BotMessageModel';
-import Chat from '../../infra/database/models/ChatModel';
+import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 
 const router = express.Router();
 
@@ -24,6 +24,7 @@ export const setupChatRoutes = (
   const botMessageRepo = new MongoBotMessageRepository();
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
+  const createChatUseCase = new CreateChatUseCase(chatRepo);
 
   // Apply authentication middleware to all routes except /suggest-friends
   router.use((req, res, next) => {
@@ -105,7 +106,7 @@ export const setupChatRoutes = (
         readBy: [dependencies.virtualUserId]
       };
 
-      socketService.emitMessage(matchMessage);
+      socketService.emitMessage(matchMessage.chatId, matchMessage);
       console.log(`Sent match request to ${message.suggestedUser.toString()} for user ${userId}`);
       res.json({ message: 'Suggestion accepted, match request sent' });
     } catch (error) {
@@ -144,17 +145,24 @@ export const setupChatRoutes = (
         return res.json({ message: 'Match request rejected and users added to blacklist' });
       }
 
-      // Create a new chat between users
-      const newChat = await Chat.create({
-        name: `Chat between ${req.user.name} and ${message.suggestedUser}`,
-        isGroupChat: false,
-        users: [
-          new mongoose.Types.ObjectId(userId),
-          new mongoose.Types.ObjectId(message.suggestedUser)
-        ]
-      });
+      // Create a new chat between users with the bot
+      const botId = process.env.BOT_ID;
+      if (!botId) {
+        throw new Error('BOT_ID is not defined in .env');
+      }
+      const users = [
+        userId,
+        message.suggestedUser.toString(),
+        botId
+      ];
 
-      const notificationMessageContent = `Match request approved! A new chat has started between you. 😊`;
+      const newChat = await createChatUseCase.execute(
+        users,
+        `Group Chat with ${req.user.name}, ${message.suggestedUser}, and Virtual Assistant`,
+        true // المحادثة جماعية بسبب البوت
+      );
+
+      const notificationMessageContent = `Match request approved! A new group chat has started with Virtual Assistant. 😊`;
       const notifyUsers = [userId, message.suggestedUser.toString()];
 
       for (const notifyUserId of notifyUsers) {
@@ -181,12 +189,12 @@ export const setupChatRoutes = (
             readBy: [dependencies.virtualUserId]
           };
 
-          socketService.emitMessage(notifyMessage);
-          console.log(`Sent notification to ${notifyUserId} for new chat ${newChat._id.toString()}`);
+          socketService.emitMessage(notifyMessage.chatId, notifyMessage);
+          console.log(`Sent notification to ${notifyUserId} for new chat ${newChat.id}`);
         }
       }
 
-      res.json({ message: 'Match accepted, new chat created', chatId: newChat._id.toString() });
+      res.json({ message: 'Match accepted, new group chat created', chatId: newChat.id });
     } catch (error) {
       console.error('Error responding to match:', error);
       res.status(500).json({ message: 'Server error' });
