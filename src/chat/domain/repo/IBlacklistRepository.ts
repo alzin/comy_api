@@ -1,3 +1,4 @@
+//src/chat/domain/repo/IBlacklistRepository.ts
 export interface IBlacklistRepository {
     addToBlacklist(userId: string, blacklistedUserId: string): Promise<void>;
     getBlacklistedUsers(userId: string): Promise<string[]>;

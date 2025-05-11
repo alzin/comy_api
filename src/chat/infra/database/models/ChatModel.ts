@@ -1,26 +1,27 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
-// Interface for chat model
-export interface IChatModel extends Document {
-  _id: mongoose.Types.ObjectId;
+export interface IChatModel extends Document<Types.ObjectId> {
+  _id: Types.ObjectId;
   name: string;
   isGroupChat: boolean;
-  users: mongoose.Types.ObjectId[];
+  users: Types.ObjectId[];
+  profileImageUrl: string;
+  botProfileImageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
-  latestMessage?: mongoose.Types.ObjectId | null;
+  latestMessage?: Types.ObjectId | null;
 }
 
-// Chat schema
 const ChatSchema: Schema<IChatModel> = new Schema(
   {
-    _id: { type: Schema.Types.ObjectId, auto: true },
     name: { type: String, required: true },
-    isGroupChat: { type: Boolean, default: false },
-    users: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    latestMessage: { type: Schema.Types.ObjectId, ref: 'Message', default: null }
+    isGroupChat: { type: Boolean, required: true },
+    users: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
+    profileImageUrl: { type: String, default: '' },
+    botProfileImageUrl: { type: String },
+    latestMessage: { type: Schema.Types.ObjectId, ref: 'Message', default: null },
   },
-  { timestamps: true, collection: 'chats' }
+  { timestamps: true }
 );
 
-export default mongoose.model<IChatModel>('Chat', ChatSchema);
+export const ChatModel = mongoose.model<IChatModel>('Chat', ChatSchema);

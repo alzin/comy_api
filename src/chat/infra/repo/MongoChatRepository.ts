@@ -1,81 +1,141 @@
 import mongoose from 'mongoose';
-import ChatModel, { IChatModel } from '../database/models/ChatModel';
+import { ChatModel, IChatModel } from '../database/models/ChatModel';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { Chat } from '../../domain/entities/Chat';
 
-// Repository for managing chats
+interface PopulatedUser {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  email: string;
+  profileImageUrl: string;
+}
+
+interface PopulatedChatModel {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  isGroupChat: boolean;
+  users: PopulatedUser[];
+  profileImageUrl: string;
+  botProfileImageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  latestMessage?: mongoose.Types.ObjectId | null;
+}
+
 export class MongoChatRepository implements IChatRepository {
-  // Map MongoDB document to Chat entity
-  private mapToDomain(chatDoc: IChatModel): Chat {
+  private mapToDomain(chatDoc: PopulatedChatModel | IChatModel): Chat {
+    const botId = process.env.BOT_ID || '681c757539ec003942b3f97e';
+    const isPopulated = (doc: any): doc is PopulatedChatModel =>
+      doc.users && doc.users[0] && 'name' in doc.users[0];
+
+    if (isPopulated(chatDoc)) {
+      let profileImageUrl = chatDoc.profileImageUrl || '';
+      let botProfileImageUrl = chatDoc.botProfileImageUrl;
+
+      if (!profileImageUrl) {
+        if (chatDoc.isGroupChat) {
+          const otherUser = chatDoc.users.find(user => user._id.toString() !== botId);
+          profileImageUrl = otherUser ? otherUser.profileImageUrl || '' : '';
+          const botUser = chatDoc.users.find(user => user._id.toString() === botId);
+          botProfileImageUrl = botUser ? botUser.profileImageUrl || '' : '';
+        } else {
+          const botUser = chatDoc.users.find(user => user._id.toString() === botId);
+          profileImageUrl = botUser ? botUser.profileImageUrl || '' : '';
+        }
+      }
+
+      return {
+        id: chatDoc._id.toString(),
+        name: chatDoc.name,
+        isGroupChat: chatDoc.isGroupChat,
+        users: chatDoc.users.map((user: PopulatedUser) => user._id.toString()),
+        profileImageUrl,
+        botProfileImageUrl,
+        createdAt: chatDoc.createdAt,
+        updatedAt: chatDoc.updatedAt,
+        latestMessage: chatDoc.latestMessage ? chatDoc.latestMessage.toString() : null,
+      };
+    }
+
     return {
       id: chatDoc._id.toString(),
       name: chatDoc.name,
       isGroupChat: chatDoc.isGroupChat,
       users: chatDoc.users.map((id: mongoose.Types.ObjectId) => id.toString()),
+      profileImageUrl: chatDoc.profileImageUrl || '',
+      botProfileImageUrl: chatDoc.botProfileImageUrl,
       createdAt: chatDoc.createdAt,
       updatedAt: chatDoc.updatedAt,
-      latestMessage: chatDoc.latestMessage ? chatDoc.latestMessage.toString() : null
+      latestMessage: chatDoc.latestMessage ? chatDoc.latestMessage.toString() : null,
     };
   }
 
-  // Find chat by ID
   async findById(chatId: string): Promise<Chat | null> {
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       return null;
     }
-    const chatDoc = await ChatModel.findById(chatId).exec();
+    const chatDoc = await ChatModel.findById(chatId)
+      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .exec();
     if (!chatDoc) {
       return null;
     }
     return this.mapToDomain(chatDoc);
   }
 
-  // Create a new chat
   async create(chat: Chat): Promise<Chat> {
     const newChat = await ChatModel.create({
       ...chat,
       users: chat.users.map(id => new mongoose.Types.ObjectId(id)),
-      latestMessage: chat.latestMessage ? new mongoose.Types.ObjectId(chat.latestMessage) : null
+      latestMessage: chat.latestMessage ? new mongoose.Types.ObjectId(chat.latestMessage) : null,
     });
-    return this.mapToDomain(newChat);
+    const populatedChat = await ChatModel.findById(newChat._id)
+      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .exec();
+    if (!populatedChat) {
+      throw new Error('Failed to populate created chat');
+    }
+    return this.mapToDomain(populatedChat);
   }
 
-  // Retrieve chats by user ID
   async findByUserId(userId: string): Promise<Chat[]> {
     const chats = await ChatModel.find({
       users: new mongoose.Types.ObjectId(userId),
-    }).exec();
-    return chats.map(this.mapToDomain);
+    })
+      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .exec();
+    return chats.map((chat: PopulatedChatModel | IChatModel) => this.mapToDomain(chat));
   }
 
-  // Retrieve chat by user IDs
   async findByUsers(userIds: string[]): Promise<Chat | null> {
     const chat = await ChatModel.findOne({
       isGroupChat: false,
       users: {
         $all: userIds.map(id => new mongoose.Types.ObjectId(id)),
-        $size: userIds.length
-      }
-    }).exec();
+        $size: userIds.length,
+      },
+    })
+      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .exec();
     return chat ? this.mapToDomain(chat) : null;
   }
 
-  // Retrieve private chat ID between two users
   async getPrivateChatId(userId: string, virtualUserId: string): Promise<string | null> {
     const chat = await ChatModel.findOne({
       isGroupChat: false,
       users: {
         $all: [
           new mongoose.Types.ObjectId(userId),
-          new mongoose.Types.ObjectId(virtualUserId)
+          new mongoose.Types.ObjectId(virtualUserId),
         ],
-        $size: 2
-      }
-    }).exec();
+        $size: 2,
+      },
+    })
+      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .exec();
     return chat ? chat._id.toString() : null;
   }
 
-  // Update chat
   async update(chatId: string, update: Partial<Chat>): Promise<void> {
     const updateFields: any = {};
     if (update.latestMessage) {
@@ -83,10 +143,6 @@ export class MongoChatRepository implements IChatRepository {
     } else if (update.latestMessage === null) {
       updateFields.latestMessage = null;
     }
-    await ChatModel.findByIdAndUpdate(
-      chatId,
-      { $set: updateFields },
-      { new: true }
-    ).exec();
+    await ChatModel.findByIdAndUpdate(chatId, { $set: updateFields }, { new: true }).exec();
   }
 }

@@ -1,3 +1,4 @@
+////src/chat/domain/services/ISocketService.ts
 import { Message } from '../../domain/entities/Message';
 
 export interface ISocketService {

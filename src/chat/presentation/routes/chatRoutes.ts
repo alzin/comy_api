@@ -10,7 +10,6 @@ import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
 import { BotMessageModel } from '../../../chat/infra/database/models/models/BotMessageModel';
-import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 
 const router = express.Router();
 
@@ -24,7 +23,6 @@ export const setupChatRoutes = (
   const botMessageRepo = new MongoBotMessageRepository();
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
-  const createChatUseCase = new CreateChatUseCase(chatRepo);
 
   // Apply authentication middleware to all routes except /suggest-friends
   router.use((req, res, next) => {
@@ -156,7 +154,8 @@ export const setupChatRoutes = (
         botId
       ];
 
-      const newChat = await createChatUseCase.execute(
+      // استخدام createChatUseCase من dependencies
+      const newChat = await dependencies.chatService.createChatUseCase.execute(
         users,
         `Group Chat with ${req.user.name}, ${message.suggestedUser}, and Virtual Assistant`,
         true // المحادثة جماعية بسبب البوت

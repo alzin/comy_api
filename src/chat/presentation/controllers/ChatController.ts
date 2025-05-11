@@ -1,7 +1,7 @@
+// src/chat/presentation/controllers/ChatController.ts
 import { Request, Response } from 'express';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { GetUserChatsUseCase } from '../../application/use-cases/GetUserChatsUseCase';
-import { Chat } from '../../domain/entities/Chat';
 import { MongoBotMessageRepository } from '../../infra/repo/MongoBotMessageRepository';
 import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistRepository';
 
@@ -23,8 +23,7 @@ export class ChatController {
         return;
       }
 
-      // Ensure the bot is included in the users list for group chats
-      const botId = '681c757539ec003942b3f97e'; // معرف البوت الجديد
+      const botId = '681c757539ec003942b3f97e';
       const updatedUsers = isGroupChat ? [...new Set([...users, userId, botId])] : [...new Set([...users, userId])];
 
       const chat = await this.createChatUseCase.execute(

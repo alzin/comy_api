@@ -1,3 +1,4 @@
+///src/chat/domain/repo/IChatRepository.ts
 import { Chat } from '../entities/Chat';
 
 export interface IChatRepository {

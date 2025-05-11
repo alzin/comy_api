@@ -1,3 +1,4 @@
+////src/chat/infra/database/models/models/BlacklistModel.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBlacklistModel extends Document {

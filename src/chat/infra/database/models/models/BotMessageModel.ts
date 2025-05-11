@@ -1,3 +1,4 @@
+//src/chat/infra/database/models/models/BotMessageModel.ts
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {

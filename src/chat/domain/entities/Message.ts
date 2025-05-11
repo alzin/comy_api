@@ -1,3 +1,4 @@
+///src/chat/domain/entities/Message.ts
 export interface Message {
   id: string;
   sender: string; 

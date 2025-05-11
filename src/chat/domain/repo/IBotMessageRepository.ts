@@ -1,3 +1,4 @@
+///src/chat/domain/repo/IBotMessageRepository.ts
 import mongoose from 'mongoose';
 
 export interface BotMessage {

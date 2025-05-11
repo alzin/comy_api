@@ -164,12 +164,12 @@ export class VirtualChatService {
   }
 
   async generateBotResponse(chatId: string, content: string, botId: string): Promise<string | null> {
-    const bot1Id = '681547798892749fbe910c02'; // Virtual Assistant
+    const bot1Id = '681547798892749fbe910c02'; // COMY オフィシャル AI
     const bot2Id = '681c757539ec003942b3f97e'; // COMY オフィシャル AI
 
     // Simple response logic based on bot ID
     if (botId === bot1Id) {
-      return `Virtual Assistant: Thanks for your message "${content}"! How can I assist you today?`;
+      return `COMY オフィシャル AI: Thanks for your message "${content}"! How can I assist you today?`;
     } else if (botId === bot2Id) {
       return `COMY オフィシャル AI: こんにちは！ "${content}" についてもっと教えてください！`;
     }

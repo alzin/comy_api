@@ -1,3 +1,4 @@
+////src/chat/infra/database/models/MessageModel.ts
 import mongoose, { Schema, Document } from 'mongoose';
 import { Message } from '../../../../chat/domain/entities/Message';
 

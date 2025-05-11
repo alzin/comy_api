@@ -1,3 +1,4 @@
+///src/chat/domain/entities/BotMessage.ts
 import mongoose from 'mongoose';
 
 const botMessageSchema = new mongoose.Schema({
