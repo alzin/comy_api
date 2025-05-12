@@ -7,5 +7,5 @@ export interface Message {
   chatId: string;
   createdAt: Date;
   readBy?: string[];
-  suggestedUserProfileImageUrl?: string; // صورة المستخدم المقترح كـ attribute مستقل
+  suggestedUserProfileImageUrl?: string; 
 }
