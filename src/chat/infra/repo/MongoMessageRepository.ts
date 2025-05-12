@@ -1,35 +1,35 @@
+// src/chat/infra/database/MongoMessageRepository.ts
 import mongoose from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 import { BotMessageModel, IBotMessageModel } from '../database/models/models/BotMessageModel';
 import { ChatModel, IChatModel } from '../database/models/ChatModel';
+import { UserModel, UserDocument } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/infra/database/models/UserModel';
 
 // Repository for managing messages
 export class MongoMessageRepository implements IMessageRepository {
   // Map MongoDB document to Message entity
   private mapToDomain(messageDoc: IMessageModel | IBotMessageModel): Message {
-    if ('sender' in messageDoc) {
-      // For messages (from MessageModel)
+    const baseMessage = {
+      id: messageDoc._id.toString(),
+      sender: ('sender' in messageDoc ? messageDoc.sender : messageDoc.senderId).toString(),
+      content: messageDoc.content || '',
+      chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId).toString(),
+      readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
+      createdAt: messageDoc.createdAt
+    };
+
+    if ('suggestedUser' in messageDoc && messageDoc.suggestedUser) {
+      // For botmessages with populated suggestedUser
+      const suggestedUser = messageDoc.suggestedUser as unknown as UserDocument;
       return {
-        id: messageDoc._id.toString(),
-        sender: messageDoc.sender.toString(),
-        content: messageDoc.content,
-        chatId: messageDoc.chat.toString(),
-        readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
-        createdAt: messageDoc.createdAt
-      };
-    } else {
-      // For botmessages (from BotMessageModel)
-      return {
-        id: messageDoc._id.toString(),
-        sender: messageDoc.senderId.toString(),
-        content: messageDoc.content || '',
-        chatId: messageDoc.chatId.toString(),
-        readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
-        createdAt: messageDoc.createdAt
+        ...baseMessage,
+        suggestedUserProfileImageUrl: suggestedUser.profileImageUrl || undefined
       };
     }
+
+    return baseMessage;
   }
 
   // Check if the chat is a private bot chat
@@ -86,7 +86,10 @@ export class MongoMessageRepository implements IMessageRepository {
     let messages: (IMessageModel | IBotMessageModel)[];
 
     if (isBotChat) {
-      const query = BotMessageModel.find({ chatId: chatObjectId });
+      const query = BotMessageModel.find({ chatId: chatObjectId }).populate({
+        path: 'suggestedUser',
+        select: 'profileImageUrl'
+      });
       if (page && limit) {
         const skip = (page - 1) * limit;
         query.skip(skip).limit(limit);
