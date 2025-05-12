@@ -1,4 +1,4 @@
-//src/chat/infra/database/models/models/BotMessageModel.ts
+// src/chat/infra/database/models/models/BotMessageModel.ts
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
@@ -14,16 +14,18 @@ export interface IBotMessageModel extends Document<Types.ObjectId> {
   readBy: Types.ObjectId[];
 }
 
-const botMessageSchema = new Schema<IBotMessageModel>({
-  chatId: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
-  senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  recipientId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  suggestedUser: { type: Schema.Types.ObjectId, ref: 'User' },
-  suggestionReason: { type: String },
-  status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
-  content: { type: String },
-  createdAt: { type: Date, default: Date.now },
-  readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }]
-});
+const botMessageSchema = new Schema<IBotMessageModel>(
+  {
+    chatId: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
+    senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    recipientId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    suggestedUser: { type: Schema.Types.ObjectId, ref: 'User' },
+    suggestionReason: { type: String },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+    content: { type: String },
+    readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  },
+  { timestamps: true, collection: 'botmessages' }
+);
 
 export const BotMessageModel = mongoose.model<IBotMessageModel>('BotMessage', botMessageSchema);
