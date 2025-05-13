@@ -1,3 +1,4 @@
+////src/chat/infra/services/SocketIOService.ts
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { ISocketService } from '../../domain/services/ISocketService';
@@ -26,15 +27,17 @@ export class SocketIOService implements ISocketService {
       cors: {
         origin: process.env.FRONT_URL,
         methods: ['GET', 'POST'],
+        credentials: true,
       },
     });
+    console.log('WebSocket server initialized');
   }
+  
 
   initialize(): void {
     this.io.on('connection', (socket: Socket) => {
       console.log('New client connected:', socket.id);
 
-      // المستخدم ينضم لغرفة محادثة
       socket.on('joinChat', async (chatId: string) => {
         try {
           const chat = await this.chatRepository.findById(chatId);
@@ -64,7 +67,6 @@ export class SocketIOService implements ISocketService {
           socket.emit('onlineUsers', this.onlineUsers.map((u) => u.userId));
           console.log(`User ${userId} authenticated`);
 
-          // انضمام المستخدم لكل محادثاته
           const userChats = await this.chatRepository.findByUserId(userId);
           userChats.forEach((chat) => {
             socket.join(chat.id);

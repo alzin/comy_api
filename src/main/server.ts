@@ -1,6 +1,5 @@
 import express from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
@@ -11,22 +10,31 @@ import { setupDependencies } from '../main/config/setupDependencies';
 import { setupSwagger } from '../main/config/swagger';
 import { dbConnectMiddleware } from '../presentation/middlewares/dbConnectMiddleware';
 import { setupChatRoutes } from '../chat/presentation/routes/chatRoutes';
-import { setupSocketHandlers } from '../chat/presentation/socket/socketManager';
 import { ChatController } from '../chat/presentation/controllers/ChatController';
 import { MessageController } from '../chat/presentation/controllers/MessageController';
 import { VirtualChatService } from '../chat/infra/services/VirtualChatService';
 
 dotenv.config();
 console.log('API_KEY:', process.env.API_KEY);
+
 export async function startServer() {
   const app = express();
   const server = http.createServer(app);
-  const io = new Server(server, {
-    cors: {
-      origin: process.env.FRONT_URL,
-      methods: ['GET', 'POST'],
-    },
-  });
+  console.log('HTTP server created:', server.listening);
+
+  // Define connectDB before using it
+  const connectDB = async () => {
+    try {
+      if (!process.env.DEV_MONGODB_URI) {
+        throw new Error('DEV_MONGODB_URI is not defined in .env');
+      }
+      await mongoose.connect(process.env.DEV_MONGODB_URI);
+      console.log('MongoDB connected successfully');
+    } catch (error) {
+      console.error('MongoDB connection error:', error);
+      process.exit(1);
+    }
+  };
 
   app.use(cors({
     origin: process.env.FRONT_URL,
@@ -76,25 +84,11 @@ export async function startServer() {
 
   setupRoutes(app, dependencies);
 
-  setupSocketHandlers(io, dependencies);
-
-  const connectDB = async () => {
-    try {
-      if (!process.env.DEV_MONGODB_URI) {
-        throw new Error('DEV_MONGODB_URI is not defined in .env');
-      }
-      await mongoose.connect(process.env.DEV_MONGODB_URI);
-      console.log('MongoDB connected successfully');
-    } catch (error) {
-      console.error('MongoDB connection error:', error);
-      process.exit(1);
-    }
-  };
-
   return new Promise<void>((resolve) => {
-    server.listen(CONFIG.PORT, async () => {
+    server.listen(8080, async () => {
+      console.log('Server listening on port 8080');
       await connectDB();
-      console.log(`Server is running on ${process.env.SERVER_URL}`);
+      console.log(`Server is running on http://localhost:8080`);
       resolve();
     });
   });

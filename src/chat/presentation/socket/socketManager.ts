@@ -1,3 +1,4 @@
+///src/chat/presentation/socket/socketManager.ts
 import { Server } from 'socket.io';
 
 // Set up Socket.IO handlers

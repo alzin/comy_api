@@ -109,8 +109,9 @@ export function setupDependencies(server: any) {
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
   const socketService = new SocketIOService(server, userRepository, messageRepository);
+  socketService.initialize(); // أضيفي هذا هنا
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
-  const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository); // إضافة userRepository
+  const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
   const virtualChatService = new VirtualChatService(
     socketService,
     userRepository,
