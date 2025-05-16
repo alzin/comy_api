@@ -2,7 +2,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { Message } from '../../../../chat/domain/entities/Message';
 
-// Interface for message model
 export interface IMessageModel extends Omit<Message, 'id' | 'sender' | 'chat' | 'readBy'>, Document {
   _id: mongoose.Types.ObjectId;
   sender: mongoose.Types.ObjectId;
@@ -10,7 +9,6 @@ export interface IMessageModel extends Omit<Message, 'id' | 'sender' | 'chat' | 
   readBy: mongoose.Types.ObjectId[];
 }
 
-// Message schema
 const MessageSchema: Schema<IMessageModel> = new Schema(
   {
     sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },

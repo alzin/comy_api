@@ -5,7 +5,7 @@ import { BotMessageModel, IBotMessageModel } from '../../../chat/infra/database/
 
 export class MongoBotMessageRepository implements IBotMessageRepository {
   private mapToDomain(doc: IBotMessageModel): BotMessage {
-    const populatedSender = (doc as any).senderId; // senderId بعد التعبئة
+    const populatedSender = (doc as any).senderId;
     return {
       id: doc._id.toString(),
       chatId: doc.chatId.toString(),
@@ -18,22 +18,24 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
       createdAt: doc.createdAt,
       readBy: doc.readBy.map(id => id.toString()),
       sender: populatedSender && populatedSender.name && populatedSender.email
-        ? {
-            name: populatedSender.name,
-            email: populatedSender.email
-          }
-        : undefined
+        ? { name: populatedSender.name, email: populatedSender.email }
+        : undefined,
+      isMatchCard: doc.isMatchCard || doc.suggestionReason === 'Random' || doc.suggestionReason === 'Match request',
+      suggestedUserProfileImageUrl: doc.suggestedUserProfileImageUrl
     };
   }
 
   async create(message: BotMessage): Promise<void> {
+    const isMatchCard = message.suggestionReason === 'Random' || message.suggestionReason === 'Match request';
     const newMessage = new BotMessageModel({
       ...message,
       chatId: new mongoose.Types.ObjectId(message.chatId),
       senderId: new mongoose.Types.ObjectId(message.senderId),
       recipientId: new mongoose.Types.ObjectId(message.recipientId),
       suggestedUser: message.suggestedUser ? new mongoose.Types.ObjectId(message.suggestedUser) : undefined,
-      readBy: message.readBy?.map(id => new mongoose.Types.ObjectId(id)) || []
+      readBy: message.readBy?.map(id => new mongoose.Types.ObjectId(id)) || [],
+      isMatchCard: message.isMatchCard !== undefined ? message.isMatchCard : isMatchCard,
+      suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl
     });
     await newMessage.save();
   }

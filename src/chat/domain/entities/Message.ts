@@ -4,8 +4,9 @@ export interface Message {
   sender: string;
   senderDetails?: { name: string; email: string };
   content: string;
-  chatId: string;
+  chatId: any;
   createdAt: Date;
   readBy?: string[];
-  suggestedUserProfileImageUrl?: string; 
+  suggestedUserProfileImageUrl?: string;
+  isMatchCard?: boolean; // إضافة الخاصية
 }

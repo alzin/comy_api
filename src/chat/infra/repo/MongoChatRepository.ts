@@ -47,7 +47,7 @@ export class MongoChatRepository implements IChatRepository {
       return {
         id: chatDoc._id.toString(),
         name: chatDoc.name,
-        isGroupChat: chatDoc.isGroupChat,
+        isGroup: chatDoc.isGroupChat, 
         users: chatDoc.users.map((user: PopulatedUser) => user._id.toString()),
         profileImageUrl,
         botProfileImageUrl,
@@ -60,7 +60,7 @@ export class MongoChatRepository implements IChatRepository {
     return {
       id: chatDoc._id.toString(),
       name: chatDoc.name,
-      isGroupChat: chatDoc.isGroupChat,
+      isGroup: chatDoc.isGroupChat, 
       users: chatDoc.users.map((id: mongoose.Types.ObjectId) => id.toString()),
       profileImageUrl: chatDoc.profileImageUrl || '',
       botProfileImageUrl: chatDoc.botProfileImageUrl,
@@ -86,6 +86,7 @@ export class MongoChatRepository implements IChatRepository {
   async create(chat: Chat): Promise<Chat> {
     const newChat = await ChatModel.create({
       ...chat,
+      isGroupChat: chat.isGroup, 
       users: chat.users.map(id => new mongoose.Types.ObjectId(id)),
       latestMessage: chat.latestMessage ? new mongoose.Types.ObjectId(chat.latestMessage) : null,
     });
@@ -99,6 +100,9 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async findByUserId(userId: string): Promise<Chat[]> {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return [];
+    }
     const chats = await ChatModel.find({
       users: new mongoose.Types.ObjectId(userId),
     })
@@ -108,6 +112,9 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async findByUsers(userIds: string[]): Promise<Chat | null> {
+    if (!userIds.every(id => mongoose.Types.ObjectId.isValid(id))) {
+      return null;
+    }
     const chat = await ChatModel.findOne({
       isGroupChat: false,
       users: {
@@ -121,6 +128,10 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async getPrivateChatId(userId: string, virtualUserId: string): Promise<string | null> {
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(virtualUserId)) {
+      console.log(`Invalid userId: ${userId} or virtualUserId: ${virtualUserId}`);
+      return null;
+    }
     const chat = await ChatModel.findOne({
       isGroupChat: false,
       users: {
@@ -137,11 +148,17 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async update(chatId: string, update: Partial<Chat>): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      return;
+    }
     const updateFields: any = {};
     if (update.latestMessage) {
       updateFields.latestMessage = new mongoose.Types.ObjectId(update.latestMessage);
     } else if (update.latestMessage === null) {
       updateFields.latestMessage = null;
+    }
+    if (update.isGroup !== undefined) {
+      updateFields.isGroupChat = update.isGroup; // Map isGroup to isGroupChat
     }
     await ChatModel.findByIdAndUpdate(chatId, { $set: updateFields }, { new: true }).exec();
   }

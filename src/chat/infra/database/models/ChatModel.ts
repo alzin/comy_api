@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IChatModel extends Document<Types.ObjectId> {
   _id: Types.ObjectId;
-  name: string;
+  name: string; 
   isGroupChat: boolean;
   users: Types.ObjectId[];
   profileImageUrl: string;

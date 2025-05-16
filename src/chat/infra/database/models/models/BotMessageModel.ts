@@ -1,4 +1,3 @@
-// src/chat/infra/database/models/models/BotMessageModel.ts
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
@@ -12,6 +11,8 @@ export interface IBotMessageModel extends Document<Types.ObjectId> {
   content?: string;
   createdAt: Date;
   readBy: Types.ObjectId[];
+  isMatchCard?: boolean;
+  suggestedUserProfileImageUrl?: string; 
 }
 
 const botMessageSchema = new Schema<IBotMessageModel>(
@@ -24,6 +25,8 @@ const botMessageSchema = new Schema<IBotMessageModel>(
     status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
     content: { type: String },
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    isMatchCard: { type: Boolean, default: false },
+    suggestedUserProfileImageUrl: { type: String },
   },
   { timestamps: true, collection: 'botmessages' }
 );

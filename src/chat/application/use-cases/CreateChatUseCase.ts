@@ -12,7 +12,7 @@ export class CreateChatUseCase {
   async execute(
     userIds: string[],
     name: string,
-    isGroupChat: boolean
+    isGroup: boolean // Changed from isGroupChat to isGroup
   ): Promise<Chat> {
     if (!userIds || userIds.length < 2) {
       throw new Error('At least two users are required to create a chat');
@@ -22,7 +22,7 @@ export class CreateChatUseCase {
     if (!botId) {
       throw new Error('BOT_ID is not defined in .env');
     }
-    if (isGroupChat && !userIds.includes(botId)) {
+    if (isGroup && !userIds.includes(botId)) {
       userIds.push(botId);
     }
 
@@ -48,7 +48,7 @@ export class CreateChatUseCase {
 
     if (!name) {
       const filteredUsers = usersDetails.filter((u) => u.id !== botId);
-      if (isGroupChat) {
+      if (isGroup) {
         const otherUser = filteredUsers[0];
         chatName = otherUser
           ? `${otherUser.name}, COMY オフィシャル AI`
@@ -59,7 +59,7 @@ export class CreateChatUseCase {
       }
     }
 
-    if (isGroupChat) {
+    if (isGroup) {
       const otherUserIndex = usersDetails.findIndex((u) => u.id !== botId);
       if (otherUserIndex !== -1) {
         profileImageUrl = usersDetails[otherUserIndex].profileImageUrl;
@@ -74,7 +74,7 @@ export class CreateChatUseCase {
     const chat: Chat = {
       id: new mongoose.Types.ObjectId().toString(),
       name: chatName,
-      isGroupChat,
+      isGroup, // Changed from isGroupChat to isGroup
       users: userIds,
       profileImageUrl,
       botProfileImageUrl,

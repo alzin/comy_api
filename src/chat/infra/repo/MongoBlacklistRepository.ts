@@ -1,33 +1,26 @@
+///Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/chat/infra/repo/MongoBlacklistRepository.ts
 import mongoose from 'mongoose';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
-
-const blacklistSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  blacklistedUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Blacklist = mongoose.model('Blacklist', blacklistSchema);
+import { BlacklistModel } from '../database/models/models/BlacklistModel';
 
 export class MongoBlacklistRepository implements IBlacklistRepository {
   async addToBlacklist(userId: string, blacklistedUserId: string): Promise<void> {
-    await Blacklist.create({
-      userId: new mongoose.Types.ObjectId(userId),
-      blacklistedUserId: new mongoose.Types.ObjectId(blacklistedUserId)
+    await BlacklistModel.create({
+      userId,
+      blockedUserId: blacklistedUserId,
+      blockDuration: 7 // يتماشى مع BlacklistModel.ts
     });
   }
 
   async getBlacklistedUsers(userId: string): Promise<string[]> {
-    const blacklisted = await Blacklist.find({
-      userId: new mongoose.Types.ObjectId(userId)
-    }).select('blacklistedUserId');
-    return blacklisted.map(entry => entry.blacklistedUserId.toString());
+    const blacklisted = await BlacklistModel.find({ userId }).select('blockedUserId');
+    return blacklisted.map(entry => entry.blockedUserId.toString());
   }
 
   async isBlacklisted(userId: string, blacklistedUserId: string): Promise<boolean> {
-    const exists = await Blacklist.exists({
-      userId: new mongoose.Types.ObjectId(userId),
-      blacklistedUserId: new mongoose.Types.ObjectId(blacklistedUserId)
+    const exists = await BlacklistModel.exists({
+      userId,
+      blockedUserId: blacklistedUserId
     });
     return !!exists;
   }
