@@ -11,8 +11,8 @@ export interface BotMessage {
   sender?: any;
   chat?: string;
   readBy?: string[];
-  isMatchCard?: boolean; // إضافة isMatchCard
-  suggestedUserProfileImageUrl?: string; // إضافة لحل المشكلة الثانية
+  isMatchCard?: boolean; 
+  suggestedUserProfileImageUrl?: string;
 }
 
 export interface IBotMessageRepository {

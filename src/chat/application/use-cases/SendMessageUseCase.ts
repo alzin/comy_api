@@ -47,12 +47,10 @@ export class SendMessageUseCase {
     // Emit WebSocket notification for the new message
     this.socketService.emitMessage(chatId, savedMessage);
 
-    // Check if bots are in the chat
-    const bot1Id = '681547798892749fbe910c02'; // Virtual Assistant
-    const bot2Id = '681c757539ec003942b3f97e'; // COMY オフィシャル AI
+    const bot1Id = '681547798892749fbe910c02'; 
+    const bot2Id = '681c757539ec003942b3f97e'; 
 
     if (chat.users.includes(bot1Id)) {
-      // Generate response from Virtual Assistant
       const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot1Id);
       if (botResponse) {
         const botMessage: Message = {
@@ -70,7 +68,6 @@ export class SendMessageUseCase {
     }
 
     if (chat.users.includes(bot2Id)) {
-      // Generate response from COMY オフィシャル AI
       const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot2Id);
       if (botResponse) {
         const botMessage: Message = {

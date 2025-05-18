@@ -22,7 +22,7 @@ export class GetUserChatsUseCase {
         let botProfileImageUrl: string | undefined = undefined;
         let chatName = chat.name;
 
-        if (!chat.isGroup) { // Changed from isGroupChat to isGroup
+        if (!chat.isGroup) { 
           const botUser = await this.userRepository.findById(this.comyBotId);
           profileImageUrl = botUser && botUser.profileImageUrl != null ? botUser.profileImageUrl : '';
           const otherUserId = chat.users.find((id) => id !== userId);

@@ -8,5 +8,5 @@ export interface Message {
   createdAt: Date;
   readBy?: string[];
   suggestedUserProfileImageUrl?: string;
-  isMatchCard?: boolean; // إضافة الخاصية
+  isMatchCard?: boolean;
 }

@@ -12,7 +12,7 @@ export class CreateChatUseCase {
   async execute(
     userIds: string[],
     name: string,
-    isGroup: boolean // Changed from isGroupChat to isGroup
+    isGroup: boolean
   ): Promise<Chat> {
     if (!userIds || userIds.length < 2) {
       throw new Error('At least two users are required to create a chat');
@@ -74,7 +74,7 @@ export class CreateChatUseCase {
     const chat: Chat = {
       id: new mongoose.Types.ObjectId().toString(),
       name: chatName,
-      isGroup, // Changed from isGroupChat to isGroup
+      isGroup, 
       users: userIds,
       profileImageUrl,
       botProfileImageUrl,
