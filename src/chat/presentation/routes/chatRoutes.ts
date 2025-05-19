@@ -10,7 +10,7 @@ import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
 import { BotMessageModel } from '../../../chat/infra/database/models/models/BotMessageModel';
-import { UserModel } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/infra/database/models/UserModel';
+import { UserModel } from '../../../infra/database/models/UserModel';
 
 const router = express.Router();
 
