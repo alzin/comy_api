@@ -1,4 +1,4 @@
-///Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/chat/infra/repo/MongoBlacklistRepository.ts
+///src/chat/infra/repo/MongoBlacklistRepository.ts
 import mongoose from 'mongoose';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 import { BlacklistModel } from '../database/models/models/BlacklistModel';
@@ -8,7 +8,7 @@ export class MongoBlacklistRepository implements IBlacklistRepository {
     await BlacklistModel.create({
       userId,
       blockedUserId: blacklistedUserId,
-      blockDuration: 7 // يتماشى مع BlacklistModel.ts
+      blockDuration: 7 
     });
   }
 

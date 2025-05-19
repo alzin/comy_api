@@ -4,7 +4,7 @@ import { Message } from '../../../chat/domain/entities/Message';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 import { BotMessageModel, IBotMessageModel } from '../database/models/models/BotMessageModel';
 import { ChatModel } from '../database/models/ChatModel';
-import { UserModel, UserDocument } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/infra/database/models/UserModel';
+import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 
 export class MongoMessageRepository implements IMessageRepository {
   async create(message: Message): Promise<Message> {
