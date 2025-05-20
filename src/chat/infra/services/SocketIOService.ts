@@ -1,6 +1,6 @@
-////src/chat/infra/services/SocketIOService.ts
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { Message } from '../../domain/entities/Message';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
@@ -10,6 +10,12 @@ import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
 interface UserSocket {
   userId: string;
   socketId: string;
+}
+
+interface SendMessageData {
+  chatId: string;
+  content: string;
+  senderId: string;
 }
 
 export class SocketIOService implements ISocketService {
@@ -32,7 +38,6 @@ export class SocketIOService implements ISocketService {
     });
     console.log('WebSocket server initialized');
   }
-  
 
   initialize(): void {
     this.io.on('connection', (socket: Socket) => {
@@ -78,16 +83,18 @@ export class SocketIOService implements ISocketService {
         }
       });
 
-      socket.on('sendMessage', async (data) => {
+      socket.on('sendMessage', async (data: SendMessageData) => {
         const { chatId, content, senderId } = data;
         try {
           const message: Message = await this.messageRepository.create({
+            id: new mongoose.Types.ObjectId().toString(),
             chatId,
             sender: senderId,
             content,
             readBy: [senderId],
             createdAt: new Date(),
-            id: ''
+            isMatchCard: false,
+            isSuggested: false
           });
           this.emitMessage(chatId, message);
         } catch (error) {

@@ -1,8 +1,8 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
-import { BotMessageModel, IBotMessageModel } from '../database/models/models/BotMessageModel';
+import BotMessageModel, { IBotMessageModel } from '../database/models/models/BotMessageModel';
 import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 
@@ -17,10 +17,14 @@ export class MongoMessageRepository implements IMessageRepository {
         createdAt: message.createdAt,
         readBy: message.readBy,
         isMatchCard: message.isMatchCard || false,
-        suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl
+        isSuggested: message.isSuggested || false,
+        suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl,
+        suggestedUserName: message.isMatchCard ? message.suggestedUserName : undefined,
+        suggestedUserCategory: message.isMatchCard ? message.suggestedUserCategory : undefined,
+        status: message.isMatchCard ? (message.status || 'pending') : undefined
       });
       await messageDoc.save();
-      console.log(`Created message with ID: ${message.id} in chat ${message.chatId}`);
+      console.log(`Created message with ID: ${message.id} in chat ${message.chatId}, isMatchCard: ${message.isMatchCard}, isSuggested: ${message.isSuggested}, status: ${message.status}`);
 
       return {
         id: messageDoc._id.toString(),
@@ -29,8 +33,12 @@ export class MongoMessageRepository implements IMessageRepository {
         chatId: messageDoc.chat.toString(),
         createdAt: messageDoc.createdAt || new Date(),
         readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
-        isMatchCard: messageDoc.isMatchCard || false,
-        suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl
+        isMatchCard: messageDoc.isMatchCard,
+        isSuggested: messageDoc.isSuggested,
+        suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
+        suggestedUserName: messageDoc.suggestedUserName,
+        suggestedUserCategory: messageDoc.suggestedUserCategory,
+        status: messageDoc.status
       };
     } catch (error) {
       console.error(`Error creating message for chatId: ${message.chatId}`, error);
@@ -39,31 +47,50 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   private mapToDomain(messageDoc: IMessageModel | IBotMessageModel): Message {
-    const isBotMessage = 'isMatchCard' in messageDoc;
-    const senderField = 'sender' in messageDoc ? messageDoc.sender : messageDoc.senderId;
+    if (!messageDoc) {
+      throw new Error('Message document is null');
+    }
+
+    const isBotMessage = 'senderId' in messageDoc;
+    const senderField = isBotMessage ? messageDoc.senderId : messageDoc.sender;
     const sender = senderField && typeof senderField === 'object' && 'name' in senderField
       ? (senderField as unknown as UserDocument).name
-      : 'Unknown';
+      : 'COMY オフィシャル AI';
 
-    const baseMessage = {
+    const baseMessage: Message = {
       id: messageDoc._id.toString(),
       sender,
       content: messageDoc.content || '',
-      chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId).toString(),
+      chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId)?.toString() || '',
       readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
       createdAt: messageDoc.createdAt || new Date(),
-      isMatchCard: isBotMessage
-        ? (messageDoc.isMatchCard ||
-           ('suggestionReason' in messageDoc &&
-            (messageDoc.suggestionReason === 'Random' || messageDoc.suggestionReason === 'Match request')))
-        : false
+      isMatchCard: isBotMessage ? (messageDoc as IBotMessageModel).isMatchCard : messageDoc.isMatchCard,
+      isSuggested: isBotMessage ? (messageDoc as IBotMessageModel).isSuggested : messageDoc.isSuggested,
+      suggestedUserProfileImageUrl: isBotMessage
+        ? (messageDoc as IBotMessageModel).suggestedUserProfileImageUrl
+        : messageDoc.suggestedUserProfileImageUrl,
+      suggestedUserName: isBotMessage
+        ? (messageDoc as IBotMessageModel).suggestedUserName
+        : messageDoc.isMatchCard
+        ? messageDoc.suggestedUserName
+        : undefined,
+      suggestedUserCategory: isBotMessage
+        ? (messageDoc as IBotMessageModel).suggestedUserCategory
+        : messageDoc.isMatchCard
+        ? messageDoc.suggestedUserCategory
+        : undefined,
+      status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
+        ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
+        : undefined
     };
 
-    if ('suggestedUser' in messageDoc && messageDoc.suggestedUser) {
+    if ('suggestedUser' in messageDoc && messageDoc.suggestedUser && baseMessage.isMatchCard) {
       const suggestedUser = messageDoc.suggestedUser as unknown as UserDocument;
       return {
         ...baseMessage,
-        suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl || suggestedUser.profileImageUrl || undefined
+        suggestedUserProfileImageUrl: baseMessage.suggestedUserProfileImageUrl || suggestedUser.profileImageUrl || undefined,
+        suggestedUserName: baseMessage.suggestedUserName || suggestedUser.name || 'User',
+        suggestedUserCategory: baseMessage.suggestedUserCategory || suggestedUser.category || 'unknown'
       };
     }
 
@@ -97,19 +124,19 @@ export class MongoMessageRepository implements IMessageRepository {
         .limit(limit)
         .sort({ createdAt: -1 })
         .lean()
-        .exec();
+        .exec() as IMessageModel[];
 
       const botMessages = await BotMessageModel.find({ chatId })
         .populate('senderId', 'name')
-        .populate('suggestedUser', 'name profileImageUrl')
+        .populate('suggestedUser', 'name profileImageUrl category')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
         .lean()
-        .exec();
+        .exec() as IBotMessageModel[];
 
-      const mappedMessages = messages.map((msg) => this.mapToDomain(msg));
-      const mappedBotMessages = botMessages.map((msg) => this.mapToDomain(msg));
+      const mappedMessages = messages.map((msg: IMessageModel) => this.mapToDomain(msg));
+      const mappedBotMessages = botMessages.map((msg: IBotMessageModel) => this.mapToDomain(msg));
 
       const allMessages = [...mappedMessages, ...mappedBotMessages].sort(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime()

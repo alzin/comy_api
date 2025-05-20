@@ -158,7 +158,7 @@ export class MongoChatRepository implements IChatRepository {
       updateFields.latestMessage = null;
     }
     if (update.isGroup !== undefined) {
-      updateFields.isGroupChat = update.isGroup; // Map isGroup to isGroupChat
+      updateFields.isGroupChat = update.isGroup;
     }
     await ChatModel.findByIdAndUpdate(chatId, { $set: updateFields }, { new: true }).exec();
   }

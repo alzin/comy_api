@@ -9,7 +9,7 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
-import { BotMessageModel } from '../../../chat/infra/database/models/models/BotMessageModel';
+import BotMessageModel from '../../../chat/infra/database/models/models/BotMessageModel';
 import { UserModel } from '../../../infra/database/models/UserModel';
 
 const router = express.Router();
@@ -58,6 +58,12 @@ export const setupChatRoutes = (
         return res.status(400).json({ message: 'Suggestion already processed' });
       }
 
+      const chatId = message.chatId?.toString();
+      if (!chatId) {
+        console.error(`ChatId is null for suggestion message ${messageId}`);
+        return res.status(500).json({ message: 'Invalid chat ID' });
+      }
+
       console.log(`User ${userId} responded to suggestion ${messageId} with ${response}`);
       await botMessageRepo.updateSuggestionStatus(messageId, response === 'マッチを希望する' ? 'accepted' : 'rejected');
 
@@ -65,14 +71,15 @@ export const setupChatRoutes = (
         id: new mongoose.Types.ObjectId().toString(),
         sender: userId,
         content: response,
-        chatId: message.chatId.toString(),
+        chatId,
         createdAt: new Date(),
         readBy: [userId],
-        isMatchCard: false
+        isMatchCard: false,
+        isSuggested: false
       };
       await dependencies.messageRepository.create(userResponseMessage);
-      socketService.emitMessage(message.chatId.toString(), userResponseMessage);
-      console.log(`Created user response message: ${userResponseMessage.id} in chat ${message.chatId}`);
+      socketService.emitMessage(chatId, userResponseMessage);
+      console.log(`Created user response message: ${userResponseMessage.id} in chat ${chatId}`);
 
       if (response === 'マッチを希望しない') {
         await blacklistRepo.addToBlacklist(userId, message.suggestedUser._id.toString());
@@ -90,11 +97,12 @@ export const setupChatRoutes = (
             id: new mongoose.Types.ObjectId().toString(),
             senderId: dependencies.virtualUserId,
             content,
-            chatId: message.chatId.toString(),
+            chatId,
             createdAt: new Date(),
             readBy: [dependencies.virtualUserId],
             isMatchCard: false,
-            suggestedUserProfileImageUrl: message.suggestedUser.profileImageUrl || ''
+            isSuggested: false,
+            status: 'pending'
           };
           await botMessageRepo.create(rejectBotMessage);
 
@@ -103,14 +111,14 @@ export const setupChatRoutes = (
             sender: dependencies.virtualUserId,
             senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
             content: rejectBotMessage.content || '',
-            chatId: rejectBotMessage.chatId,
-            createdAt: rejectBotMessage.createdAt!, 
+            chatId,
+            createdAt: rejectBotMessage.createdAt!,
             readBy: rejectBotMessage.readBy,
-            isMatchCard: rejectBotMessage.isMatchCard,
-            suggestedUserProfileImageUrl: rejectBotMessage.suggestedUserProfileImageUrl
+            isMatchCard: rejectBotMessage.isMatchCard ?? false,
+            isSuggested: rejectBotMessage.isSuggested ?? false
           };
-          socketService.emitMessage(message.chatId.toString(), rejectMessage);
-          console.log(`Created rejection bot message: ${rejectBotMessage.id} in chat ${message.chatId}`);
+          socketService.emitMessage(chatId, rejectMessage);
+          console.log(`Created rejection bot message: ${rejectBotMessage.id} in chat ${chatId}`);
         }
 
         return res.status(200).json({ message: rejectMessages });
@@ -120,11 +128,12 @@ export const setupChatRoutes = (
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
         content: `${message.suggestedUser.name}さんにマッチの希望を送りました。`,
-        chatId: message.chatId.toString(),
+        chatId,
         createdAt: new Date(),
         readBy: [dependencies.virtualUserId],
         isMatchCard: false,
-        suggestedUserProfileImageUrl: message.suggestedUser.profileImageUrl || ''
+        isSuggested: false, // Set to false for bot response to suggestion
+        status: 'pending'
       };
       await botMessageRepo.create(confirmBotMessage);
       const confirmMessage: Message = {
@@ -132,17 +141,16 @@ export const setupChatRoutes = (
         sender: dependencies.virtualUserId,
         senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
         content: confirmBotMessage.content || '',
-        chatId: confirmBotMessage.chatId,
-        createdAt: confirmBotMessage.createdAt!, 
+        chatId,
+        createdAt: confirmBotMessage.createdAt!,
         readBy: confirmBotMessage.readBy,
-        isMatchCard: confirmBotMessage.isMatchCard,
-        suggestedUserProfileImageUrl: confirmBotMessage.suggestedUserProfileImageUrl
+        isMatchCard: confirmBotMessage.isMatchCard ?? false,
+        isSuggested: confirmBotMessage.isSuggested ?? false
       };
-      socketService.emitMessage(message.chatId.toString(), confirmMessage);
-      console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${message.chatId}`);
+      socketService.emitMessage(chatId, confirmMessage);
+      console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      let suggestedUserChatId = await chatRepo.getPrivateChatId(message.suggestedUser._id.toString(), dependencies.virtualUserId);
-      console.log(`Fetched suggestedUserChatId: ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()} and virtualUserId ${dependencies.virtualUserId}`);
+      let suggestedUserChatId: string | null = await chatRepo.getPrivateChatId(message.suggestedUser._id.toString(), dependencies.virtualUserId);
       if (!suggestedUserChatId) {
         console.log(`Creating new chat for suggested user ${message.suggestedUser._id.toString()} with virtual user ${dependencies.virtualUserId}`);
         const newChat = await dependencies.chatService.createChatUseCase.execute(
@@ -154,10 +162,17 @@ export const setupChatRoutes = (
         console.log(`Created new chat: ${suggestedUserChatId}`);
       }
 
+      if (!suggestedUserChatId) {
+        console.error(`Failed to obtain suggestedUserChatId for user ${message.suggestedUser._id.toString()}`);
+        return res.status(500).json({ message: 'Failed to create chat' });
+      }
+
       const suggestingUser = await UserModel.findById(userId).select('profileImageUrl name category').exec();
       const suggestedUserProfileImageUrl = suggestingUser?.profileImageUrl || '';
+      const suggestedUserName = req.user?.name || 'User';
+      const suggestedUserCategory = suggestingUser?.category || 'unknown';
 
-      const matchMessageContent = `${message.suggestedUser.name}さん、おはようございます！\n${message.suggestedUser.name}さんに${suggestingUser?.category || 'unknown'}カテゴリーの${req.user.name}さんからマッチの希望が届いています。\nお繋がりを希望しますか？`;
+      const matchMessageContent = `${message.suggestedUser.name}さん、おはようございます！\n${message.suggestedUser.name}さんに${suggestedUserCategory}カテゴリーの${suggestedUserName}さんからマッチの希望が届いています。\nお繋がりを希望しますか？`;
       const matchBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
@@ -170,7 +185,10 @@ export const setupChatRoutes = (
         suggestionReason: 'Match request',
         status: 'pending',
         isMatchCard: true,
-        suggestedUserProfileImageUrl
+        isSuggested: false,
+        suggestedUserProfileImageUrl,
+        suggestedUserName,
+        suggestedUserCategory
       };
 
       const existingMessage = await BotMessageModel.findOne({
@@ -196,13 +214,14 @@ export const setupChatRoutes = (
         senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
         content: matchMessageContent,
         chatId: suggestedUserChatId,
-        createdAt: matchBotMessage.createdAt!, 
-        readBy: [dependencies.virtualUserId],
-        isMatchCard: true,
-        suggestedUserProfileImageUrl
+        createdAt: matchBotMessage.createdAt!,
+        readBy: matchBotMessage.readBy,
+        isMatchCard: matchBotMessage.isMatchCard ?? false,
+        isSuggested: matchBotMessage.isSuggested ?? false
       };
 
-      socketService.emitMessage(matchMessage.chatId, matchMessage);
+      console.log(`Emitting match message with ID: ${matchMessage.id}, isMatchCard: ${matchMessage.isMatchCard}, isSuggested: ${matchMessage.isSuggested}, status: ${matchMessage.status}`);
+      socketService.emitMessage(suggestedUserChatId, matchMessage);
       console.log(`Emitted match message ${matchBotMessage.id} to chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
       res.status(200).json({
         message: `${message.suggestedUser.name}さんにマッチの希望を送りました。`
@@ -235,6 +254,12 @@ export const setupChatRoutes = (
         return res.status(400).json({ message: 'Match request already processed' });
       }
 
+      const chatId = message.chatId?.toString();
+      if (!chatId) {
+        console.error(`ChatId is null for match message ${messageId}`);
+        return res.status(500).json({ message: 'Invalid chat ID' });
+      }
+
       console.log(`User ${userId} responded to match request ${messageId} with ${response}`);
       await botMessageRepo.updateSuggestionStatus(messageId, response === 'マッチを希望する' ? 'accepted' : 'rejected');
 
@@ -242,14 +267,15 @@ export const setupChatRoutes = (
         id: new mongoose.Types.ObjectId().toString(),
         sender: userId,
         content: response,
-        chatId: message.chatId.toString(),
+        chatId,
         createdAt: new Date(),
         readBy: [userId],
-        isMatchCard: false
+        isMatchCard: false,
+        isSuggested: false
       };
       await dependencies.messageRepository.create(userResponseMessage);
-      socketService.emitMessage(message.chatId.toString(), userResponseMessage);
-      console.log(`Created user response message: ${userResponseMessage.id} in chat ${message.chatId}`);
+      socketService.emitMessage(chatId, userResponseMessage);
+      console.log(`Created user response message: ${userResponseMessage.id} in chat ${chatId}`);
 
       if (response === 'マッチを希望しない') {
         await blacklistRepo.addToBlacklist(userId, message.suggestedUser._id.toString());
@@ -267,11 +293,12 @@ export const setupChatRoutes = (
             id: new mongoose.Types.ObjectId().toString(),
             senderId: dependencies.virtualUserId,
             content,
-            chatId: message.chatId.toString(),
+            chatId,
             createdAt: new Date(),
             readBy: [dependencies.virtualUserId],
             isMatchCard: false,
-            suggestedUserProfileImageUrl: message.suggestedUser.profileImageUrl || ''
+            isSuggested: false,
+            status: 'pending'
           };
           await botMessageRepo.create(rejectBotMessage);
 
@@ -280,14 +307,14 @@ export const setupChatRoutes = (
             sender: dependencies.virtualUserId,
             senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
             content: rejectBotMessage.content || '',
-            chatId: rejectBotMessage.chatId,
-            createdAt: rejectBotMessage.createdAt!, 
+            chatId,
+            createdAt: rejectBotMessage.createdAt!,
             readBy: rejectBotMessage.readBy,
-            isMatchCard: rejectBotMessage.isMatchCard,
-            suggestedUserProfileImageUrl: rejectBotMessage.suggestedUserProfileImageUrl
+            isMatchCard: rejectBotMessage.isMatchCard ?? false,
+            isSuggested: rejectBotMessage.isSuggested ?? false
           };
-          socketService.emitMessage(message.chatId.toString(), rejectMessage);
-          console.log(`Created rejection bot message: ${rejectBotMessage.id} in chat ${message.chatId}`);
+          socketService.emitMessage(chatId, rejectMessage);
+          console.log(`Created rejection bot message: ${rejectBotMessage.id} in chat ${chatId}`);
         }
 
         return res.status(200).json({ message: rejectMessages });
@@ -297,11 +324,12 @@ export const setupChatRoutes = (
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
         content: `${message.suggestedUser.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`,
-        chatId: message.chatId.toString(),
+        chatId,
         createdAt: new Date(),
         readBy: [dependencies.virtualUserId],
         isMatchCard: false,
-        suggestedUserProfileImageUrl: message.suggestedUser.profileImageUrl || ''
+        isSuggested: false,
+        status: 'pending'
       };
       await botMessageRepo.create(confirmBotMessage);
       const confirmMessage: Message = {
@@ -309,14 +337,14 @@ export const setupChatRoutes = (
         sender: dependencies.virtualUserId,
         senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
         content: confirmBotMessage.content || '',
-        chatId: confirmBotMessage.chatId,
-        createdAt: confirmBotMessage.createdAt!, 
+        chatId,
+        createdAt: confirmBotMessage.createdAt!,
         readBy: confirmBotMessage.readBy,
-        isMatchCard: confirmBotMessage.isMatchCard,
-        suggestedUserProfileImageUrl: confirmBotMessage.suggestedUserProfileImageUrl
+        isMatchCard: confirmBotMessage.isMatchCard ?? false,
+        isSuggested: confirmBotMessage.isSuggested ?? false
       };
-      socketService.emitMessage(message.chatId.toString(), confirmMessage);
-      console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${message.chatId}`);
+      socketService.emitMessage(chatId, confirmMessage);
+      console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
       const botId = process.env.BOT_ID;
       if (!botId) {
@@ -327,7 +355,7 @@ export const setupChatRoutes = (
       const suggestedUserName = message.suggestedUser.name || 'User';
       const newChat = await dependencies.chatService.createChatUseCase.execute(
         users,
-        `Group Chat with ${req.user.name}, ${suggestedUserName}, and Virtual Assistant`,
+        `Group Chat with ${req.user?.name || 'User'}, ${suggestedUserName}, and Virtual Assistant`,
         true
       );
 
@@ -348,7 +376,8 @@ export const setupChatRoutes = (
           createdAt: new Date(),
           readBy: [botId],
           isMatchCard: false,
-          suggestedUserProfileImageUrl: ''
+          isSuggested: false,
+          status: 'pending'
         };
         await botMessageRepo.create(groupBotMessage);
 
@@ -357,22 +386,21 @@ export const setupChatRoutes = (
           sender: botId,
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
           content: groupBotMessage.content || '',
-          chatId: groupBotMessage.chatId,
+          chatId: newChat.id,
           createdAt: groupBotMessage.createdAt!,
           readBy: groupBotMessage.readBy,
-          isMatchCard: groupBotMessage.isMatchCard,
-          suggestedUserProfileImageUrl: groupBotMessage.suggestedUserProfileImageUrl
+          isMatchCard: groupBotMessage.isMatchCard ?? false,
+          isSuggested: groupBotMessage.isSuggested ?? false
         };
         socketService.emitMessage(newChat.id, groupMessage);
         console.log(`Created group bot message: ${groupBotMessage.id} in chat ${newChat.id}`);
       }
 
-      const notifyUserId = message.suggestedUser._id.toString();
-      let notifyChatId = await chatRepo.getPrivateChatId(notifyUserId, dependencies.virtualUserId);
+      let notifyChatId: string | null = await chatRepo.getPrivateChatId(message.suggestedUser._id.toString(), dependencies.virtualUserId);
       if (!notifyChatId) {
-        console.log(`Creating new chat for user ${notifyUserId} with virtual user ${dependencies.virtualUserId}`);
+        console.log(`Creating new chat for user ${message.suggestedUser._id.toString()} with virtual user ${dependencies.virtualUserId}`);
         const newChat = await dependencies.chatService.createChatUseCase.execute(
-          [notifyUserId, dependencies.virtualUserId],
+          [message.suggestedUser._id.toString(), dependencies.virtualUserId],
           `Private Chat with Virtual Assistant`,
           false
         );
@@ -380,10 +408,12 @@ export const setupChatRoutes = (
         console.log(`Created new chat: ${notifyChatId}`);
       }
 
-      const suggestingUser = await UserModel.findById(userId).select('profileImageUrl').exec();
-      const suggestedUserProfileImageUrl = suggestingUser?.profileImageUrl || '';
+      if (!notifyChatId) {
+        console.error(`Failed to obtain notifyChatId for user ${message.suggestedUser._id.toString()}`);
+        return res.status(500).json({ message: 'Failed to create notification chat' });
+      }
 
-      const notificationMessageContent = `${req.user.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`;
+      const notificationMessageContent = `${req.user?.name || 'User'}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`;
       const notifyBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
@@ -392,7 +422,8 @@ export const setupChatRoutes = (
         createdAt: new Date(),
         readBy: [dependencies.virtualUserId],
         isMatchCard: false,
-        suggestedUserProfileImageUrl
+        isSuggested: false,
+        status: 'pending'
       };
 
       await botMessageRepo.create(notifyBotMessage);
@@ -405,13 +436,13 @@ export const setupChatRoutes = (
         content: notificationMessageContent,
         chatId: notifyChatId,
         createdAt: notifyBotMessage.createdAt!,
-        readBy: [dependencies.virtualUserId],
-        isMatchCard: false,
-        suggestedUserProfileImageUrl
+        readBy: notifyBotMessage.readBy,
+        isMatchCard: notifyBotMessage.isMatchCard ?? false,
+        isSuggested: notifyBotMessage.isSuggested ?? false
       };
 
-      socketService.emitMessage(notifyMessage.chatId, notifyMessage);
-      console.log(`Emitted notification to ${notifyUserId} for new chat ${newChat.id}`);
+      socketService.emitMessage(notifyChatId, notifyMessage);
+      console.log(`Emitted notification to ${message.suggestedUser._id.toString()} for new chat ${newChat.id}`);
 
       res.status(200).json({
         message: `${message.suggestedUser.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`,

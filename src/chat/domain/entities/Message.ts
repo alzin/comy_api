@@ -1,4 +1,3 @@
-// src/chat/domain/entities/Message.ts
 export interface Message {
   id: string;
   sender: string;
@@ -6,7 +5,11 @@ export interface Message {
   content: string;
   chatId: any;
   createdAt: Date;
-  readBy?: string[];
+  readBy: string[];
+  isMatchCard: boolean;
+  isSuggested: boolean;
   suggestedUserProfileImageUrl?: string;
-  isMatchCard?: boolean;
+  suggestedUserName?: string;
+  suggestedUserCategory?: string;
+  status?: 'pending' | 'accepted' | 'rejected';
 }

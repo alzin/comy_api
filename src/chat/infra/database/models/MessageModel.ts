@@ -1,22 +1,35 @@
-////src/chat/infra/database/models/MessageModel.ts
-import mongoose, { Schema, Document } from 'mongoose';
-import { Message } from '../../../../chat/domain/entities/Message';
+import mongoose, { Schema, Document, Types } from 'mongoose';
+import { UserDocument } from '../../../../infra/database/models/UserModel';
 
-export interface IMessageModel extends Omit<Message, 'id' | 'sender' | 'chat' | 'readBy'>, Document {
-  _id: mongoose.Types.ObjectId;
-  sender: mongoose.Types.ObjectId;
-  chat: mongoose.Types.ObjectId;
-  readBy: mongoose.Types.ObjectId[];
+export interface IMessageModel extends Document<Types.ObjectId> {
+  _id: Types.ObjectId;
+  sender: Types.ObjectId | UserDocument;
+  content: string;
+  chat: Types.ObjectId;
+  createdAt: Date;
+  readBy: Types.ObjectId[];
+  isMatchCard: boolean;
+  isSuggested: boolean;
+  suggestedUserProfileImageUrl?: string;
+  suggestedUserName?: string;
+  suggestedUserCategory?: string;
+  status?: 'pending' | 'accepted' | 'rejected';
 }
 
-const MessageSchema: Schema<IMessageModel> = new Schema(
+const messageSchema = new Schema<IMessageModel>(
   {
     sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     content: { type: String, required: true },
     chat: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    isMatchCard: { type: Boolean, default: false, required: true },
+    isSuggested: { type: Boolean, default: false, required: true },
+    suggestedUserProfileImageUrl: { type: String },
+    suggestedUserName: { type: String },
+    suggestedUserCategory: { type: String },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected'] }
   },
   { timestamps: true, collection: 'messages' }
 );
 
-export default mongoose.model<IMessageModel>('Message', MessageSchema);
+export default mongoose.model<IMessageModel>('Message', messageSchema);

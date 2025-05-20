@@ -1,4 +1,3 @@
-///src/chat/application/use-cases/SendMessageUseCase.ts
 import mongoose from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
@@ -39,6 +38,8 @@ export class SendMessageUseCase {
       chatId,
       readBy: [senderId],
       createdAt: new Date(),
+      isMatchCard: false,
+      isSuggested: false
     };
 
     const savedMessage = await this.messageRepository.create(message);
@@ -47,8 +48,8 @@ export class SendMessageUseCase {
     // Emit WebSocket notification for the new message
     this.socketService.emitMessage(chatId, savedMessage);
 
-    const bot1Id = '681547798892749fbe910c02'; 
-    const bot2Id = '681c757539ec003942b3f97e'; 
+    const bot1Id = '681547798892749fbe910c02';
+    const bot2Id = '681c757539ec003942b3f97e';
 
     if (chat.users.includes(bot1Id)) {
       const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot1Id);
@@ -60,6 +61,9 @@ export class SendMessageUseCase {
           chatId,
           readBy: [bot1Id],
           createdAt: new Date(),
+          isMatchCard: false,
+          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
+          isSuggested: false
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
         await this.chatRepository.update(chatId, { latestMessage: savedBotMessage.id });
@@ -77,6 +81,9 @@ export class SendMessageUseCase {
           chatId,
           readBy: [bot2Id],
           createdAt: new Date(),
+          isMatchCard: false,
+          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
+          isSuggested: false
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
         await this.chatRepository.update(chatId, { latestMessage: savedBotMessage.id });

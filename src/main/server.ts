@@ -22,7 +22,6 @@ export async function startServer() {
   const server = http.createServer(app);
   console.log('HTTP server created:', server.listening);
 
-  // Define connectDB before using it
   const connectDB = async () => {
     try {
       if (!process.env.DEV_MONGODB_URI) {
@@ -59,7 +58,6 @@ export async function startServer() {
   );
   await virtualChatService.initialize();
 
-  // Store virtualChatService in app.locals.dependencies
   app.locals.dependencies = {
     ...dependencies,
     virtualChatService

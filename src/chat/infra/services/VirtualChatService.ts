@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
-import { IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
+import { BotMessage, IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
+import BotMessageModel from '../../../chat/infra/database/models/models/BotMessageModel';
+import { Message } from '../../../chat/domain/entities/Message';
 
 export class VirtualChatService {
   private virtualUserId: string = '';
@@ -37,7 +39,7 @@ export class VirtualChatService {
         id: new mongoose.Types.ObjectId().toString(),
         email: virtualUserEmail,
         password: 'virtual_password',
-        name: 'Virtual Bot',
+        name: 'COMY オフィシャル AI',
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
@@ -62,41 +64,16 @@ export class VirtualChatService {
 
     try {
       const activeUsers = await this.userRepository.findActiveUsers();
-      console.log(`Found ${activeUsers.length} active users:`, activeUsers.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        subscriptionStatus: u.subscriptionStatus,
-        subscriptionPlan: u.subscriptionPlan,
-        currentPeriodEnd: u.currentPeriodEnd,
-        profileImageUrl: u.profileImageUrl,
-        isEmailVerified: u.isEmailVerified,
-        isOnline: u.isOnline,
-        lastActive: u.lastActive
-      })));
+      console.log(`Found ${activeUsers.length} active users`);
 
       const validUsers = activeUsers.filter(u => {
         const isValid = u.id && mongoose.Types.ObjectId.isValid(u.id) && u.subscriptionStatus === SubscriptionStatus.Active;
         if (!isValid) {
-          console.log(`Invalid user filtered out:`, {
-            id: u.id,
-            isValidId: u.id && mongoose.Types.ObjectId.isValid(u.id),
-            subscriptionStatus: u.subscriptionStatus
-          });
+          console.log(`Invalid user filtered out:`, { id: u.id, subscriptionStatus: u.subscriptionStatus });
         }
         return isValid;
       });
-      console.log(`Found ${validUsers.length} valid active users:`, validUsers.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        isEmailVerified: u.isEmailVerified,
-        subscriptionPlan: u.subscriptionPlan,
-        currentPeriodEnd: u.currentPeriodEnd,
-        profileImageUrl: u.profileImageUrl,
-        isOnline: u.isOnline,
-        lastActive: u.lastActive
-      })));
+      console.log(`Found ${validUsers.length} valid active users`);
 
       if (validUsers.length < 2) {
         console.log('Not enough valid active users to make suggestions');
@@ -108,66 +85,90 @@ export class VirtualChatService {
       const suggestedUsers = new Set<string>();
       let suggestionCount = 0;
 
-      // Helper function to create a suggestion
       const createSuggestion = async (user: User, suggestedUser: User) => {
         const pairKey = `${user.id}-${suggestedUser.id}`;
         suggestedPairs.add(pairKey);
         suggestedUsers.add(suggestedUser.id!);
         suggestionCount++;
 
-        console.log(`Suggesting user: ${suggestedUser.name} (ID: ${suggestedUser.id}, Email: ${suggestedUser.email}, Category: ${suggestedUser.category}, SubscriptionPlan: ${suggestedUser.subscriptionPlan}, ProfileImage: ${suggestedUser.profileImageUrl || 'none'}) to ${user.name} (ID: ${user.id})`);
+        console.log(`Suggesting user: ${suggestedUser.name} (ID: ${suggestedUser.id}, Category: ${suggestedUser.category}) to ${user.name} (ID: ${user.id})`);
 
         let chat = await this.chatRepository.findByUsers([user.id!, this.virtualUserId]);
         if (!chat) {
           console.log(`Creating new private chat for user ${user.id} with virtual user`);
           chat = await this.createChatUseCase.execute(
             [user.id!, this.virtualUserId],
-            'Private Chat',
+            'Private Chat with Virtual Assistant',
             false
           );
           console.log(`Created chat with ID: ${chat.id}`);
         }
 
-        const defaultProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
-        const profileImageUrl = suggestedUser.profileImageUrl || defaultProfileImageUrl;
-
-        if (!suggestedUser.profileImageUrl) {
-          console.warn(`Missing profileImageUrl for user: ${suggestedUser.name} (ID: ${suggestedUser.id}, Email: ${suggestedUser.email})`);
+        if (!chat.id) {
+          console.error(`Chat ID is null for user ${user.id}`);
+          return;
         }
 
-        const suggestionMessage = {
+        const defaultProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+        const profileImageUrl = suggestedUser.profileImageUrl || defaultProfileImageUrl;
+        const suggestedUserName = suggestedUser.name || 'User';
+        const suggestedUserCategory = suggestedUser.category || 'unknown';
+
+        const suggestionContent = `${user.name || 'User'}さん、おはようございます！\n今週は${user.name || 'User'}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは“自社の強みテーブル”です！\nお繋がりを希望しますか？`;
+
+        const suggestionMessage: BotMessage = {
           id: new mongoose.Types.ObjectId().toString(),
           chatId: chat.id,
           senderId: this.virtualUserId,
           recipientId: user.id!,
           suggestedUser: suggestedUser.id!,
           suggestionReason: 'Random',
-          status: 'pending' as const,
+          status: 'pending',
+          content: suggestionContent,
           createdAt: new Date(),
-          content: `${user.name}さん、おはようございます！\n今週は${user.name}さんにおすすめの方で${suggestedUser.category || 'user'}カテゴリーの${suggestedUser.name}さんをご紹介します！\n${suggestedUser.category || 'user'}カテゴリーの${suggestedUser.name}さんの強みは“自社の強みテーブル”です！\nお繋がりを希望しますか？`,
-          readBy: [],
+          readBy: [this.virtualUserId],
           isMatchCard: true,
-          suggestedUserProfileImageUrl: profileImageUrl
+          isSuggested: true, // Explicitly true for friend suggestions
+          suggestedUserProfileImageUrl: profileImageUrl,
+          suggestedUserName,
+          suggestedUserCategory
         };
 
-        await this.botMessageRepository.create(suggestionMessage);
-        console.log(`Saved suggestion message with ID: ${suggestionMessage.id} in chat ${chat.id} with profileImageUrl: ${suggestionMessage.suggestedUserProfileImageUrl} for user ${user.name} (ID: ${user.id})`);
+        const existingMessage = await BotMessageModel.findOne({
+          chatId: chat.id,
+          senderId: this.virtualUserId,
+          recipientId: user.id,
+          suggestedUser: suggestedUser.id,
+          status: 'pending'
+        });
+        if (existingMessage) {
+          console.log(`Duplicate suggestion found for user ${user.id} suggesting ${suggestedUser.id}, skipping...`);
+          return;
+        }
 
-        this.socketService.emitMessage(chat.id, {
+        await this.botMessageRepository.create(suggestionMessage);
+        console.log(`Saved suggestion message with ID: ${suggestionMessage.id} in chat ${chat.id}`);
+
+        const message: Message = {
           id: suggestionMessage.id,
           sender: this.virtualUserId,
-          senderDetails: { name: 'Virtual Bot', email: 'virtual@chat.com' },
-          content: suggestionMessage.content,
+          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
+          content: suggestionMessage.content || '',
           chatId: chat.id,
-          readBy: [],
-          createdAt: new Date(),
-          isMatchCard: true,
-          suggestedUserProfileImageUrl: profileImageUrl
-        });
-        console.log(`Emitted suggestion message ${suggestionMessage.id} to chat ${chat.id} for user ${user.id}`);
+          createdAt: suggestionMessage.createdAt!,
+          readBy: suggestionMessage.readBy,
+          isMatchCard: suggestionMessage.isMatchCard ?? false,
+          isSuggested: suggestionMessage.isSuggested ?? false,
+          suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl,
+          suggestedUserName: suggestionMessage.suggestedUserName,
+          suggestedUserCategory: suggestionMessage.suggestedUserCategory,
+          status: suggestionMessage.status
+        };
+
+        this.socketService.emitMessage(chat.id, message);
+        console.log(`Emitted suggestion message ${message.id} to chat ${chat.id}`);
       };
 
-      // Suggest a friend for every active user
       for (const user of validUsers) {
         if (!user.id || user.id === this.virtualUserId) {
           console.log(`Skipping user with ID ${user.id} (invalid or virtual user)`);
@@ -176,11 +177,9 @@ export class VirtualChatService {
 
         console.log(`Processing suggestion for ${user.name} (ID: ${user.id})`);
 
-        // Get blacklisted users for the current user
         const blacklistedUserIds = await this.blacklistRepository.getBlacklistedUsers(user.id);
         console.log(`Blacklisted users for ${user.name} (ID: ${user.id}):`, blacklistedUserIds);
 
-        // Find a random valid user (excluding self, virtual user, already suggested users, and blacklisted users)
         const possibleSuggestions = validUsers.filter(u =>
           u.id &&
           u.id !== user.id &&
@@ -191,7 +190,6 @@ export class VirtualChatService {
 
         if (possibleSuggestions.length === 0) {
           console.log(`No possible suggestions for ${user.name} (ID: ${user.id}) after filtering blacklisted users`);
-          // Fallback: Allow suggesting a previously suggested user if no other options (still exclude blacklisted users)
           const fallbackSuggestions = validUsers.filter(u =>
             u.id &&
             u.id !== user.id &&
@@ -215,11 +213,9 @@ export class VirtualChatService {
           continue;
         }
 
-        // Shuffle to randomize
         const shuffledSuggestions = this.shuffle([...possibleSuggestions]);
-        const suggestedUser = shuffledSuggestions[0]; // Pick the first one
+        const suggestedUser = shuffledSuggestions[0];
 
-        // Verify the suggested user exists in the database
         const suggestedUserExists = await this.userRepository.findById(suggestedUser.id);
         if (!suggestedUserExists) {
           console.log(`Suggested user ${suggestedUser.name} (ID: ${suggestedUser.id}) does not exist in database, skipping...`);
@@ -230,11 +226,6 @@ export class VirtualChatService {
       }
 
       console.log(`Friend suggestion process completed. Total suggestions made: ${suggestionCount}. Users without suggestions: ${validUsers.length - suggestionCount}`);
-      if (suggestionCount < validUsers.length) {
-        console.log(`Users without suggestions:`, validUsers
-          .filter(u => !suggestedPairs.has(u.id!) && !suggestedPairs.has(`${u.id}-*`))
-          .map(u => ({ id: u.id, name: u.name, email: u.email })));
-      }
     } catch (error) {
       console.error('Error in suggestFriends:', error);
       throw error;
@@ -242,10 +233,9 @@ export class VirtualChatService {
   }
 
   async generateBotResponse(chatId: string, content: string, botId: string): Promise<string | null> {
-    const bot1Id = '681547798892749fbe910c02'; // COMY オフィシャル AI
-    const bot2Id = '681c757539ec003942b3f97e'; // COMY オフィシャル AI
+    const bot1Id = '681547798892749fbe910c02';
+    const bot2Id = '681c757539ec003942b3f97e';
 
-    // Check if the chat is a group chat
     const chat = await this.chatRepository.findById(chatId);
     if (!chat) {
       console.log(`Chat ${chatId} not found for bot response`);
