@@ -6,7 +6,7 @@ import { log } from "console";
 export class AuthController {
   constructor(private authUseCase: IAuthUseCase) {}
 
-  private setTokenCookie(res: Response, name: string, token: string, maxAge?: number): void {
+  private setTokenCookie(res: Response, name: string, token: string): void {
     const ONE_MINUTE_IN_MS = 60 * 1000;
     const ONE_HOUR_IN_MS = 60 * ONE_MINUTE_IN_MS;
     const ONE_DAY_IN_MS = 24 * ONE_HOUR_IN_MS;
@@ -16,7 +16,10 @@ export class AuthController {
       httpOnly: true,
       secure: CONFIG.NODE_ENV === "production",
       sameSite: "none",
-      maxAge: maxAge || (name === CONFIG.REFRESH_TOKEN_COOKIE_NAME ? ONE_WEEK_IN_MS : ONE_DAY_IN_MS),
+      maxAge:
+        name === CONFIG.REFRESH_TOKEN_COOKIE_NAME
+          ? ONE_WEEK_IN_MS 
+          : ONE_DAY_IN_MS,
     });
   }
 
@@ -25,7 +28,8 @@ export class AuthController {
       const { email, name, category, password } = req.body;
       await this.authUseCase.register(email, name, category, password);
       res.status(201).json({
-        message: "User registered successfully. Please check your email for verification.",
+        message:
+          "User registered successfully. Please check your email for verification.",
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -45,24 +49,13 @@ export class AuthController {
         return;
       }
 
-      const { accessToken, refreshToken, email } = await this.authUseCase.verifyEmail(token);
+      const { accessToken, refreshToken } =
+        await this.authUseCase.verifyEmail(token);
 
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, accessToken);
       this.setTokenCookie(res, CONFIG.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
 
-      const userData = { email, verified: true };
-      res.cookie('userData', JSON.stringify(userData), {
-        httpOnly: false,
-        secure: CONFIG.NODE_ENV === "production",
-        sameSite: "none",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
-      res.status(200).json({
-        message: "Email verified successfully",
-        redirect: `${CONFIG.FRONT_URL}/terms-of-use`,
-        accessToken,
-      });
+      res.status(200).redirect(`${CONFIG.FRONT_URL}/terms-of-use`);
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Invalid or expired token") {
@@ -79,23 +72,15 @@ export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const { accessToken, refreshToken } = await this.authUseCase.login(email, password);
+      const { accessToken, refreshToken } = await this.authUseCase.login(
+        email,
+        password,
+      );
 
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, accessToken);
       this.setTokenCookie(res, CONFIG.REFRESH_TOKEN_COOKIE_NAME, refreshToken);
 
-      const userData = { email, loggedIn: true };
-      res.cookie('userData', JSON.stringify(userData), {
-        httpOnly: false,
-        secure: CONFIG.NODE_ENV === "production",
-        sameSite: "none",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
-      res.status(200).json({
-        message: "Login successful",
-        accessToken,
-      });
+      res.status(200).json({ message: "Login successful" });
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "Please verify your email before logging in") {
@@ -115,7 +100,8 @@ export class AuthController {
       if (!refreshToken) {
         res.status(400).json({ message: "No refresh token provided" });
       }
-      const newAccessToken = await this.authUseCase.refreshAccessToken(refreshToken);
+      const newAccessToken =
+        await this.authUseCase.refreshAccessToken(refreshToken);
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
 
       res.status(200).json({ message: "Token refreshed successfully" });
@@ -127,10 +113,15 @@ export class AuthController {
     }
   }
 
+
   async changePassword(req: Request, res: Response): Promise<void> {
     try {
       const { email, currentPassword, newPassword } = req.body;
-      await this.authUseCase.changePassword(email, currentPassword, newPassword);
+      await this.authUseCase.changePassword(
+        email,
+        currentPassword,
+        newPassword,
+      );
       res.status(200).json({ message: "Password changed successfully" });
     } catch (error) {
       if (error instanceof Error) {
@@ -145,7 +136,9 @@ export class AuthController {
     try {
       const { email } = req.body;
       await this.authUseCase.forgotPassword(email);
-      res.status(200).json({ message: "Password reset email sent. Please check your inbox." });
+      res.status(200).json({
+        message: "Password reset email sent. Please check your inbox.",
+      });
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
@@ -160,7 +153,10 @@ export class AuthController {
       const { token } = req.params;
       const { newPassword } = req.body;
       await this.authUseCase.resetPassword(token, newPassword);
-      res.status(200).json({ message: "Password reset successfully. You can now log in with your new password." });
+      res.status(200).json({
+        message:
+          "Password reset successfully. You can now log in with your new password.",
+      });
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
@@ -176,10 +172,9 @@ export class AuthController {
         httpOnly: true,
         secure: CONFIG.NODE_ENV === "production",
         sameSite: "none" as const
-      };
+      }
       res.clearCookie(CONFIG.ACCESS_TOKEN_COOKIE_NAME, cookieOptions);
       res.clearCookie(CONFIG.REFRESH_TOKEN_COOKIE_NAME, cookieOptions);
-      res.clearCookie('userData', { httpOnly: false });
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
       if (error instanceof Error) {
