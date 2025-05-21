@@ -4,6 +4,7 @@ import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { VirtualChatService } from '../../infra/services/VirtualChatService';
 import { Message } from '../../domain/entities/Message';
+import { LatestMessage } from '../../domain/entities/Chat';
 
 export class SendMessageUseCase {
   constructor(
@@ -43,7 +44,12 @@ export class SendMessageUseCase {
     };
 
     const savedMessage = await this.messageRepository.create(message);
-    await this.chatRepository.update(chatId, { latestMessage: savedMessage.id });
+    const latestMessage: LatestMessage = {
+      id: savedMessage.id,
+      content: savedMessage.content,
+      createdAt: savedMessage.createdAt,
+    };
+    await this.chatRepository.update(chatId, { latestMessage });
 
     // Emit WebSocket notification for the new message
     this.socketService.emitMessage(chatId, savedMessage);
@@ -66,7 +72,12 @@ export class SendMessageUseCase {
           isSuggested: false
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
-        await this.chatRepository.update(chatId, { latestMessage: savedBotMessage.id });
+        const botLatestMessage: LatestMessage = {
+          id: savedBotMessage.id,
+          content: savedBotMessage.content,
+          createdAt: savedBotMessage.createdAt,
+        };
+        await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
         this.socketService.emitMessage(chatId, savedBotMessage);
       }
     }
@@ -86,7 +97,12 @@ export class SendMessageUseCase {
           isSuggested: false
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
-        await this.chatRepository.update(chatId, { latestMessage: savedBotMessage.id });
+        const botLatestMessage: LatestMessage = {
+          id: savedBotMessage.id,
+          content: savedBotMessage.content,
+          createdAt: savedBotMessage.createdAt,
+        };
+        await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
         this.socketService.emitMessage(chatId, savedBotMessage);
       }
     }

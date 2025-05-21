@@ -1,7 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { ChatModel, IChatModel } from '../database/models/ChatModel';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
-import { Chat } from '../../domain/entities/Chat';
+import { Chat, LatestMessage } from '../../domain/entities/Chat';
+import MessageModel, { IMessageModel } from '../database/models/MessageModel';
+import BotMessageModel, { IBotMessageModel } from '../database/models/models/BotMessageModel';
 
 interface PopulatedUser {
   _id: mongoose.Types.ObjectId;
@@ -23,15 +25,25 @@ interface PopulatedChatModel {
 }
 
 export class MongoChatRepository implements IChatRepository {
-  private mapToDomain(chatDoc: PopulatedChatModel | IChatModel): Chat {
+  private mapMessageToDomain(messageDoc: IMessageModel | IBotMessageModel | null): LatestMessage | null {
+    if (!messageDoc) return null;
+
+    return {
+      id: messageDoc._id.toString(),
+      content: messageDoc.content || '',
+      createdAt: messageDoc.createdAt || new Date(),
+    };
+  }
+
+  private async mapToDomain(chatDoc: PopulatedChatModel | IChatModel): Promise<Chat> {
     const botId = process.env.BOT_ID || '681c757539ec003942b3f97e';
     const isPopulated = (doc: any): doc is PopulatedChatModel =>
       doc.users && doc.users[0] && 'name' in doc.users[0];
 
-    if (isPopulated(chatDoc)) {
-      let profileImageUrl = chatDoc.profileImageUrl || '';
-      let botProfileImageUrl = chatDoc.botProfileImageUrl;
+    let profileImageUrl = chatDoc.profileImageUrl || '';
+    let botProfileImageUrl = chatDoc.botProfileImageUrl;
 
+    if (isPopulated(chatDoc)) {
       if (!profileImageUrl) {
         if (chatDoc.isGroupChat) {
           const otherUser = chatDoc.users.find(user => user._id.toString() !== botId);
@@ -43,30 +55,41 @@ export class MongoChatRepository implements IChatRepository {
           profileImageUrl = botUser ? botUser.profileImageUrl || '' : '';
         }
       }
+    }
 
-      return {
-        id: chatDoc._id.toString(),
-        name: chatDoc.name,
-        isGroup: chatDoc.isGroupChat, 
-        users: chatDoc.users.map((user: PopulatedUser) => user._id.toString()),
-        profileImageUrl,
-        botProfileImageUrl,
-        createdAt: chatDoc.createdAt,
-        updatedAt: chatDoc.updatedAt,
-        latestMessage: chatDoc.latestMessage ? chatDoc.latestMessage.toString() : null,
-      };
+    let latestMessage: LatestMessage | null = null;
+
+    // Always fetch the latest message by sorting, ignoring chatDoc.latestMessage
+    const latestUserMessage = await MessageModel.findOne({ chat: chatDoc._id })
+      .sort({ createdAt: -1 })
+      .exec();
+    const latestBotMessage = await BotMessageModel.findOne({ chatId: chatDoc._id.toString() })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (latestUserMessage || latestBotMessage) {
+      const latest = latestUserMessage && latestBotMessage
+        ? latestUserMessage.createdAt > latestBotMessage.createdAt ? latestUserMessage : latestBotMessage
+        : latestUserMessage || latestBotMessage;
+      if (latest) {
+        latestMessage = this.mapMessageToDomain(latest);
+        // Update the chat document with the latest message ID
+        await ChatModel.findByIdAndUpdate(chatDoc._id, { latestMessage: latest._id }, { new: true }).exec();
+      }
     }
 
     return {
       id: chatDoc._id.toString(),
       name: chatDoc.name,
-      isGroup: chatDoc.isGroupChat, 
-      users: chatDoc.users.map((id: mongoose.Types.ObjectId) => id.toString()),
-      profileImageUrl: chatDoc.profileImageUrl || '',
-      botProfileImageUrl: chatDoc.botProfileImageUrl,
+      isGroup: chatDoc.isGroupChat,
+      users: isPopulated(chatDoc)
+        ? chatDoc.users.map((user: PopulatedUser) => user._id.toString())
+        : chatDoc.users.map((id: mongoose.Types.ObjectId) => id.toString()),
+      profileImageUrl,
+      botProfileImageUrl,
       createdAt: chatDoc.createdAt,
       updatedAt: chatDoc.updatedAt,
-      latestMessage: chatDoc.latestMessage ? chatDoc.latestMessage.toString() : null,
+      latestMessage,
     };
   }
 
@@ -86,9 +109,9 @@ export class MongoChatRepository implements IChatRepository {
   async create(chat: Chat): Promise<Chat> {
     const newChat = await ChatModel.create({
       ...chat,
-      isGroupChat: chat.isGroup, 
+      isGroupChat: chat.isGroup,
       users: chat.users.map(id => new mongoose.Types.ObjectId(id)),
-      latestMessage: chat.latestMessage ? new mongoose.Types.ObjectId(chat.latestMessage) : null,
+      latestMessage: chat.latestMessage?.id ? new mongoose.Types.ObjectId(chat.latestMessage.id) : null,
     });
     const populatedChat = await ChatModel.findById(newChat._id)
       .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
@@ -108,7 +131,7 @@ export class MongoChatRepository implements IChatRepository {
     })
       .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
       .exec();
-    return chats.map((chat: PopulatedChatModel | IChatModel) => this.mapToDomain(chat));
+    return Promise.all(chats.map((chat) => this.mapToDomain(chat)));
   }
 
   async findByUsers(userIds: string[]): Promise<Chat | null> {
@@ -152,8 +175,8 @@ export class MongoChatRepository implements IChatRepository {
       return;
     }
     const updateFields: any = {};
-    if (update.latestMessage) {
-      updateFields.latestMessage = new mongoose.Types.ObjectId(update.latestMessage);
+    if (update.latestMessage?.id) {
+      updateFields.latestMessage = new mongoose.Types.ObjectId(update.latestMessage.id);
     } else if (update.latestMessage === null) {
       updateFields.latestMessage = null;
     }
