@@ -1,7 +1,7 @@
 export interface LatestMessage {
   id: string;
   content: string;
-  createdAt: Date;
+  createdAt: string; // Changed from Date
 }
 
 export interface Chat {
@@ -11,7 +11,7 @@ export interface Chat {
   users: string[];
   profileImageUrl: string;
   botProfileImageUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // Changed from Date
+  updatedAt: string; // Changed from Date
   latestMessage?: LatestMessage | null;
 }

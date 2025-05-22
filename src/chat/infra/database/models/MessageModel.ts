@@ -6,7 +6,7 @@ export interface IMessageModel extends Document<Types.ObjectId> {
   sender: Types.ObjectId | UserDocument;
   content: string;
   chat: Types.ObjectId;
-  createdAt: Date;
+  createdAt: string;
   readBy: Types.ObjectId[];
   isMatchCard: boolean;
   isSuggested: boolean;
@@ -14,6 +14,7 @@ export interface IMessageModel extends Document<Types.ObjectId> {
   suggestedUserName?: string;
   suggestedUserCategory?: string;
   status?: 'pending' | 'accepted' | 'rejected';
+  senderProfileImageUrl?: string; // Added this field
 }
 
 const messageSchema = new Schema<IMessageModel>(
@@ -27,9 +28,11 @@ const messageSchema = new Schema<IMessageModel>(
     suggestedUserProfileImageUrl: { type: String },
     suggestedUserName: { type: String },
     suggestedUserCategory: { type: String },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected'] }
+    status: { type: String, enum: ['pending', 'accepted', 'rejected'] },
+    senderProfileImageUrl: { type: String }, // Added to schema
+    createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }
   },
-  { timestamps: true, collection: 'messages' }
+  { timestamps: false, collection: 'messages' }
 );
 
 export default mongoose.model<IMessageModel>('Message', messageSchema);
