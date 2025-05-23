@@ -29,7 +29,7 @@ const messageSchema = new Schema<IMessageModel>(
     suggestedUserName: { type: String },
     suggestedUserCategory: { type: String },
     status: { type: String, enum: ['pending', 'accepted', 'rejected'] },
-    senderProfileImageUrl: { type: String }, // Added to schema
+    senderProfileImageUrl: { type: String }, 
     createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }
   },
   { timestamps: false, collection: 'messages' }

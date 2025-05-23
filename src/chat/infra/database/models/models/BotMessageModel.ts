@@ -38,7 +38,7 @@ const botMessageSchema = new Schema<IBotMessageModel>(
     suggestedUserCategory: { type: String },
     senderProfileImageUrl: { type: String }
   },
-  { timestamps: false, collection: 'botmessage' } // Changed from 'botMessages' to 'botmessage'
+  { timestamps: false, collection: 'botmessages' } 
 );
 
 export default mongoose.model<IBotMessageModel>('BotMessage', botMessageSchema);

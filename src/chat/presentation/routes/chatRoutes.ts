@@ -478,7 +478,7 @@ export const setupChatRoutes = (
         content: notificationMessageContent,
         chatId: notifyChatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-        readBy: [dependencies.virtualUserId], // Only bot
+        readBy: [dependencies.virtualUserId], 
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',

@@ -21,7 +21,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserProfileImageUrl: botMessage.suggestedUserProfileImageUrl,
         suggestedUserName: botMessage.suggestedUserName,
         suggestedUserCategory: botMessage.suggestedUserCategory,
-        senderProfileImageUrl: botMessage.senderProfileImageUrl // Add senderProfileImageUrl
+        senderProfileImageUrl: botMessage.senderProfileImageUrl 
       });
       await messageDoc.save();
       console.log(`Created bot message with ID: ${botMessage.id} in chat ${botMessage.chatId}`);
@@ -53,7 +53,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
         suggestedUserName: messageDoc.suggestedUserName,
         suggestedUserCategory: messageDoc.suggestedUserCategory,
-        senderProfileImageUrl: messageDoc.senderProfileImageUrl // Add senderProfileImageUrl
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl 
       };
     } catch (error) {
       console.error(`Error finding bot message with ID: ${id}`, error);

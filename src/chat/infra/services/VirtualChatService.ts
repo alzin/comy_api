@@ -43,7 +43,7 @@ export class VirtualChatService {
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
-        lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) // JST as string
+        lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) 
       };
       await this.userRepository.create(virtualUser as User); 
       console.log('Virtual user created:', virtualUserEmail);
@@ -155,7 +155,7 @@ export class VirtualChatService {
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
           content: suggestionMessage.content || '',
           chatId: chat.id,
-          createdAt: suggestionMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), // Add fallback
+          createdAt: suggestionMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
           readBy: suggestionMessage.readBy,
           isMatchCard: suggestionMessage.isMatchCard ?? false,
           isSuggested: suggestionMessage.isSuggested ?? false,
@@ -209,7 +209,7 @@ export class VirtualChatService {
             continue;
           }
 
-          await createSuggestion(user, suggestedUser as User); // صريح النوع
+          await createSuggestion(user, suggestedUser as User);
           continue;
         }
 

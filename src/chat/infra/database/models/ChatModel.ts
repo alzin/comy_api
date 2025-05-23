@@ -7,8 +7,8 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
     users: Types.ObjectId[];
     profileImageUrl: string;
     botProfileImageUrl?: string;
-    createdAt: string; // Changed from Date
-    updatedAt: string; // Changed from Date
+    createdAt: string; 
+    updatedAt: string; 
     latestMessage?: Types.ObjectId | null;
   }
 
@@ -23,7 +23,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
       createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }, // JST
       updatedAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }  // JST
     },
-    { timestamps: false } // Disable automatic timestamps
+    { timestamps: false } 
   );
 
   export const ChatModel = mongoose.model<IChatModel>('Chat', ChatSchema);

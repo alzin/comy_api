@@ -14,7 +14,7 @@ export interface BotMessage {
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
-  senderProfileImageUrl?: string; // Added this field
+  senderProfileImageUrl?: string; 
 }
 
 export interface IBotMessageRepository {

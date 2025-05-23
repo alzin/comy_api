@@ -35,7 +35,7 @@ export class MongoChatRepository implements IChatRepository {
     return {
       id: messageDoc._id.toString(),
       content: truncatedContent,
-      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), // JST as string
+      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
     };
   }
 
@@ -63,7 +63,6 @@ export class MongoChatRepository implements IChatRepository {
 
     let latestMessage: LatestMessage | null = null;
 
-    // Always fetch the latest message by sorting, ignoring chatDoc.latestMessage
     const latestUserMessage = await MessageModel.findOne({ chat: chatDoc._id })
       .sort({ createdAt: -1 })
       .exec();
@@ -77,7 +76,6 @@ export class MongoChatRepository implements IChatRepository {
         : latestUserMessage || latestBotMessage;
       if (latest) {
         latestMessage = this.mapMessageToDomain(latest);
-        // Update the chat document with the latest message ID
         await ChatModel.findByIdAndUpdate(chatDoc._id, { latestMessage: latest._id }, { new: true }).exec();
       }
     }

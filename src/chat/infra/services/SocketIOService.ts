@@ -92,7 +92,7 @@ export class SocketIOService implements ISocketService {
             sender: senderId,
             content,
             readBy: [senderId],
-            createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), // Changed from new Date()
+            createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
             isMatchCard: false,
             isSuggested: false
           });
