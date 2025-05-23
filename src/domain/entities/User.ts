@@ -1,9 +1,7 @@
-// src/domain/entities/User.ts
-
 import { SubscriptionStatus } from "./SubscriptionStatus";
 
 export interface User {
-  id?: string;
+  id: string; // Changed from id?: string
   email: string;
   name: string;
   category: string;
@@ -15,5 +13,7 @@ export interface User {
   stripeSubscriptionId?: string;
   subscriptionStatus: SubscriptionStatus;
   currentPeriodEnd?: Date;
-  subscriptionPlan?: String;
+  subscriptionPlan?: string; // Changed String to string
+  isOnline: boolean;
+  lastActive: Date;
 }
