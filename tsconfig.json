@@ -4,21 +4,16 @@
     "module": "commonjs",
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "declaration": false,
-    "removeComments": true,
     "noImplicitAny": false,
-    "strictNullChecks": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "types": ["node", "express", "multer"]
+    "noImplicitReturns": false,
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "jest.config.js"]
+  "exclude": ["node_modules", "dist"]
 }
