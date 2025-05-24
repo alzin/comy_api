@@ -4,11 +4,11 @@ import { SocketIOService } from '../../infra/services/SocketIOService';
 import { UserModel } from '../../../infra/database/models/UserModel';
 
 // Utility function to get sender profile image URL
-const getSenderProfileImageUrl = async (sender: string): Promise<string> => {
-  if (sender === 'COMY オフィシャル AI') {
+const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
+  if (senderId === 'COMY オフィシャル AI') {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
   }
-  const user = await UserModel.findById(sender).select('profileImageUrl').exec();
+  const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
   return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 };
 
@@ -64,10 +64,13 @@ export class MessageController {
         return;
       }
 
+      const sender = await UserModel.findById(userId).select('name').exec();
+      const senderName = sender ? sender.name : 'Unknown User';
       const senderProfileImageUrl = await getSenderProfileImageUrl(userId);
       const messageWithSenderImage = {
         ...messageData,
         senderId: userId,
+        senderName,
         senderProfileImageUrl,
         readBy: [userId], // Initialize readBy with the sender
       };

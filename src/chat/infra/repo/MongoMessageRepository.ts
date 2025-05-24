@@ -7,22 +7,30 @@ import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 
 // Utility function to get sender profile image URL
-const getSenderProfileImageUrl = async (sender: string): Promise<string> => {
-  if (sender === 'COMY オフィシャル AI') {
+const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
+  if (senderId === '681547798892749fbe910c02') {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
   }
-  const user = await UserModel.findById(sender).select('profileImageUrl').exec();
+  const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
   return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 };
 
 export class MongoMessageRepository implements IMessageRepository {
   async create(message: Message, userId?: string): Promise<Message> {
     try {
-      const senderProfileImageUrl = await getSenderProfileImageUrl(message.sender);
+      // Validate senderId before creating the message
+      if (!mongoose.Types.ObjectId.isValid(message.senderId)) {
+        throw new Error(`Invalid senderId: ${message.senderId} is not a valid ObjectId`);
+      }
+      if (!mongoose.Types.ObjectId.isValid(message.chatId)) {
+        throw new Error(`Invalid chatId: ${message.chatId} is not a valid ObjectId`);
+      }
+
+      const senderProfileImageUrl = await getSenderProfileImageUrl(message.senderId);
       const readBy = [...new Set([...message.readBy, ...(userId ? [userId] : [])])];
       const messageDoc = new MessageModel({
         _id: new mongoose.Types.ObjectId(message.id),
-        sender: message.sender,
+        sender: message.senderId, // Store senderId in the DB
         content: message.content,
         chat: message.chatId,
         createdAt: message.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
@@ -40,7 +48,8 @@ export class MongoMessageRepository implements IMessageRepository {
 
       return {
         id: messageDoc._id.toString(),
-        sender: message.sender,
+        senderId: message.senderId,
+        senderName: message.senderName,
         content: messageDoc.content || '',
         chatId: messageDoc.chat.toString(),
         createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
@@ -65,16 +74,79 @@ export class MongoMessageRepository implements IMessageRepository {
     }
 
     const isBotMessage = 'senderId' in messageDoc;
-    const senderField = isBotMessage ? messageDoc.senderId : messageDoc.sender;
-    const sender = senderField && typeof senderField === 'object' && 'name' in senderField
-      ? (senderField as unknown as UserDocument).name
-      : 'COMY オフィシャル AI';
+    let senderId: string;
 
-    const senderProfileImageUrl = messageDoc.senderProfileImageUrl || (await getSenderProfileImageUrl(sender));
+    // Extract senderId based on message type
+    if (isBotMessage) {
+      const botMessage = messageDoc as IBotMessageModel;
+      senderId = botMessage.senderId ? botMessage.senderId.toString() : '';
+    } else {
+      const userMessage = messageDoc as IMessageModel;
+      senderId = userMessage.sender ? userMessage.sender.toString() : '';
+    }
+
+    // Log senderId for debugging
+    console.log(`Processing message with senderId: ${senderId}, messageDoc:`, messageDoc);
+
+    // Validate senderId
+    if (!mongoose.Types.ObjectId.isValid(senderId)) {
+      console.error(`Invalid senderId detected: ${senderId} for messageDoc:`, messageDoc);
+      // Fallback to the actual bot ID and name
+      const fallbackSenderId = '681547798892749fbe910c02'; // Use the actual bot ID
+      const senderName = 'COMY オフィシャル AI'; // Use the actual bot name
+      const senderProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+
+      const baseMessage: Message = {
+        id: messageDoc._id.toString(),
+        senderId: fallbackSenderId,
+        senderName,
+        content: messageDoc.content || '',
+        chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId)?.toString() || '',
+        readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
+        createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        isMatchCard: isBotMessage ? (messageDoc as IBotMessageModel).isMatchCard : messageDoc.isMatchCard,
+        isSuggested: isBotMessage ? (messageDoc as IBotMessageModel).isSuggested : messageDoc.isSuggested,
+        suggestedUserProfileImageUrl: isBotMessage
+          ? (messageDoc as IBotMessageModel).suggestedUserProfileImageUrl
+          : messageDoc.suggestedUserProfileImageUrl,
+        suggestedUserName: isBotMessage
+          ? (messageDoc as IBotMessageModel).suggestedUserName
+          : messageDoc.isMatchCard
+          ? messageDoc.suggestedUserName
+          : undefined,
+        suggestedUserCategory: isBotMessage
+          ? (messageDoc as IBotMessageModel).suggestedUserCategory
+          : messageDoc.isMatchCard
+          ? messageDoc.suggestedUserCategory
+          : undefined,
+        status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
+          ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
+          : undefined,
+        senderProfileImageUrl: senderProfileImageUrl
+      };
+
+      if ('suggestedUser' in messageDoc && messageDoc.suggestedUser && baseMessage.isMatchCard) {
+        const suggestedUser = messageDoc.suggestedUser as unknown as UserDocument;
+        return {
+          ...baseMessage,
+          suggestedUserProfileImageUrl: baseMessage.suggestedUserProfileImageUrl || suggestedUser.profileImageUrl || undefined,
+          suggestedUserName: baseMessage.suggestedUserName || suggestedUser.name || 'User',
+          suggestedUserCategory: baseMessage.suggestedUserCategory || suggestedUser.category || 'unknown'
+        };
+      }
+
+      return baseMessage;
+    }
+
+    // Proceed with valid senderId
+    const sender = await UserModel.findById(senderId).select('name').exec();
+    const senderName = sender ? sender.name : (senderId === '681547798892749fbe910c02' ? 'COMY オフィシャル AI' : 'Unknown User');
+    const senderProfileImageUrl = messageDoc.senderProfileImageUrl || (await getSenderProfileImageUrl(senderId));
 
     const baseMessage: Message = {
       id: messageDoc._id.toString(),
-      sender,
+      senderId,
+      senderName,
       content: messageDoc.content || '',
       chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId)?.toString() || '',
       readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
@@ -135,7 +207,6 @@ export class MongoMessageRepository implements IMessageRepository {
 
     try {
       const messages = await MessageModel.find({ chat: chatId })
-        .populate('sender', 'name')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -143,7 +214,6 @@ export class MongoMessageRepository implements IMessageRepository {
         .exec() as IMessageModel[];
 
       const botMessages = await BotMessageModel.find({ chatId })
-        .populate('senderId', 'name')
         .populate('suggestedUser', 'name profileImageUrl category')
         .skip(skip)
         .limit(limit)
@@ -151,17 +221,18 @@ export class MongoMessageRepository implements IMessageRepository {
         .lean()
         .exec() as IBotMessageModel[];
 
-      const mappedMessages = await Promise.all(messages.map((msg: IMessageModel) => this.mapToDomain(msg)));
-      const mappedBotMessages = await Promise.all(botMessages.map((msg: IBotMessageModel) => this.mapToDomain(msg)));
+      const mappedMessages = await Promise.all(
+        [...messages, ...botMessages].map((msg: IMessageModel | IBotMessageModel) => this.mapToDomain(msg))
+      );
 
-      const allMessages = [...mappedMessages, ...mappedBotMessages].sort(
+      const allMessages = mappedMessages.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       const paginatedMessages = allMessages.slice(0, limit);
 
       console.log(`Fetched ${paginatedMessages.length} messages for chatId: ${chatId}`);
-      return paginatedMessages;
+      return paginatedMessages.length > 0 ? paginatedMessages : [];
     } catch (error) {
       console.error(`Error fetching messages for chatId: ${chatId}`, error);
       throw error;
@@ -169,6 +240,13 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   async updateReadBy(messageId: string, userId: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(messageId)) {
+      throw new Error(`Invalid messageId: ${messageId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error(`Invalid userId: ${userId}`);
+    }
+
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const messageResult = await MessageModel.findByIdAndUpdate(
       messageId,
@@ -186,6 +264,13 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   async updateReadByForChat(chatId: string, userId: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      throw new Error(`Invalid chatId: ${chatId}`);
+    }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error(`Invalid userId: ${userId}`);
+    }
+
     const userObjectId = new mongoose.Types.ObjectId(userId);
     await MessageModel.updateMany(
       { chat: chatId },

@@ -49,15 +49,12 @@ export const setupChatRoutes = (
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
 
-  // تعريف router بشكل صحيح
   const router = express.Router();
 
-  // تعديل الـ middleware عشان يسمح لأي مستخدم مسجل بدون التحقق من admin
   router.use((req: Request, res: Response, next: express.NextFunction) => {
     if (req.path === '/suggest-friends') {
       return next();
     }
-    // استخدام authMiddleware بس للتحقق من تسجيل الدخول، بدون الاعتماد على صلاحية admin
     return authMiddleware(dependencies.tokenService, dependencies.userRepository)(req, res, next);
   });
 
@@ -94,16 +91,18 @@ export const setupChatRoutes = (
         return res.status(500).json({ message: 'Invalid chat ID' });
       }
 
-      // Update readBy for all messages in the chat
       await updateReadByForChat(chatId, userId);
 
       console.log(`User ${userId} responded to suggestion ${messageId} with ${response}`);
       await botMessageRepo.updateSuggestionStatus(messageId, response === 'マッチを希望する' ? 'accepted' : 'rejected');
 
+      const user = await UserModel.findById(userId).select('name').exec();
+      const senderName = user ? user.name : 'Unknown User';
       const userProfileImageUrl = await getSenderProfileImageUrl(userId, dependencies);
       const userResponseMessage: Message = {
         id: new mongoose.Types.ObjectId().toString(),
-        sender: userId,
+        senderId: userId,
+        senderName,
         content: response,
         chatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
@@ -148,7 +147,8 @@ export const setupChatRoutes = (
 
           const rejectMessage: Message = {
             id: rejectBotMessage.id,
-            sender: 'COMY オフィシャル AI',
+            senderId: 'COMY オフィシャル AI',
+            senderName: 'COMY オフィシャル AI',
             content: rejectBotMessage.content || '',
             chatId,
             createdAt: rejectBotMessage.createdAt!,
@@ -181,7 +181,8 @@ export const setupChatRoutes = (
 
       const confirmMessage: Message = {
         id: confirmBotMessage.id,
-        sender: 'COMY オフィシャル AI',
+        senderId: 'COMY オフィシャル AI',
+        senderName: 'COMY オフィシャル AI',
         content: confirmBotMessage.content || '',
         chatId,
         createdAt: confirmBotMessage.createdAt!,
@@ -254,7 +255,8 @@ export const setupChatRoutes = (
 
       const matchMessage: Message = {
         id: matchBotMessage.id,
-        sender: 'COMY オフィシャル AI',
+        senderId: 'COMY オフィシャル AI',
+        senderName: 'COMY オフィシャル AI',
         content: matchMessageContent,
         chatId: suggestedUserChatId,
         createdAt: matchBotMessage.createdAt!,
@@ -313,10 +315,13 @@ export const setupChatRoutes = (
       console.log(`User ${userId} responded to match request ${messageId} with ${response}`);
       await botMessageRepo.updateSuggestionStatus(messageId, response === 'マッチを希望する' ? 'accepted' : 'rejected');
 
+      const user = await UserModel.findById(userId).select('name').exec();
+      const senderName = user ? user.name : 'Unknown User';
       const userProfileImageUrl = await getSenderProfileImageUrl(userId, dependencies);
       const userResponseMessage: Message = {
         id: new mongoose.Types.ObjectId().toString(),
-        sender: userId,
+        senderId: userId,
+        senderName,
         content: response,
         chatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
@@ -361,7 +366,8 @@ export const setupChatRoutes = (
 
           const rejectMessage: Message = {
             id: rejectBotMessage.id,
-            sender: 'COMY オフィシャル AI',
+            senderId: 'COMY オフィシャル AI',
+            senderName: 'COMY オフィシャル AI',
             content: rejectBotMessage.content || '',
             chatId,
             createdAt: rejectBotMessage.createdAt!,
@@ -394,7 +400,8 @@ export const setupChatRoutes = (
 
       const confirmMessage: Message = {
         id: confirmBotMessage.id,
-        sender: 'COMY オフィシャル AI',
+        senderId: 'COMY オフィシャル AI',
+        senderName: 'COMY オフィシャル AI',
         content: confirmBotMessage.content || '',
         chatId,
         createdAt: confirmBotMessage.createdAt!,
@@ -445,7 +452,8 @@ export const setupChatRoutes = (
 
         const groupMessage: Message = {
           id: groupBotMessage.id,
-          sender: 'COMY オフィシャル AI',
+          senderId: 'COMY オフィシャル AI',
+          senderName: 'COMY オフィシャル AI',
           content: groupBotMessage.content || '',
           chatId: newChat.id,
           createdAt: groupBotMessage.createdAt!,
@@ -494,7 +502,8 @@ export const setupChatRoutes = (
 
       const notifyMessage: Message = {
         id: notifyBotMessage.id,
-        sender: 'COMY オフィシャル AI',
+        senderId: 'COMY オフィシャル AI',
+        senderName: 'COMY オフィシャル AI',
         content: notificationMessageContent,
         chatId: notifyChatId,
         createdAt: notifyBotMessage.createdAt!,
