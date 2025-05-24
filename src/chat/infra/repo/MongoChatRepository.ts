@@ -19,8 +19,8 @@ interface PopulatedChatModel {
   users: PopulatedUser[];
   profileImageUrl: string;
   botProfileImageUrl?: string;
-  createdAt: string; // Changed from Date
-  updatedAt: string; // Changed from Date
+  createdAt: string;
+  updatedAt: string;
   latestMessage?: mongoose.Types.ObjectId | null;
 }
 

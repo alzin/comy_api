@@ -1,6 +1,7 @@
 export interface Message {
   id: string;
-  sender: string;
+  senderId: string;
+  senderName: string;
   senderDetails?: { name: string; email: string; profileImageUrl?: string }; 
   content: string;
   chatId: any;

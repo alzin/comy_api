@@ -124,7 +124,8 @@ export function setupDependencies(server: any) {
     messageRepository,
     chatRepository,
     socketService,
-    virtualChatService
+    virtualChatService,
+    userRepository // Added to fetch senderName
   );
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 

@@ -1,4 +1,4 @@
-import { json, Request, Response } from "express";
+import { Request, Response } from "express";
 import { IAuthUseCase } from "../../domain/interfaces/IAuthUseCase";
 import { CONFIG } from "../../main/config/config";
 import { log } from "console";

@@ -1,5 +1,4 @@
 ///src/chat/infra/repo/MongoBlacklistRepository.ts
-import mongoose from 'mongoose';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 import { BlacklistModel } from '../database/models/models/BlacklistModel';
 

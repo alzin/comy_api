@@ -4,7 +4,6 @@ import { authMiddleware } from '../middlewares/authMiddleware';
 import { setupAuthRoutes } from './authRoutes';
 import { setupStripeRoutes } from './StripeRoutes';
 import { setupUserInfoRoutes } from './userRoutes';
-import { setupAdminRoutes } from './adminRoutes';
 import { createActiveUsersEmailRoutes } from './activeUsersEmailRoutes';
 import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNodeHttpEndpoint } from '@copilotkit/runtime';
 import { LiteralClient } from '@literalai/client';
@@ -58,7 +57,6 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     )
   );
 
-  app.use('/admin', setupAdminRoutes());
 
   app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
     dependencies.webhookController.handleWebhook(req, res)
