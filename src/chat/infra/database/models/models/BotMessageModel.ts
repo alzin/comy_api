@@ -3,20 +3,21 @@ import { UserDocument } from '../../../../../infra/database/models/UserModel';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
   _id: Types.ObjectId;
-  senderId: Types.ObjectId;
+  senderId: Types.ObjectId | UserDocument;
   content: string;
   chatId: Types.ObjectId;
-  createdAt: Date;
+  createdAt: string;
   readBy: Types.ObjectId[];
-  recipientId?: string;
+  recipientId?: Types.ObjectId;
   suggestedUser?: Types.ObjectId | UserDocument;
   suggestionReason?: string;
+  status: 'pending' | 'accepted' | 'rejected';
   isMatchCard: boolean;
   isSuggested: boolean;
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
-  status?: 'pending' | 'accepted' | 'rejected';
+  senderProfileImageUrl?: string;
 }
 
 const botMessageSchema = new Schema<IBotMessageModel>(
@@ -24,18 +25,20 @@ const botMessageSchema = new Schema<IBotMessageModel>(
     senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     content: { type: String, required: true },
     chatId: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
+    createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    recipientId: { type: String },
+    recipientId: { type: Schema.Types.ObjectId, ref: 'User' },
     suggestedUser: { type: Schema.Types.ObjectId, ref: 'User' },
     suggestionReason: { type: String },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
     isMatchCard: { type: Boolean, default: false, required: true },
     isSuggested: { type: Boolean, default: false, required: true },
     suggestedUserProfileImageUrl: { type: String },
     suggestedUserName: { type: String },
     suggestedUserCategory: { type: String },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected'] }
+    senderProfileImageUrl: { type: String }
   },
-  { timestamps: true, collection: 'botmessages' }
+  { timestamps: false, collection: 'botmessages' } 
 );
 
 export default mongoose.model<IBotMessageModel>('BotMessage', botMessageSchema);

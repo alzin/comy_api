@@ -43,9 +43,9 @@ export class VirtualChatService {
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
-        lastActive: new Date()
+        lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) 
       };
-      await this.userRepository.create(virtualUser);
+      await this.userRepository.create(virtualUser as User); 
       console.log('Virtual user created:', virtualUserEmail);
     } else {
       console.log('Virtual user already exists:', virtualUserEmail);
@@ -125,10 +125,10 @@ export class VirtualChatService {
           suggestionReason: 'Random',
           status: 'pending',
           content: suggestionContent,
-          createdAt: new Date(),
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
           readBy: [this.virtualUserId],
           isMatchCard: true,
-          isSuggested: true, // Explicitly true for friend suggestions
+          isSuggested: true,
           suggestedUserProfileImageUrl: profileImageUrl,
           suggestedUserName,
           suggestedUserCategory
@@ -155,7 +155,7 @@ export class VirtualChatService {
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
           content: suggestionMessage.content || '',
           chatId: chat.id,
-          createdAt: suggestionMessage.createdAt!,
+          createdAt: suggestionMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
           readBy: suggestionMessage.readBy,
           isMatchCard: suggestionMessage.isMatchCard ?? false,
           isSuggested: suggestionMessage.isSuggested ?? false,
@@ -209,7 +209,7 @@ export class VirtualChatService {
             continue;
           }
 
-          await createSuggestion(user, suggestedUser);
+          await createSuggestion(user, suggestedUser as User);
           continue;
         }
 
@@ -222,7 +222,7 @@ export class VirtualChatService {
           continue;
         }
 
-        await createSuggestion(user, suggestedUser);
+        await createSuggestion(user, suggestedUser as User); 
       }
 
       console.log(`Friend suggestion process completed. Total suggestions made: ${suggestionCount}. Users without suggestions: ${validUsers.length - suggestionCount}`);

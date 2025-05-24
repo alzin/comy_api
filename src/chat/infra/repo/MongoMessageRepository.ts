@@ -6,22 +6,34 @@ import BotMessageModel, { IBotMessageModel } from '../database/models/models/Bot
 import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 
+// Utility function to get sender profile image URL
+const getSenderProfileImageUrl = async (sender: string): Promise<string> => {
+  if (sender === 'COMY オフィシャル AI') {
+    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
+  }
+  const user = await UserModel.findById(sender).select('profileImageUrl').exec();
+  return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+};
+
 export class MongoMessageRepository implements IMessageRepository {
-  async create(message: Message): Promise<Message> {
+  async create(message: Message, userId?: string): Promise<Message> {
     try {
+      const senderProfileImageUrl = await getSenderProfileImageUrl(message.sender);
+      const readBy = [...new Set([...message.readBy, ...(userId ? [userId] : [])])];
       const messageDoc = new MessageModel({
         _id: new mongoose.Types.ObjectId(message.id),
         sender: message.sender,
         content: message.content,
         chat: message.chatId,
-        createdAt: message.createdAt,
-        readBy: message.readBy,
+        createdAt: message.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        readBy: readBy.map(id => new mongoose.Types.ObjectId(id)),
         isMatchCard: message.isMatchCard || false,
         isSuggested: message.isSuggested || false,
         suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl,
         suggestedUserName: message.isMatchCard ? message.suggestedUserName : undefined,
         suggestedUserCategory: message.isMatchCard ? message.suggestedUserCategory : undefined,
-        status: message.isMatchCard ? (message.status || 'pending') : undefined
+        status: message.isMatchCard ? (message.status || 'pending') : undefined,
+        senderProfileImageUrl: message.senderProfileImageUrl || senderProfileImageUrl
       });
       await messageDoc.save();
       console.log(`Created message with ID: ${message.id} in chat ${message.chatId}, isMatchCard: ${message.isMatchCard}, isSuggested: ${message.isSuggested}, status: ${message.status}`);
@@ -31,14 +43,15 @@ export class MongoMessageRepository implements IMessageRepository {
         sender: message.sender,
         content: messageDoc.content || '',
         chatId: messageDoc.chat.toString(),
-        createdAt: messageDoc.createdAt || new Date(),
+        createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
         readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
         isMatchCard: messageDoc.isMatchCard,
         isSuggested: messageDoc.isSuggested,
         suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
         suggestedUserName: messageDoc.suggestedUserName,
         suggestedUserCategory: messageDoc.suggestedUserCategory,
-        status: messageDoc.status
+        status: messageDoc.status,
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl
       };
     } catch (error) {
       console.error(`Error creating message for chatId: ${message.chatId}`, error);
@@ -46,7 +59,7 @@ export class MongoMessageRepository implements IMessageRepository {
     }
   }
 
-  private mapToDomain(messageDoc: IMessageModel | IBotMessageModel): Message {
+  private async mapToDomain(messageDoc: IMessageModel | IBotMessageModel): Promise<Message> {
     if (!messageDoc) {
       throw new Error('Message document is null');
     }
@@ -57,13 +70,15 @@ export class MongoMessageRepository implements IMessageRepository {
       ? (senderField as unknown as UserDocument).name
       : 'COMY オフィシャル AI';
 
+    const senderProfileImageUrl = messageDoc.senderProfileImageUrl || (await getSenderProfileImageUrl(sender));
+
     const baseMessage: Message = {
       id: messageDoc._id.toString(),
       sender,
       content: messageDoc.content || '',
       chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId)?.toString() || '',
       readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
-      createdAt: messageDoc.createdAt || new Date(),
+      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
       isMatchCard: isBotMessage ? (messageDoc as IBotMessageModel).isMatchCard : messageDoc.isMatchCard,
       isSuggested: isBotMessage ? (messageDoc as IBotMessageModel).isSuggested : messageDoc.isSuggested,
       suggestedUserProfileImageUrl: isBotMessage
@@ -81,7 +96,8 @@ export class MongoMessageRepository implements IMessageRepository {
         : undefined,
       status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
         ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
-        : undefined
+        : undefined,
+      senderProfileImageUrl
     };
 
     if ('suggestedUser' in messageDoc && messageDoc.suggestedUser && baseMessage.isMatchCard) {
@@ -135,11 +151,11 @@ export class MongoMessageRepository implements IMessageRepository {
         .lean()
         .exec() as IBotMessageModel[];
 
-      const mappedMessages = messages.map((msg: IMessageModel) => this.mapToDomain(msg));
-      const mappedBotMessages = botMessages.map((msg: IBotMessageModel) => this.mapToDomain(msg));
+      const mappedMessages = await Promise.all(messages.map((msg: IMessageModel) => this.mapToDomain(msg)));
+      const mappedBotMessages = await Promise.all(botMessages.map((msg: IBotMessageModel) => this.mapToDomain(msg)));
 
       const allMessages = [...mappedMessages, ...mappedBotMessages].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       const paginatedMessages = allMessages.slice(0, limit);
@@ -167,5 +183,18 @@ export class MongoMessageRepository implements IMessageRepository {
         { new: true }
       ).exec();
     }
+  }
+
+  async updateReadByForChat(chatId: string, userId: string): Promise<void> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    await MessageModel.updateMany(
+      { chat: chatId },
+      { $addToSet: { readBy: userObjectId } }
+    ).exec();
+
+    await BotMessageModel.updateMany(
+      { chatId: chatId },
+      { $addToSet: { readBy: userObjectId } }
+    ).exec();
   }
 }

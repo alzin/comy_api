@@ -1,6 +1,16 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { SocketIOService } from '../../infra/services/SocketIOService';
+import { UserModel } from '../../../infra/database/models/UserModel';
+
+// Utility function to get sender profile image URL
+const getSenderProfileImageUrl = async (sender: string): Promise<string> => {
+  if (sender === 'COMY オフィシャル AI') {
+    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
+  }
+  const user = await UserModel.findById(sender).select('profileImageUrl').exec();
+  return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+};
 
 export class MessageController {
   private sendMessageUseCase: any;
@@ -15,6 +25,8 @@ export class MessageController {
 
   async getMessages(req: Request, res: Response): Promise<void> {
     const chatId = req.params.chatId;
+    const userId = (req as any).user?.id;
+
     try {
       console.log(`Fetching messages for chatId: ${chatId}`);
       if (!mongoose.Types.ObjectId.isValid(chatId)) {
@@ -22,6 +34,16 @@ export class MessageController {
         res.status(400).json({ message: 'Invalid chat ID' });
         return;
       }
+
+      if (!userId) {
+        console.log('Unauthorized access: No user ID provided');
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      // Update readBy for all messages in the chat
+      await this.getMessagesUseCase.messageRepository.updateReadByForChat(chatId, userId);
+
       const messages = await this.getMessagesUseCase.execute(chatId);
       console.log(`Found ${messages.length} messages for chatId: ${chatId}`);
       res.status(200).json(messages);
@@ -35,7 +57,21 @@ export class MessageController {
     try {
       const messageData = req.body;
       const userId = (req as any).user?.id;
-      const message = await this.sendMessageUseCase.execute({ ...messageData, senderId: userId });
+
+      if (!userId) {
+        console.log('Unauthorized access: No user ID provided');
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      const senderProfileImageUrl = await getSenderProfileImageUrl(userId);
+      const messageWithSenderImage = {
+        ...messageData,
+        senderId: userId,
+        senderProfileImageUrl,
+        readBy: [userId], // Initialize readBy with the sender
+      };
+      const message = await this.sendMessageUseCase.execute(messageWithSenderImage);
       this.socketService.emitMessage(messageData.chatId, message);
       res.status(200).json(message);
     } catch (error: any) {

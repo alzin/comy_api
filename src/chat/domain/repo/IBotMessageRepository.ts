@@ -3,20 +3,22 @@ export interface BotMessage {
   senderId: string;
   content: string;
   chatId: string;
-  createdAt: Date;
+  createdAt?: string;
   readBy: string[];
   recipientId?: string;
   suggestedUser?: string;
   suggestionReason?: string;
-  isMatchCard?: boolean;
-  isSuggested?: boolean;
+  status: 'pending' | 'accepted' | 'rejected';
+  isMatchCard: boolean;
+  isSuggested: boolean;
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  senderProfileImageUrl?: string; 
 }
 
 export interface IBotMessageRepository {
-  create(message: BotMessage): Promise<void>;
-  updateSuggestionStatus(messageId: string, status: 'accepted' | 'rejected'): Promise<void>;
+  create(botMessage: BotMessage): Promise<void>;
+  findById(id: string): Promise<BotMessage | null>;
+  updateSuggestionStatus(id: string, status: 'accepted' | 'rejected'): Promise<void>;
 }

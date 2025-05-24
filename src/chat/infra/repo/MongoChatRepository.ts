@@ -19,8 +19,8 @@ interface PopulatedChatModel {
   users: PopulatedUser[];
   profileImageUrl: string;
   botProfileImageUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // Changed from Date
+  updatedAt: string; // Changed from Date
   latestMessage?: mongoose.Types.ObjectId | null;
 }
 
@@ -28,10 +28,14 @@ export class MongoChatRepository implements IChatRepository {
   private mapMessageToDomain(messageDoc: IMessageModel | IBotMessageModel | null): LatestMessage | null {
     if (!messageDoc) return null;
 
+    // Truncate content to 18 characters if longer, otherwise return full content
+    const content = messageDoc.content || '';
+    const truncatedContent = content.length > 18 ? content.substring(0, 18) : content;
+
     return {
       id: messageDoc._id.toString(),
-      content: messageDoc.content || '',
-      createdAt: messageDoc.createdAt || new Date(),
+      content: truncatedContent,
+      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
     };
   }
 
@@ -59,7 +63,6 @@ export class MongoChatRepository implements IChatRepository {
 
     let latestMessage: LatestMessage | null = null;
 
-    // Always fetch the latest message by sorting, ignoring chatDoc.latestMessage
     const latestUserMessage = await MessageModel.findOne({ chat: chatDoc._id })
       .sort({ createdAt: -1 })
       .exec();
@@ -73,7 +76,6 @@ export class MongoChatRepository implements IChatRepository {
         : latestUserMessage || latestBotMessage;
       if (latest) {
         latestMessage = this.mapMessageToDomain(latest);
-        // Update the chat document with the latest message ID
         await ChatModel.findByIdAndUpdate(chatDoc._id, { latestMessage: latest._id }, { new: true }).exec();
       }
     }

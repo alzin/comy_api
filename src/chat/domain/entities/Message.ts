@@ -1,10 +1,10 @@
 export interface Message {
   id: string;
   sender: string;
-  senderDetails?: { name: string; email: string };
+  senderDetails?: { name: string; email: string; profileImageUrl?: string }; 
   content: string;
   chatId: any;
-  createdAt: Date;
+  createdAt: string; 
   readBy: string[];
   isMatchCard: boolean;
   isSuggested: boolean;
@@ -12,4 +12,5 @@ export interface Message {
   suggestedUserName?: string;
   suggestedUserCategory?: string;
   status?: 'pending' | 'accepted' | 'rejected';
+  senderProfileImageUrl?: string;
 }

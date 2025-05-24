@@ -15,5 +15,5 @@ export interface User {
   currentPeriodEnd?: Date;
   subscriptionPlan?: string; // Changed String to string
   isOnline: boolean;
-  lastActive: Date;
+  lastActive: string;
 }
