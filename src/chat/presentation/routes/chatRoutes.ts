@@ -12,7 +12,6 @@ import mongoose from 'mongoose';
 import BotMessageModel from '../../../chat/infra/database/models/models/BotMessageModel';
 import MessageModel from '../../../chat/infra/database/models/MessageModel';
 import { UserModel } from '../../../infra/database/models/UserModel';
-import router from '../../../presentation/routes/adminRoutes';
 
 // Utility function to add a delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -50,17 +49,22 @@ export const setupChatRoutes = (
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
 
-  router.use((req, res, next) => {
+  // تعريف router بشكل صحيح
+  const router = express.Router();
+
+  // تعديل الـ middleware عشان يسمح لأي مستخدم مسجل بدون التحقق من admin
+  router.use((req: Request, res: Response, next: express.NextFunction) => {
     if (req.path === '/suggest-friends') {
       return next();
     }
+    // استخدام authMiddleware بس للتحقق من تسجيل الدخول، بدون الاعتماد على صلاحية admin
     return authMiddleware(dependencies.tokenService, dependencies.userRepository)(req, res, next);
   });
 
-  router.post('/', (req, res) => chatController.createChat(req, res));
-  router.get('/', (req, res) => chatController.getUserChats(req, res));
-  router.get('/:chatId/messages', (req, res) => messageController.getMessages(req, res));
-  router.post('/messages', (req, res) => messageController.sendMessage(req, res));
+  router.post('/', (req: Request, res: Response) => chatController.createChat(req, res));
+  router.get('/', (req: Request, res: Response) => chatController.getUserChats(req, res));
+  router.get('/:chatId/messages', (req: Request, res: Response) => messageController.getMessages(req, res));
+  router.post('/messages', (req: Request, res: Response) => messageController.sendMessage(req, res));
 
   router.post('/suggestions/respond', async (req: Request, res: Response) => {
     const { messageId, response } = req.body;
