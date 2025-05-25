@@ -10,7 +10,7 @@ export class GetUserChatsUseCase {
   constructor(chatRepository: IChatRepository, userRepository: IUserRepository) {
     this.chatRepository = chatRepository;
     this.userRepository = userRepository;
-    this.comyBotId = process.env.BOT_ID || '681c757539ec003942b3f97e';
+    this.comyBotId = process.env.BOT_ID ;
   }
 
   async execute(userId: string): Promise<Chat[]> {

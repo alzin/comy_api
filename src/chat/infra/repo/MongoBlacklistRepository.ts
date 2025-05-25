@@ -16,11 +16,8 @@ export class MongoBlacklistRepository implements IBlacklistRepository {
     return blacklisted.map(entry => entry.blockedUserId.toString());
   }
 
-  async isBlacklisted(userId: string, blacklistedUserId: string): Promise<boolean> {
-    const exists = await BlacklistModel.exists({
-      userId,
-      blockedUserId: blacklistedUserId
-    });
-    return !!exists;
+  async isBlacklisted(userId: string, blockedUserId: string): Promise<boolean> {
+    const entry = await BlacklistModel.findOne({ userId, blockedUserId });
+    return !!entry; 
   }
 }

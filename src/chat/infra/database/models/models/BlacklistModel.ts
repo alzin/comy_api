@@ -12,7 +12,6 @@ export interface IBlacklistModel extends Document {
 const blacklistSchema = new Schema<IBlacklistModel>({
   userId: { type: String, required: true },
   blockedUserId: { type: String, required: true },
-  blockDuration: { type: Number, default: 7 },
   createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) } 
 });
 

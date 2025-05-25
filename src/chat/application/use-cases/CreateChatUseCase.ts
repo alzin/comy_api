@@ -18,7 +18,7 @@ import mongoose from 'mongoose';
         throw new Error('At least two users are required to create a chat');
       }
 
-      const botId = process.env.BOT_ID || '681c757539ec003942b3f97e';
+      const botId = process.env.BOT_ID;
       if (!botId) {
         throw new Error('BOT_ID is not defined in .env');
       }

@@ -109,8 +109,6 @@ export class VirtualChatService {
           return;
         }
 
-        const defaultProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
-        const profileImageUrl = suggestedUser.profileImageUrl || defaultProfileImageUrl;
         const suggestedUserName = suggestedUser.name || 'User';
         const suggestedUserCategory = suggestedUser.category || 'unknown';
 
@@ -129,7 +127,7 @@ export class VirtualChatService {
           readBy: [this.virtualUserId],
           isMatchCard: true,
           isSuggested: true,
-          suggestedUserProfileImageUrl: profileImageUrl,
+          suggestedUserProfileImageUrl: '', // التعديل لجعل الصورة فارغة
           suggestedUserName,
           suggestedUserCategory
         };

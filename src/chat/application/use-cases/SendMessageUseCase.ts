@@ -61,8 +61,8 @@ export class SendMessageUseCase {
 
     this.socketService.emitMessage(chatId, savedMessage);
 
-    const bot1Id = '681547798892749fbe910c02';
-    const bot2Id = '681c757539ec003942b3f97e';
+    const bot1Id = process.env.VIRTUAL_USER_ID;
+    const bot2Id = process.env.BOT_ID ;
 
     if (chat.users.includes(bot1Id)) {
       const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot1Id);
