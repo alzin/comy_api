@@ -151,7 +151,8 @@ export class VirtualChatService {
 
         const message: Message = {
           id: suggestionMessage.id,
-          sender: this.virtualUserId,
+          senderId: this.virtualUserId,
+          senderName: 'COMY オフィシャル AI',
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
           content: suggestionMessage.content || '',
           chatId: chat.id,

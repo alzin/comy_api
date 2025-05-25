@@ -3,7 +3,6 @@ import http from 'http';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { CONFIG } from '../main/config/config';
 import { setupMiddlewares } from '../presentation/middlewares/setupMiddlewares';
 import { setupRoutes } from '../presentation/routes/setupRoutes';
 import { setupDependencies } from '../main/config/setupDependencies';

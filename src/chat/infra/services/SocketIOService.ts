@@ -86,11 +86,14 @@ export class SocketIOService implements ISocketService {
       socket.on('sendMessage', async (data: SendMessageData) => {
         const { chatId, content, senderId } = data;
         try {
+          const sender = await this.userRepository.findById(senderId);
+          const senderName = sender ? sender.name : 'Unknown User';
           const message: Message = await this.messageRepository.create({
             id: new mongoose.Types.ObjectId().toString(),
-            chatId,
-            sender: senderId,
+            senderId,
+            senderName,
             content,
+            chatId,
             readBy: [senderId],
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
             isMatchCard: false,
