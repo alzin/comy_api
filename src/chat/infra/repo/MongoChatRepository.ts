@@ -18,6 +18,7 @@ interface PopulatedChatModel {
   isGroupChat: boolean;
   users: PopulatedUser[];
   profileImageUrl: string;
+  profileImageUrls?: string[];
   botProfileImageUrl?: string;
   createdAt: string;
   updatedAt: string;
@@ -28,14 +29,13 @@ export class MongoChatRepository implements IChatRepository {
   private mapMessageToDomain(messageDoc: IMessageModel | IBotMessageModel | null): LatestMessage | null {
     if (!messageDoc) return null;
 
-    // Truncate content to 18 characters if longer, otherwise return full content
     const content = messageDoc.content || '';
     const truncatedContent = content.length > 18 ? content.substring(0, 18) : content;
 
     return {
       id: messageDoc._id.toString(),
       content: truncatedContent,
-      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
+      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
     };
   }
 
@@ -45,19 +45,21 @@ export class MongoChatRepository implements IChatRepository {
       doc.users && doc.users[0] && 'name' in doc.users[0];
 
     let profileImageUrl = chatDoc.profileImageUrl || '';
-    let botProfileImageUrl = chatDoc.botProfileImageUrl;
+    let profileImageUrls = chatDoc.profileImageUrls;
+    let botProfileImageUrl = chatDoc.botProfileImageUrl || '';
+
+    // Log the name from the database to debug
+    console.log(`Chat ID: ${chatDoc._id}, Name from DB: ${chatDoc.name}`);
 
     if (isPopulated(chatDoc)) {
-      if (!profileImageUrl) {
-        if (chatDoc.isGroupChat) {
-          const otherUser = chatDoc.users.find(user => user._id.toString() !== botId);
-          profileImageUrl = otherUser ? otherUser.profileImageUrl || '' : '';
-          const botUser = chatDoc.users.find(user => user._id.toString() === botId);
-          botProfileImageUrl = botUser ? botUser.profileImageUrl || '' : '';
-        } else {
-          const botUser = chatDoc.users.find(user => user._id.toString() === botId);
-          profileImageUrl = botUser ? botUser.profileImageUrl || '' : '';
-        }
+      if (!profileImageUrl || !profileImageUrls) {
+        const nonBotUsers = chatDoc.users.filter(user => user._id.toString() !== botId);
+        profileImageUrl = nonBotUsers[0]?.profileImageUrl || '';
+        profileImageUrls = nonBotUsers
+          .map(user => user.profileImageUrl)
+          .filter(url => url);
+        const botUser = chatDoc.users.find(user => user._id.toString() === botId);
+        botProfileImageUrl = botUser?.profileImageUrl || '';
       }
     }
 
@@ -88,6 +90,7 @@ export class MongoChatRepository implements IChatRepository {
         ? chatDoc.users.map((user: PopulatedUser) => user._id.toString())
         : chatDoc.users.map((id: mongoose.Types.ObjectId) => id.toString()),
       profileImageUrl,
+      profileImageUrls,
       botProfileImageUrl,
       createdAt: chatDoc.createdAt,
       updatedAt: chatDoc.updatedAt,
@@ -113,6 +116,7 @@ export class MongoChatRepository implements IChatRepository {
       ...chat,
       isGroupChat: chat.isGroup,
       users: chat.users.map(id => new mongoose.Types.ObjectId(id)),
+      profileImageUrls: chat.profileImageUrls,
       latestMessage: chat.latestMessage?.id ? new mongoose.Types.ObjectId(chat.latestMessage.id) : null,
     });
     const populatedChat = await ChatModel.findById(newChat._id)
@@ -184,6 +188,9 @@ export class MongoChatRepository implements IChatRepository {
     }
     if (update.isGroup !== undefined) {
       updateFields.isGroupChat = update.isGroup;
+    }
+    if (update.profileImageUrls) {
+      updateFields.profileImageUrls = update.profileImageUrls;
     }
     await ChatModel.findByIdAndUpdate(chatId, { $set: updateFields }, { new: true }).exec();
   }

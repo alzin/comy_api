@@ -5,7 +5,6 @@ import BotMessageModel, { IBotMessageModel } from '../database/models/models/Bot
 export class MongoBotMessageRepository implements IBotMessageRepository {
   async create(botMessage: BotMessage): Promise<void> {
     try {
-      // Validate required fields
       if (!mongoose.Types.ObjectId.isValid(botMessage.senderId)) {
         throw new Error(`Invalid senderId: ${botMessage.senderId} is not a valid ObjectId`);
       }

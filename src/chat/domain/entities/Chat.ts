@@ -10,8 +10,9 @@ export interface Chat {
   isGroup: boolean;
   users: string[];
   profileImageUrl: string;
+  profileImageUrls?: string[]; // For group chats viewed by bot2
   botProfileImageUrl?: string;
-  createdAt: string; 
-  updatedAt: string; 
+  createdAt: string;
+  updatedAt: string;
   latestMessage?: LatestMessage | null;
 }

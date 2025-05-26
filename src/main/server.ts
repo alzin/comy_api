@@ -1,3 +1,4 @@
+// Main server setup
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -12,6 +13,7 @@ import { setupChatRoutes } from '../chat/presentation/routes/chatRoutes';
 import { ChatController } from '../chat/presentation/controllers/ChatController';
 import { MessageController } from '../chat/presentation/controllers/MessageController';
 import { VirtualChatService } from '../chat/infra/services/VirtualChatService';
+import { MongoFriendRepository } from '../chat/infra/repo/MongoFriendRepository'; // Added
 
 dotenv.config();
 console.log('API_KEY:', process.env.API_KEY);
@@ -47,19 +49,22 @@ export async function startServer() {
   const dependencies = setupDependencies(server);
 
   // Set up bot service
+  const friendRepository = new MongoFriendRepository(); // Added
   const virtualChatService = new VirtualChatService(
     dependencies.socketService,
     dependencies.userRepository,
     dependencies.botMessageRepository,
     dependencies.chatRepository,
     dependencies.blacklistRepository,
+    friendRepository, // Added
     dependencies.chatService.createChatUseCase
   );
   await virtualChatService.initialize();
 
   app.locals.dependencies = {
     ...dependencies,
-    virtualChatService
+    virtualChatService,
+    friendRepository // Added
   };
   console.log('VirtualChatService initialized:', app.locals.dependencies.virtualChatService);
 

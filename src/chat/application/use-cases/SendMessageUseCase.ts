@@ -7,6 +7,7 @@ import { Message } from '../../domain/entities/Message';
 import { LatestMessage } from '../../domain/entities/Chat';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 
+// Use case for sending messages
 export class SendMessageUseCase {
   constructor(
     private messageRepository: IMessageRepository,

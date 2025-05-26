@@ -1,9 +1,11 @@
+// Service for bot operations (friend suggestions, auto-replies)
 import mongoose from 'mongoose';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { BotMessage, IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
+import { IFriendRepository } from '../../domain/repo/IFriendRepository';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
@@ -19,6 +21,7 @@ export class VirtualChatService {
     private botMessageRepository: IBotMessageRepository,
     private chatRepository: IChatRepository,
     private blacklistRepository: IBlacklistRepository,
+    private friendRepository: IFriendRepository,
     private createChatUseCase: CreateChatUseCase
   ) {}
 
@@ -109,8 +112,11 @@ export class VirtualChatService {
           return;
         }
 
-        const suggestedUserName = suggestedUser.name || 'User';
-        const suggestedUserCategory = suggestedUser.category || 'unknown';
+        // Fetch the suggested user's latest data to ensure profileImageUrl is accurate
+        const verifiedSuggestedUser = await this.userRepository.findById(suggestedUser.id!);
+        const profileImageUrl = verifiedSuggestedUser?.profileImageUrl ?? ''; // Updated: Ensure empty string if no profile image
+        const suggestedUserName = verifiedSuggestedUser?.name || suggestedUser.name || 'User';
+        const suggestedUserCategory = verifiedSuggestedUser?.category || suggestedUser.category || 'unknown';
 
         const suggestionContent = `${user.name || 'User'}さん、おはようございます！\n今週は${user.name || 'User'}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは“自社の強みテーブル”です！\nお繋がりを希望しますか？`;
 
@@ -127,7 +133,7 @@ export class VirtualChatService {
           readBy: [this.virtualUserId],
           isMatchCard: true,
           isSuggested: true,
-          suggestedUserProfileImageUrl: '', // التعديل لجعل الصورة فارغة
+          suggestedUserProfileImageUrl: profileImageUrl, // Always include attribute
           suggestedUserName,
           suggestedUserCategory
         };
@@ -158,7 +164,7 @@ export class VirtualChatService {
           readBy: suggestionMessage.readBy,
           isMatchCard: suggestionMessage.isMatchCard ?? false,
           isSuggested: suggestionMessage.isSuggested ?? false,
-          suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl,
+          suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl ?? '', // Always include attribute, empty if undefined
           suggestedUserName: suggestionMessage.suggestedUserName,
           suggestedUserCategory: suggestionMessage.suggestedUserCategory,
           status: suggestionMessage.status
@@ -177,23 +183,27 @@ export class VirtualChatService {
         console.log(`Processing suggestion for ${user.name} (ID: ${user.id})`);
 
         const blacklistedUserIds = await this.blacklistRepository.getBlacklistedUsers(user.id);
+        const friendUserIds = (await this.friendRepository.getFriends(user.id)).map(f => f.friendId.toString());
         console.log(`Blacklisted users for ${user.name} (ID: ${user.id}):`, blacklistedUserIds);
+        console.log(`Existing friends for ${user.name} (ID: ${user.id}):`, friendUserIds);
 
         const possibleSuggestions = validUsers.filter(u =>
           u.id &&
           u.id !== user.id &&
           u.id !== this.virtualUserId &&
           !suggestedUsers.has(u.id) &&
-          !blacklistedUserIds.includes(u.id)
+          !blacklistedUserIds.includes(u.id) &&
+          !friendUserIds.includes(u.id)
         );
 
         if (possibleSuggestions.length === 0) {
-          console.log(`No possible suggestions for ${user.name} (ID: ${user.id}) after filtering blacklisted users`);
+          console.log(`No possible suggestions for ${user.name} (ID: ${user.id}) after filtering blacklisted and friend users`);
           const fallbackSuggestions = validUsers.filter(u =>
             u.id &&
             u.id !== user.id &&
             u.id !== this.virtualUserId &&
-            !blacklistedUserIds.includes(u.id)
+            !blacklistedUserIds.includes(u.id) &&
+            !friendUserIds.includes(u.id)
           );
           if (fallbackSuggestions.length === 0) {
             console.log(`No fallback suggestions available for ${user.name} (ID: ${user.id})`);
