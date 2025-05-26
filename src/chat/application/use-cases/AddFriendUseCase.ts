@@ -9,7 +9,6 @@ export class AddFriendUseCase {
   ) {}
 
   async execute(userId: string, friendId: string): Promise<void> {
-    // Validate users exist
     const user = await this.userRepository.findById(userId);
     const friend = await this.userRepository.findById(friendId);
 
@@ -17,13 +16,11 @@ export class AddFriendUseCase {
       throw new Error('User or friend not found');
     }
 
-    // Check if already friends
     const isAlreadyFriend = await this.friendRepository.isFriend(userId, friendId);
     if (isAlreadyFriend) {
       throw new Error('Users are already friends');
     }
 
-    // Add friendship
     await this.friendRepository.addFriend(userId, friendId);
   }
 }
