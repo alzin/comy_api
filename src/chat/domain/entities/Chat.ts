@@ -4,14 +4,18 @@ export interface LatestMessage {
   createdAt: string;
 }
 
+export interface ChatUser {
+  role: string;
+  id: string;
+  image: string;
+  name?: string; 
+}
+
 export interface Chat {
   id: string;
   name: string;
   isGroup: boolean;
-  users: string[];
-  profileImageUrl: string;
-  profileImageUrls?: string[]; // For group chats viewed by bot2
-  botProfileImageUrl?: string;
+  users: ChatUser[]; 
   createdAt: string;
   updatedAt: string;
   latestMessage?: LatestMessage | null;

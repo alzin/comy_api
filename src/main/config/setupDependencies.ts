@@ -145,9 +145,9 @@ export function setupDependencies(server: any) {
     socketService
   );
 
-  const virtualUserId = process.env.VIRTUAL_USER_ID;
+  const virtualUserId = process.env.BOT_ID;
   if (!virtualUserId) {
-    throw new Error('VIRTUAL_USER_ID is not defined in .env');
+    throw new Error('BOT_ID is not defined in .env');
   }
 
   return {

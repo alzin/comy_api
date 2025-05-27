@@ -193,7 +193,7 @@ export class MongoMessageRepository implements IMessageRepository {
     if (!chat || chat.isGroupChat) {
       return false;
     }
-    const virtualUserId = process.env.VIRTUAL_USER_ID || '681547798892749fbe910c02';
+    const virtualUserId = process.env.BOT_ID;
     return chat.users.some((userId: mongoose.Types.ObjectId) => userId.toString() === virtualUserId);
   }
 

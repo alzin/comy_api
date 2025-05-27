@@ -441,9 +441,9 @@ export const setupChatRoutes = (
       socketService.emitMessage(chatId, confirmMessage);
       console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      const botId = process.env.BOT_ID;
+      const botId = process.env.ADMAIN;
       if (!botId) {
-        throw new Error('BOT_ID is not defined in .env');
+        throw new Error('ADMAIN is not defined in .env');
       }
 
       // Fetch user names for chat name

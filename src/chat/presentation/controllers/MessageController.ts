@@ -12,6 +12,7 @@ const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 };
 
+
 export class MessageController {
   private sendMessageUseCase: any;
   private getMessagesUseCase: any;

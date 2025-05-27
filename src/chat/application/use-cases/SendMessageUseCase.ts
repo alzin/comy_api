@@ -7,7 +7,6 @@ import { Message } from '../../domain/entities/Message';
 import { LatestMessage } from '../../domain/entities/Chat';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 
-// Use case for sending messages
 export class SendMessageUseCase {
   constructor(
     private messageRepository: IMessageRepository,
@@ -36,7 +35,6 @@ export class SendMessageUseCase {
       throw new Error('Chat not found');
     }
 
-    // Fetch sender's name
     const sender = await this.userRepository.findById(senderId);
     const senderName = sender ? sender.name : 'Unknown User';
 
@@ -62,10 +60,11 @@ export class SendMessageUseCase {
 
     this.socketService.emitMessage(chatId, savedMessage);
 
-    const bot1Id = process.env.VIRTUAL_USER_ID;
-    const bot2Id = process.env.BOT_ID ;
+    const bot1Id = process.env.BOT_ID;
+    const bot2Id = process.env.ADMAIN;
 
-    if (chat.users.includes(bot1Id)) {
+    // Check if bot1Id exists in chat.users
+    if (bot1Id && chat.users.some(user => user.id === bot1Id)) {
       const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot1Id);
       if (botResponse) {
         const botMessage: Message = {
@@ -91,7 +90,8 @@ export class SendMessageUseCase {
       }
     }
 
-    if (chat.users.includes(bot2Id)) {
+    // Check if bot2Id exists in chat.users
+    if (bot2Id && chat.users.some(user => user.id === bot2Id)) {
       const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot2Id);
       if (botResponse) {
         const botMessage: Message = {
