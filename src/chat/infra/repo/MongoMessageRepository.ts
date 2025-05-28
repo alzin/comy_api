@@ -6,7 +6,6 @@ import BotMessageModel, { IBotMessageModel } from '../database/models/models/Bot
 import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 
-// Utility function to get sender profile image URL
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === '681547798892749fbe910c02') {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
@@ -18,7 +17,6 @@ const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
 export class MongoMessageRepository implements IMessageRepository {
   async create(message: Message, userId?: string): Promise<Message> {
     try {
-      // Validate senderId before creating the message
       if (!mongoose.Types.ObjectId.isValid(message.senderId)) {
         throw new Error(`Invalid senderId: ${message.senderId} is not a valid ObjectId`);
       }
@@ -30,7 +28,7 @@ export class MongoMessageRepository implements IMessageRepository {
       const readBy = [...new Set([...message.readBy, ...(userId ? [userId] : [])])];
       const messageDoc = new MessageModel({
         _id: new mongoose.Types.ObjectId(message.id),
-        sender: message.senderId, // Store senderId in the DB
+        sender: message.senderId,
         content: message.content,
         chat: message.chatId,
         createdAt: message.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
@@ -76,7 +74,6 @@ export class MongoMessageRepository implements IMessageRepository {
     const isBotMessage = 'senderId' in messageDoc;
     let senderId: string;
 
-    // Extract senderId based on message type
     if (isBotMessage) {
       const botMessage = messageDoc as IBotMessageModel;
       senderId = botMessage.senderId ? botMessage.senderId.toString() : '';
@@ -85,15 +82,12 @@ export class MongoMessageRepository implements IMessageRepository {
       senderId = userMessage.sender ? userMessage.sender.toString() : '';
     }
 
-    // Log senderId for debugging
     console.log(`Processing message with senderId: ${senderId}, messageDoc:`, messageDoc);
 
-    // Validate senderId
     if (!mongoose.Types.ObjectId.isValid(senderId)) {
       console.error(`Invalid senderId detected: ${senderId} for messageDoc:`, messageDoc);
-      // Fallback to the actual bot ID and name
-      const fallbackSenderId = '681547798892749fbe910c02'; // Use the actual bot ID
-      const senderName = 'COMY オフィシャル AI'; // Use the actual bot name
+      const fallbackSenderId = '681547798892749fbe910c02';
+      const senderName = 'COMY オフィシャル AI';
       const senderProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 
       const baseMessage: Message = {
@@ -119,6 +113,9 @@ export class MongoMessageRepository implements IMessageRepository {
           : messageDoc.isMatchCard
           ? messageDoc.suggestedUserCategory
           : undefined,
+        relatedUserId: (isBotMessage && (messageDoc as IBotMessageModel).isSuggested) || (isBotMessage && !(messageDoc as IBotMessageModel).isSuggested && (messageDoc as IBotMessageModel).isMatchCard)
+          ? (messageDoc as IBotMessageModel).suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined
+          : undefined,
         status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
           ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
           : undefined,
@@ -138,7 +135,6 @@ export class MongoMessageRepository implements IMessageRepository {
       return baseMessage;
     }
 
-    // Proceed with valid senderId
     const sender = await UserModel.findById(senderId).select('name').exec();
     const senderName = sender ? sender.name : (senderId === '681547798892749fbe910c02' ? 'COMY オフィシャル AI' : 'Unknown User');
     const senderProfileImageUrl = messageDoc.senderProfileImageUrl || (await getSenderProfileImageUrl(senderId));
@@ -165,6 +161,9 @@ export class MongoMessageRepository implements IMessageRepository {
         ? (messageDoc as IBotMessageModel).suggestedUserCategory
         : messageDoc.isMatchCard
         ? messageDoc.suggestedUserCategory
+        : undefined,
+      relatedUserId: (isBotMessage && (messageDoc as IBotMessageModel).isSuggested) || (isBotMessage && !(messageDoc as IBotMessageModel).isSuggested && (messageDoc as IBotMessageModel).isMatchCard)
+        ? (messageDoc as IBotMessageModel).suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined
         : undefined,
       status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
         ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
@@ -214,7 +213,7 @@ export class MongoMessageRepository implements IMessageRepository {
         .exec() as IMessageModel[];
 
       const botMessages = await BotMessageModel.find({ chatId })
-        .populate('suggestedUser', 'name profileImageUrl category')
+        .populate('suggestedUser', '_id') 
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })

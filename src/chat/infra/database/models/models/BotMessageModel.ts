@@ -17,6 +17,7 @@ export interface IBotMessageModel extends Document<Types.ObjectId> {
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
+  relatedUserId?: string;
   senderProfileImageUrl?: string;
 }
 
@@ -36,7 +37,8 @@ const botMessageSchema = new Schema<IBotMessageModel>(
     suggestedUserProfileImageUrl: { type: String },
     suggestedUserName: { type: String },
     suggestedUserCategory: { type: String },
-    senderProfileImageUrl: { type: String }
+    senderProfileImageUrl: { type: String },
+    relatedUserId: { type: String }
   },
   { timestamps: false, collection: 'botmessages' } 
 );

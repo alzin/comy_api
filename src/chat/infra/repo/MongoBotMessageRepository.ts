@@ -51,7 +51,9 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         return null;
       }
 
-      const messageDoc = await BotMessageModel.findById(id).exec();
+      const messageDoc = await BotMessageModel.findById(id)
+        .populate('suggestedUser', '_id') 
+        .exec();
       if (!messageDoc) {
         return null;
       }
@@ -64,7 +66,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
         readBy: messageDoc.readBy?.map((id: mongoose.Types.ObjectId) => id.toString()) || [],
         recipientId: messageDoc.recipientId?.toString(),
-        suggestedUser: messageDoc.suggestedUser?.toString(),
+        suggestedUser: messageDoc.suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined,
         suggestionReason: messageDoc.suggestionReason,
         status: messageDoc.status as 'pending' | 'accepted' | 'rejected' || 'pending',
         isMatchCard: messageDoc.isMatchCard || false,
@@ -72,7 +74,10 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
         suggestedUserName: messageDoc.suggestedUserName,
         suggestedUserCategory: messageDoc.suggestedUserCategory,
-        senderProfileImageUrl: messageDoc.senderProfileImageUrl
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl,
+        relatedUserId: (messageDoc.isSuggested || messageDoc.isMatchCard) && messageDoc.suggestedUser
+          ? (messageDoc.suggestedUser as any)._id.toString()
+          : undefined
       };
     } catch (error) {
       console.error(`Error finding bot message with ID: ${id}`, error);

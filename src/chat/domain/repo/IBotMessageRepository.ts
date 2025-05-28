@@ -1,20 +1,23 @@
+import { Message } from '../../../chat/domain/entities/Message';
+
 export interface BotMessage {
   id: string;
   senderId: string;
   content: string;
   chatId: string;
-  createdAt?: string;
+  createdAt: string;
   readBy: string[];
   recipientId?: string;
   suggestedUser?: string;
   suggestionReason?: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  isMatchCard: boolean;
-  isSuggested: boolean;
+  status?: 'pending' | 'accepted' | 'rejected';
+  isMatchCard?: boolean;
+  isSuggested?: boolean;
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
-  senderProfileImageUrl?: string; 
+  relatedUserId?: string; 
+  senderProfileImageUrl?: string;
 }
 
 export interface IBotMessageRepository {
