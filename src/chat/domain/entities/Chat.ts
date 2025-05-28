@@ -2,6 +2,7 @@ export interface LatestMessage {
   id: string;
   content: string;
   createdAt: string;
+  readBy: string[]; 
 }
 
 export interface ChatUser {

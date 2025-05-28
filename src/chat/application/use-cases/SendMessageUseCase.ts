@@ -55,6 +55,7 @@ export class SendMessageUseCase {
       id: savedMessage.id,
       content: this.truncateContent(savedMessage.content),
       createdAt: savedMessage.createdAt,
+      readBy: savedMessage.readBy // Add readBy from savedMessage
     };
     await this.chatRepository.update(chatId, { latestMessage });
 
@@ -84,6 +85,7 @@ export class SendMessageUseCase {
           id: savedBotMessage.id,
           content: this.truncateContent(savedBotMessage.content),
           createdAt: savedBotMessage.createdAt,
+          readBy: savedBotMessage.readBy // Add readBy from savedBotMessage
         };
         await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
         this.socketService.emitMessage(chatId, savedBotMessage);
@@ -111,6 +113,7 @@ export class SendMessageUseCase {
           id: savedBotMessage.id,
           content: this.truncateContent(savedBotMessage.content),
           createdAt: savedBotMessage.createdAt,
+          readBy: savedBotMessage.readBy // Add readBy from savedBotMessage
         };
         await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
         this.socketService.emitMessage(chatId, savedBotMessage);

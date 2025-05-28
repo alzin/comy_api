@@ -34,6 +34,7 @@ export class MongoChatRepository implements IChatRepository {
       id: messageDoc._id.toString(),
       content: truncatedContent,
       createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()) // Add readBy mapping
     };
   }
 
