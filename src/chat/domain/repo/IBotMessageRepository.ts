@@ -1,5 +1,3 @@
-import { Message } from '../../../chat/domain/entities/Message';
-
 export interface BotMessage {
   id: string;
   senderId: string;
@@ -16,12 +14,13 @@ export interface BotMessage {
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
-  relatedUserId?: string; 
   senderProfileImageUrl?: string;
+  relatedUserId?: string;
 }
 
 export interface IBotMessageRepository {
   create(botMessage: BotMessage): Promise<void>;
   findById(id: string): Promise<BotMessage | null>;
   updateSuggestionStatus(id: string, status: 'accepted' | 'rejected'): Promise<void>;
+  findExistingSuggestion(chatId: string, senderId: string, recipientId: string, suggestedUserId: string): Promise<BotMessage | null>;
 }

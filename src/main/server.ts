@@ -1,4 +1,3 @@
-// Main server setup
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -13,7 +12,8 @@ import { setupChatRoutes } from '../chat/presentation/routes/chatRoutes';
 import { ChatController } from '../chat/presentation/controllers/ChatController';
 import { MessageController } from '../chat/presentation/controllers/MessageController';
 import { VirtualChatService } from '../chat/infra/services/VirtualChatService';
-import { MongoFriendRepository } from '../chat/infra/repo/MongoFriendRepository'; // Added
+import { MongoFriendRepository } from '../chat/infra/repo/MongoFriendRepository';
+import { InitializeVirtualUserUseCase } from '../chat/application/use-cases/InitializeVirtualUserUseCase'; // Added
 
 dotenv.config();
 console.log('API_KEY:', process.env.API_KEY);
@@ -49,22 +49,18 @@ export async function startServer() {
   const dependencies = setupDependencies(server);
 
   // Set up bot service
-  const friendRepository = new MongoFriendRepository(); // Added
-  const virtualChatService = new VirtualChatService(
-    dependencies.socketService,
-    dependencies.userRepository,
-    dependencies.botMessageRepository,
-    dependencies.chatRepository,
-    dependencies.blacklistRepository,
-    friendRepository, // Added
-    dependencies.chatService.createChatUseCase
-  );
-  await virtualChatService.initialize();
+  const friendRepository = new MongoFriendRepository();
+  const virtualChatService = new VirtualChatService(); // Updated: No arguments
+
+  // Initialize virtual user using the Use Case
+  const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(dependencies.userRepository);
+  const virtualUserId = await initializeVirtualUserUseCase.execute();
 
   app.locals.dependencies = {
     ...dependencies,
     virtualChatService,
-    friendRepository // Added
+    friendRepository,
+    virtualUserId // Update virtualUserId in dependencies
   };
   console.log('VirtualChatService initialized:', app.locals.dependencies.virtualChatService);
 

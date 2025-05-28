@@ -13,6 +13,7 @@ import mongoose from 'mongoose';
 import BotMessageModel from '../../../chat/infra/database/models/models/BotMessageModel';
 import MessageModel from '../../../chat/infra/database/models/MessageModel';
 import { UserModel } from '../../../infra/database/models/UserModel';
+import { SuggestFriendsUseCase } from '../../application/use-cases/SuggestFriendsUseCase';
 
 // Utility function to add a delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -51,6 +52,17 @@ export const setupChatRoutes = (
   const chatRepo = new MongoChatRepository();
   const friendRepo = new MongoFriendRepository();
 
+  const suggestFriendsUseCase = new SuggestFriendsUseCase(
+    dependencies.userRepository,
+    botMessageRepo,
+    chatRepo,
+    blacklistRepo,
+    friendRepo,
+    dependencies.chatService.createChatUseCase,
+    socketService,
+    dependencies.virtualUserId
+  );
+
   const router = express.Router();
 
   router.use((req: Request, res: Response, next: express.NextFunction) => {
@@ -74,7 +86,6 @@ export const setupChatRoutes = (
     }
 
     try {
-      // Find the suggestion message
       const message = await BotMessageModel.findById(messageId).populate<{
         suggestedUser: { _id: mongoose.Types.ObjectId; name: string; profileImageUrl?: string; category?: string }
       }>('suggestedUser', 'profileImageUrl name category');
@@ -99,7 +110,6 @@ export const setupChatRoutes = (
       console.log(`User ${userId} responded to suggestion ${messageId} with ${response}`);
       await botMessageRepo.updateSuggestionStatus(messageId, response === 'マッチを希望する' ? 'accepted' : 'rejected');
 
-      // Create user response message
       const user = await UserModel.findById(userId).select('name').exec();
       const senderName = user ? user.name : 'Unknown User';
       const userProfileImageUrl = await getSenderProfileImageUrl(userId, dependencies);
@@ -168,7 +178,6 @@ export const setupChatRoutes = (
         return res.status(200).json({ message: rejectMessages });
       }
 
-      // Create confirmation message for the user who accepted
       const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
       const confirmBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
@@ -199,7 +208,6 @@ export const setupChatRoutes = (
       socketService.emitMessage(chatId, confirmMessage);
       console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      // Find or create a private chat for the suggested user with the virtual user
       let suggestedUserChatId: string | null = await chatRepo.getPrivateChatId(message.suggestedUser._id.toString(), dependencies.virtualUserId);
       if (!suggestedUserChatId) {
         console.log(`Creating new chat for suggested user ${message.suggestedUser._id.toString()} with virtual user ${dependencies.virtualUserId}`);
@@ -222,7 +230,6 @@ export const setupChatRoutes = (
         return res.status(500).json({ message: 'Failed to create chat' });
       }
 
-      // Prepare match request message for the suggested user
       const suggestingUser = await UserModel.findById(userId).select('profileImageUrl name category').exec();
       const suggestedUserProfileImageUrl = suggestingUser?.profileImageUrl ?? '';
       const suggestedUserName = req.user?.name || 'User';
@@ -248,7 +255,6 @@ export const setupChatRoutes = (
         senderProfileImageUrl: botProfileImageUrl
       };
 
-      // Check for duplicate match request
       const existingMessage = await BotMessageModel.findOne({
         chatId: suggestedUserChatId,
         senderId: dependencies.virtualUserId,
@@ -263,16 +269,9 @@ export const setupChatRoutes = (
         });
       }
 
-      // Save the match request message
-      try {
-        await botMessageRepo.create(matchBotMessage);
-        console.log(`Created match bot message: ${matchBotMessage.id} in chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
-      } catch (error) {
-        console.error(`Failed to save match bot message for user ${message.suggestedUser._id.toString()}:`, error);
-        return res.status(500).json({ message: 'Failed to save match request message' });
-      }
+      await botMessageRepo.create(matchBotMessage);
+      console.log(`Created match bot message: ${matchBotMessage.id} in chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
 
-      // Emit the match request message
       const matchMessage: Message = {
         id: matchBotMessage.id,
         senderId: 'COMY オフィシャル AI',
@@ -289,13 +288,8 @@ export const setupChatRoutes = (
         status: matchBotMessage.status,
         senderProfileImageUrl: botProfileImageUrl
       };
-      try {
-        socketService.emitMessage(suggestedUserChatId, matchMessage);
-        console.log(`Emitted match message ${matchBotMessage.id} to chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
-      } catch (error) {
-        console.error(`Failed to emit match message for user ${message.suggestedUser._id.toString()}:`, error);
-        return res.status(500).json({ message: 'Failed to emit match request message' });
-      }
+      socketService.emitMessage(suggestedUserChatId, matchMessage);
+      console.log(`Emitted match message ${matchBotMessage.id} to chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
 
       res.status(200).json({
         message: `${message.suggestedUser.name}さんにマッチの希望を送りました。`
@@ -407,7 +401,6 @@ export const setupChatRoutes = (
         return res.status(200).json({ message: rejectMessages });
       }
 
-      // Add users as friends
       await friendRepo.addFriend(userId, message.suggestedUser._id.toString());
       console.log(`Added friendship between ${userId} and ${message.suggestedUser._id.toString()}`);
 
@@ -446,7 +439,6 @@ export const setupChatRoutes = (
         throw new Error('ADMAIN is not defined in .env');
       }
 
-      // Fetch user names for chat name
       const user1 = await UserModel.findById(userId).select('name').exec();
       const user2 = await UserModel.findById(message.suggestedUser._id).select('name').exec();
       if (!user1 || !user2) {
@@ -454,7 +446,7 @@ export const setupChatRoutes = (
       }
 
       const users = [userId, message.suggestedUser._id.toString(), botId];
-      const chatName = `${user1.name}, ${user2.name}`; // e.g., "لبنى, tala"
+      const chatName = `${user1.name}, ${user2.name}`;
       const newChat = await dependencies.chatService.createChatUseCase.execute(
         users,
         chatName,
@@ -565,8 +557,7 @@ export const setupChatRoutes = (
         return res.status(401).json({ error: 'Invalid or missing API Key' });
       }
 
-      const virtualChatService = req.app.locals.dependencies.virtualChatService;
-      await virtualChatService.suggestFriends();
+      await suggestFriendsUseCase.execute();
       return res.status(200).json({ message: 'Friend suggestions triggered successfully' });
     } catch (error) {
       console.error('Error triggering friend suggestions:', error);

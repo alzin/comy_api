@@ -1,4 +1,3 @@
-// Dependency injection setup
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import express from 'express';
@@ -8,7 +7,7 @@ import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessage
 import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
 import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
 import { MongoChatRepository } from '../../chat/infra/repo/MongoChatRepository';
-import { MongoFriendRepository } from '../../chat/infra/repo/MongoFriendRepository'; // Added
+import { MongoFriendRepository } from '../../chat/infra/repo/MongoFriendRepository';
 import { VirtualChatService } from '../../chat/infra/services/VirtualChatService';
 import { MongoUserRepository } from '../../infra/repo/MongoUserRepository';
 import { CreateChatUseCase } from '../../chat/application/use-cases/CreateChatUseCase';
@@ -48,6 +47,7 @@ import { BulkEmailSender } from '../../infra/services/BulkEmailSender';
 import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
+import { GenerateBotResponseUseCase } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/chat/application/use-cases/GenerateBotResponseUseCase'; // Added
 
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
@@ -110,25 +110,18 @@ export function setupDependencies(server: any) {
   const messageRepository = new MongoMessageRepository();
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
-  const friendRepository = new MongoFriendRepository(); // Added
+  const friendRepository = new MongoFriendRepository();
   const socketService = new SocketIOService(server, userRepository, messageRepository);
   socketService.initialize(); 
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
-  const virtualChatService = new VirtualChatService(
-    socketService,
-    userRepository,
-    botMessageRepository,
-    chatRepository,
-    blacklistRepository,
-    friendRepository, // Added
-    createChatUseCase
-  );
+  const generateBotResponseUseCase = new GenerateBotResponseUseCase(chatRepository); // Added
+  const virtualChatService = new VirtualChatService(); // Updated: No arguments
   const sendMessageUseCase = new SendMessageUseCase(
     messageRepository,
     chatRepository,
     socketService,
-    virtualChatService,
+    generateBotResponseUseCase, // Updated: Use GenerateBotResponseUseCase
     userRepository
   );
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
@@ -175,7 +168,7 @@ export function setupDependencies(server: any) {
     messageRepository,
     chatRepository,
     blacklistRepository,
-    friendRepository, // Added
+    friendRepository,
     virtualChatService,
     sendMessageUseCase,
     virtualUserId,

@@ -52,7 +52,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
       }
 
       const messageDoc = await BotMessageModel.findById(id)
-        .populate('suggestedUser', '_id') 
+        .populate('suggestedUser', '_id')
         .exec();
       if (!messageDoc) {
         return null;
@@ -98,6 +98,50 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
       console.log(`Updated suggestion status for message ${id} to ${status}`);
     } catch (error) {
       console.error(`Error updating suggestion status for message ${id}`, error);
+      throw error;
+    }
+  }
+
+  async findExistingSuggestion(chatId: string, senderId: string, recipientId: string, suggestedUserId: string): Promise<BotMessage | null> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(chatId) || !mongoose.Types.ObjectId.isValid(senderId) ||
+          !mongoose.Types.ObjectId.isValid(recipientId) || !mongoose.Types.ObjectId.isValid(suggestedUserId)) {
+        console.log(`Invalid IDs for finding existing suggestion: chatId=${chatId}, senderId=${senderId}, recipientId=${recipientId}, suggestedUserId=${suggestedUserId}`);
+        return null;
+      }
+
+      const messageDoc = await BotMessageModel.findOne({
+        chatId: chatId,
+        senderId: senderId,
+        recipientId: recipientId,
+        suggestedUser: suggestedUserId,
+        status: 'pending'
+      }).exec();
+
+      if (!messageDoc) {
+        return null;
+      }
+
+      return {
+        id: messageDoc._id.toString(),
+        senderId: messageDoc.senderId?.toString() || '',
+        content: messageDoc.content || '',
+        chatId: messageDoc.chatId?.toString() || '',
+        createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        readBy: messageDoc.readBy?.map((id: mongoose.Types.ObjectId) => id.toString()) || [],
+        recipientId: messageDoc.recipientId?.toString(),
+        suggestedUser: messageDoc.suggestedUser?.toString(),
+        suggestionReason: messageDoc.suggestionReason,
+        status: messageDoc.status as 'pending' | 'accepted' | 'rejected' || 'pending',
+        isMatchCard: messageDoc.isMatchCard || false,
+        isSuggested: messageDoc.isSuggested || false,
+        suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
+        suggestedUserName: messageDoc.suggestedUserName,
+        suggestedUserCategory: messageDoc.suggestedUserCategory,
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl
+      };
+    } catch (error) {
+      console.error(`Error finding existing suggestion for chatId: ${chatId}`, error);
       throw error;
     }
   }

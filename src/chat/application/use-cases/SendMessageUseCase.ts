@@ -1,8 +1,9 @@
+///chat/application/use-cases/SendMessageUseCase.ts
 import mongoose from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
-import { VirtualChatService } from '../../infra/services/VirtualChatService';
+import { GenerateBotResponseUseCase } from './GenerateBotResponseUseCase';
 import { Message } from '../../domain/entities/Message';
 import { LatestMessage } from '../../domain/entities/Chat';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
@@ -12,7 +13,7 @@ export class SendMessageUseCase {
     private messageRepository: IMessageRepository,
     private chatRepository: IChatRepository,
     private socketService: ISocketService,
-    private virtualChatService: VirtualChatService,
+    private generateBotResponseUseCase: GenerateBotResponseUseCase,
     private userRepository: IUserRepository
   ) {}
 
@@ -45,7 +46,7 @@ export class SendMessageUseCase {
       content,
       chatId,
       readBy: [senderId],
-      createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), // JST
+      createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
       isMatchCard: false,
       isSuggested: false
     };
@@ -55,7 +56,7 @@ export class SendMessageUseCase {
       id: savedMessage.id,
       content: this.truncateContent(savedMessage.content),
       createdAt: savedMessage.createdAt,
-      readBy: savedMessage.readBy // Add readBy from savedMessage
+      readBy: savedMessage.readBy
     };
     await this.chatRepository.update(chatId, { latestMessage });
 
@@ -64,9 +65,8 @@ export class SendMessageUseCase {
     const bot1Id = process.env.BOT_ID;
     const bot2Id = process.env.ADMAIN;
 
-    // Check if bot1Id exists in chat.users
     if (bot1Id && chat.users.some(user => user.id === bot1Id)) {
-      const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot1Id);
+      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, bot1Id);
       if (botResponse) {
         const botMessage: Message = {
           id: new mongoose.Types.ObjectId().toString(),
@@ -75,7 +75,7 @@ export class SendMessageUseCase {
           content: botResponse,
           chatId,
           readBy: [bot1Id],
-          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), // JST
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
           isMatchCard: false,
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
           isSuggested: false
@@ -85,16 +85,15 @@ export class SendMessageUseCase {
           id: savedBotMessage.id,
           content: this.truncateContent(savedBotMessage.content),
           createdAt: savedBotMessage.createdAt,
-          readBy: savedBotMessage.readBy // Add readBy from savedBotMessage
+          readBy: savedBotMessage.readBy
         };
         await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
         this.socketService.emitMessage(chatId, savedBotMessage);
       }
     }
 
-    // Check if bot2Id exists in chat.users
     if (bot2Id && chat.users.some(user => user.id === bot2Id)) {
-      const botResponse = await this.virtualChatService.generateBotResponse(chatId, content, bot2Id);
+      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, bot2Id);
       if (botResponse) {
         const botMessage: Message = {
           id: new mongoose.Types.ObjectId().toString(),
@@ -103,7 +102,7 @@ export class SendMessageUseCase {
           content: botResponse,
           chatId,
           readBy: [bot2Id],
-          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), // JST
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
           isMatchCard: false,
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
           isSuggested: false
@@ -113,7 +112,7 @@ export class SendMessageUseCase {
           id: savedBotMessage.id,
           content: this.truncateContent(savedBotMessage.content),
           createdAt: savedBotMessage.createdAt,
-          readBy: savedBotMessage.readBy // Add readBy from savedBotMessage
+          readBy: savedBotMessage.readBy
         };
         await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
         this.socketService.emitMessage(chatId, savedBotMessage);
