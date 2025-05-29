@@ -1,6 +1,6 @@
 import { IFriendRepository } from '../../domain/repo/IFriendRepository';
-import { Friend } from '../database/models/models/FriendModel';
-import { FriendModel } from '../database/models/models/FriendModel';
+import { Friend } from '../database/models/FriendModel';
+import { FriendModel } from '../database/models/FriendModel';
 import mongoose from 'mongoose';
 
 export class MongoFriendRepository implements IFriendRepository {

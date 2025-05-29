@@ -1,5 +1,5 @@
 // Interface for friend repository operations
-import { Friend } from '../../infra/database/models/models/FriendModel';
+import { Friend } from '../../infra/database/models/FriendModel';
 
 export interface IFriendRepository {
   addFriend(userId: string, friendId: string): Promise<void>;

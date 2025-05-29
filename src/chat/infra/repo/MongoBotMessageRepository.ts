@@ -1,6 +1,6 @@
 import mongoose, { Types } from 'mongoose';
 import { IBotMessageRepository, BotMessage } from '../../domain/repo/IBotMessageRepository';
-import BotMessageModel, { IBotMessageModel } from '../database/models/models/BotMessageModel';
+import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 
 export class MongoBotMessageRepository implements IBotMessageRepository {
   async create(botMessage: BotMessage): Promise<void> {

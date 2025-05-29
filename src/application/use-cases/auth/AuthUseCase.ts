@@ -9,7 +9,6 @@ import { CONFIG } from "../../../main/config/config";
 import fs from "fs";
 import path from "path";
 import { SubscriptionStatus } from "../../../domain/entities/SubscriptionStatus";
-import mongoose from "mongoose";
 
 export class AuthUseCase implements IAuthUseCase {
   constructor(
@@ -52,7 +51,6 @@ export class AuthUseCase implements IAuthUseCase {
     const verificationToken = this.randomStringGenerator.generate(32);
 
     await this.userRepository.create({
-      id: new mongoose.Types.ObjectId().toString(),
       email,
       name,
       category,
@@ -66,7 +64,7 @@ export class AuthUseCase implements IAuthUseCase {
       currentPeriodEnd: undefined,
       subscriptionPlan: undefined,
       isOnline: false,
-      lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) // Changed from new Date()
+      lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
     });
 
     const verificationUrl = `${CONFIG.SERVER_URL}auth/verify-email?token=${verificationToken}`;

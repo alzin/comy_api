@@ -47,7 +47,7 @@ import { BulkEmailSender } from '../../infra/services/BulkEmailSender';
 import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
-import { GenerateBotResponseUseCase } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/chat/application/use-cases/GenerateBotResponseUseCase'; // Added
+import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
@@ -112,25 +112,23 @@ export function setupDependencies(server: any) {
   const blacklistRepository = new MongoBlacklistRepository();
   const friendRepository = new MongoFriendRepository();
   const socketService = new SocketIOService(server, userRepository, messageRepository);
-  socketService.initialize(); 
+  socketService.initialize();
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
-  const generateBotResponseUseCase = new GenerateBotResponseUseCase(chatRepository); // Added
-  const virtualChatService = new VirtualChatService(); // Updated: No arguments
+  const generateBotResponseUseCase = new GenerateBotResponseUseCase(chatRepository);
+  const virtualChatService = new VirtualChatService();
   const sendMessageUseCase = new SendMessageUseCase(
     messageRepository,
     chatRepository,
     socketService,
-    generateBotResponseUseCase, // Updated: Use GenerateBotResponseUseCase
+    generateBotResponseUseCase,
     userRepository
   );
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 
   const chatController = new ChatController(
     createChatUseCase,
-    getUserChatsUseCase,
-    botMessageRepository,
-    blacklistRepository
+    getUserChatsUseCase
   );
   const messageController = new MessageController(
     sendMessageUseCase,

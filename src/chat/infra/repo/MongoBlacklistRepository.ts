@@ -1,6 +1,6 @@
 ///src/chat/infra/repo/MongoBlacklistRepository.ts
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
-import { BlacklistModel } from '../database/models/models/BlacklistModel';
+import { BlacklistModel } from '../database/models/BlacklistModel';
 
 export class MongoBlacklistRepository implements IBlacklistRepository {
   async addToBlacklist(userId: string, blacklistedUserId: string): Promise<void> {

@@ -7,10 +7,8 @@ import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistReposit
 export class ChatController {
   constructor(
     private createChatUseCase: CreateChatUseCase,
-    private getUserChatsUseCase: GetUserChatsUseCase,
-    private botMessageRepository: MongoBotMessageRepository,
-    private blacklistRepository: MongoBlacklistRepository
-  ) {}
+    private getUserChatsUseCase: GetUserChatsUseCase
+    ) {}
 
   async createChat(req: Request, res: Response): Promise<void> {
     try {
@@ -22,7 +20,7 @@ export class ChatController {
         return;
       }
 
-      const botId = process.env.ADMAIN;
+      const botId = process.env.ADMIN;
       const updatedUsers = isGroupChat ? [...new Set([...users, userId, botId])] : [...new Set([...users, userId])];
 
       const chat = await this.createChatUseCase.execute(

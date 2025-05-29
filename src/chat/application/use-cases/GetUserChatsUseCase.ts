@@ -6,7 +6,7 @@ export class GetUserChatsUseCase {
   private chatRepository: IChatRepository;
   private userRepository: IUserRepository;
   private readonly botId: string = process.env.BOT_ID; 
-  private readonly adminId: string = process.env.ADMAIN; 
+  private readonly adminId: string = process.env.ADMIN; 
 
   constructor(chatRepository: IChatRepository, userRepository: IUserRepository) {
     this.chatRepository = chatRepository;

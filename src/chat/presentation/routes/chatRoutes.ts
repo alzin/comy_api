@@ -10,15 +10,13 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
-import BotMessageModel from '../../../chat/infra/database/models/models/BotMessageModel';
+import BotMessageModel from '../../infra/database/models/BotMessageModel';
 import MessageModel from '../../../chat/infra/database/models/MessageModel';
 import { UserModel } from '../../../infra/database/models/UserModel';
 import { SuggestFriendsUseCase } from '../../application/use-cases/SuggestFriendsUseCase';
 
-// Utility function to add a delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Function to get sender profile image URL
 const getSenderProfileImageUrl = async (sender: string, dependencies: any, userId?: string): Promise<string> => {
   if (sender === 'COMY オフィシャル AI') {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
@@ -27,7 +25,6 @@ const getSenderProfileImageUrl = async (sender: string, dependencies: any, userI
   return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 };
 
-// Utility function to update readBy for all messages in a chat
 const updateReadByForChat = async (chatId: string, userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   await BotMessageModel.updateMany(
@@ -434,9 +431,9 @@ export const setupChatRoutes = (
       socketService.emitMessage(chatId, confirmMessage);
       console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      const botId = process.env.ADMAIN;
+      const botId = process.env.ADMIN;
       if (!botId) {
-        throw new Error('ADMAIN is not defined in .env');
+        throw new Error('ADMIN is not defined in .env');
       }
 
       const user1 = await UserModel.findById(userId).select('name').exec();

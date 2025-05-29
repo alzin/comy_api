@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat, ChatUser } from '../../domain/entities/Chat';
@@ -31,7 +30,7 @@ export class CreateChatUseCase {
     const usersDetails: ChatUser[] = await Promise.all(
       userIds.map(async (id) => {
         const user = await this.userRepository.findById(id);
-        const role = id === botId ? 'bot' : (id === process.env.ADMAIN ? 'admin' : 'user');
+        const role = id === botId ? 'bot' : (id === process.env.ADMIN ? 'admin' : 'user');
         return {
           role,
           id,
@@ -52,7 +51,7 @@ export class CreateChatUseCase {
     }
 
     const chat: Chat = {
-      id: new mongoose.Types.ObjectId().toString(),
+      id: null, // Repository will assign ID
       name: chatName,
       isGroup,
       users: usersDetails,

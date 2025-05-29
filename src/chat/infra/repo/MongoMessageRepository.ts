@@ -2,7 +2,7 @@ import mongoose, { Types } from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
-import BotMessageModel, { IBotMessageModel } from '../database/models/models/BotMessageModel';
+import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 

@@ -1,5 +1,3 @@
-//chat/application/use-cases/SuggestFriendsUseCase.ts
-import mongoose from 'mongoose';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IBotMessageRepository, BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
@@ -42,13 +40,7 @@ export class SuggestFriendsUseCase {
       const activeUsers = await this.userRepository.findActiveUsers();
       console.log(`Found ${activeUsers.length} active users`);
 
-      const validUsers = activeUsers.filter(u => {
-        const isValid = u.id && mongoose.Types.ObjectId.isValid(u.id) && u.subscriptionStatus === SubscriptionStatus.Active;
-        if (!isValid) {
-          console.log(`Invalid user filtered out:`, { id: u.id, subscriptionStatus: u.subscriptionStatus });
-        }
-        return isValid;
-      });
+      const validUsers = activeUsers.filter(u => u.id && u.subscriptionStatus === SubscriptionStatus.Active);
       console.log(`Found ${validUsers.length} valid active users`);
 
       if (validUsers.length < 2) {
@@ -93,7 +85,7 @@ export class SuggestFriendsUseCase {
         const suggestionContent = `${user.name || 'User'}さん、おはようございます！\n今週は${user.name || 'User'}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは“自社の強みテーブル”です！\nお繋がりを希望しますか？`;
 
         const suggestionMessage: BotMessage = {
-          id: new mongoose.Types.ObjectId().toString(),
+          id: null, // Repository will assign ID
           chatId: chat.id,
           senderId: this.virtualUserId,
           recipientId: user.id!,
@@ -122,10 +114,10 @@ export class SuggestFriendsUseCase {
         }
 
         await this.botMessageRepository.create(suggestionMessage);
-        console.log(`Saved suggestion message with ID: ${suggestionMessage.id} in chat ${chat.id}`);
+        console.log(`Saved suggestion message in chat ${chat.id}`);
 
         const message: Message = {
-          id: suggestionMessage.id,
+          id: suggestionMessage.id || '', // Will be set by repository
           senderId: this.virtualUserId,
           senderName: 'COMY オフィシャル AI',
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
@@ -142,7 +134,7 @@ export class SuggestFriendsUseCase {
         };
 
         this.socketService.emitMessage(chat.id, message);
-        console.log(`Emitted suggestion message ${message.id} to chat ${chat.id}`);
+        console.log(`Emitted suggestion message to chat ${chat.id}`);
       };
 
       for (const user of validUsers) {

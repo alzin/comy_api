@@ -24,16 +24,21 @@ literalAiClient.instrumentation.openai({ client: serviceAdapter });
 export function setupRoutes(app: express.Application, dependencies: any) {
   app.get('/', (_, res) => res.status(200).send('OK'));
 
-  app.use(authMiddleware(dependencies.tokenService, dependencies.userRepository));
+  // Apply auth middleware globally, except for specific routes
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/auth') || req.path === '/webhook' || req.path === '/') {
+      return next();
+    }
+    return authMiddleware(dependencies.tokenService, dependencies.userRepository)(req, res, next);
+  });
+
   app.use('/create-checkout-session', setupStripeRoutes(dependencies.stripeController));
   app.use('/business-sheets', setupBusinessSheetRoutes(dependencies.businessSheetController));
   app.use('/auth', setupAuthRoutes(dependencies.authController));
   app.use('/api/chats', setupChatRoutes(
     new ChatController(
       dependencies.chatService.createChatUseCase,
-      dependencies.chatService.getUserChatsUseCase,
-      dependencies.botMessageRepository,
-      dependencies.blacklistRepository
+      dependencies.chatService.getUserChatsUseCase
     ),
     new MessageController(
       dependencies.messageService.sendMessageUseCase,
@@ -43,7 +48,8 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     dependencies,
     dependencies.socketService
   ));
-  app.get('/check-auth', (req, res) => {
+
+  app.get('/check-auth', (req: Request, res: Response) => {
     res.json({ isAuthenticated: !!(req as any).user });
   });
 
@@ -57,12 +63,13 @@ export function setupRoutes(app: express.Application, dependencies: any) {
     )
   );
 
-
-  app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
+  // Webhook route with raw body parser
+  app.post('/webhook', express.raw({ type: 'application/json' }), (req: Request, res: Response) =>
     dependencies.webhookController.handleWebhook(req, res)
   );
 
-  app.use('/copilotkit', async (req, res) => {
+  // CopilotKit route
+  app.use('/copilotkit', async (req: Request, res: Response) => {
     try {
       const runtime = new CopilotRuntime();
       const handler = copilotRuntimeNodeHttpEndpoint({
@@ -73,6 +80,7 @@ export function setupRoutes(app: express.Application, dependencies: any) {
       await handler(req, res);
     } catch (err) {
       console.error('CopilotKit error:', err);
+      res.status(500).json({ message: 'CopilotKit error', error: (err as Error).message });
     }
   });
 

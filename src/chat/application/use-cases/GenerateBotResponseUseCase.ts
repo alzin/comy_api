@@ -4,8 +4,8 @@ export class GenerateBotResponseUseCase {
   constructor(private chatRepository: IChatRepository) {}
 
   async execute(chatId: string, content: string, botId: string): Promise<string | null> {
-    const bot1Id = '681547798892749fbe910c02';
-    const bot2Id = '681c757539ec003942b3f97e';
+    const bot1Id = process.env.BOT_ID;
+    const bot2Id = process.env.ADMIN;
 
     const chat = await this.chatRepository.findById(chatId);
     if (!chat) {

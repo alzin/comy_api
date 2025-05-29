@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { UserDocument } from '../../../../../infra/database/models/UserModel';
+import { UserDocument } from '../../../../infra/database/models/UserModel';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
   _id: Types.ObjectId;

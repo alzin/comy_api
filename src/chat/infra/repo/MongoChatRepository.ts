@@ -3,7 +3,7 @@ import { ChatModel, IChatModel } from '../database/models/ChatModel';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { Chat, LatestMessage, ChatUser } from '../../domain/entities/Chat';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
-import BotMessageModel, { IBotMessageModel } from '../database/models/models/BotMessageModel';
+import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 
 interface PopulatedUser {
   _id: mongoose.Types.ObjectId;
@@ -40,7 +40,7 @@ export class MongoChatRepository implements IChatRepository {
 
   private async mapToDomain(chatDoc: PopulatedChatModel | IChatModel): Promise<Chat> {
     const botId = process.env.BOT_ID; 
-    const adminId = process.env.ADMAIN;
+    const adminId = process.env.ADMIN;
 
     const isPopulated = (doc: any): doc is PopulatedChatModel =>
       doc.users && doc.users[0] && 'name' in doc.users[0];
