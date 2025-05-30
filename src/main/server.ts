@@ -11,7 +11,7 @@ import { dbConnectMiddleware } from '../presentation/middlewares/dbConnectMiddle
 import { setupChatRoutes } from '../chat/presentation/routes/chatRoutes';
 import { ChatController } from '../chat/presentation/controllers/ChatController';
 import { MessageController } from '../chat/presentation/controllers/MessageController';
-import { VirtualChatService } from '../chat/infra/services/VirtualChatService';
+import { InitializeVirtualUserUseCase } from '../chat/application/use-cases/InitializeVirtualUserUseCase';
 
 dotenv.config();
 console.log('API_KEY:', process.env.API_KEY);
@@ -46,29 +46,22 @@ export async function startServer() {
 
   const dependencies = setupDependencies(server);
 
-  // Set up bot service
-  const virtualChatService = new VirtualChatService(
-    dependencies.socketService,
-    dependencies.userRepository,
-    dependencies.botMessageRepository,
-    dependencies.chatRepository,
-    dependencies.blacklistRepository,
-    dependencies.chatService.createChatUseCase
-  );
-  await virtualChatService.initialize();
+  // Initialize virtual user using the Use Case
+  const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(dependencies.userRepository);
+  const virtualUserId = await initializeVirtualUserUseCase.execute();
 
+  // Update dependencies with virtualUserId
   app.locals.dependencies = {
     ...dependencies,
-    virtualChatService
+    virtualUserId
   };
-  console.log('VirtualChatService initialized:', app.locals.dependencies.virtualChatService);
+  console.log('Dependencies initialized with virtualUserId:', virtualUserId);
 
   app.use('/api/chats', setupChatRoutes(
     new ChatController(
       dependencies.chatService.createChatUseCase,
-      dependencies.chatService.getUserChatsUseCase,
-      dependencies.botMessageRepository,
-      dependencies.blacklistRepository
+      dependencies.chatService.getUserChatsUseCase
+      // Removed botMessageRepository and blacklistRepository to match constructor
     ),
     new MessageController(
       dependencies.messageService.sendMessageUseCase,

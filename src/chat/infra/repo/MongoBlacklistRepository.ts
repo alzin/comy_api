@@ -1,6 +1,6 @@
 ///src/chat/infra/repo/MongoBlacklistRepository.ts
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
-import { BlacklistModel } from '../database/models/models/BlacklistModel';
+import { BlacklistModel } from '../database/models/BlacklistModel';
 
 export class MongoBlacklistRepository implements IBlacklistRepository {
   async addToBlacklist(userId: string, blacklistedUserId: string): Promise<void> {
@@ -16,11 +16,8 @@ export class MongoBlacklistRepository implements IBlacklistRepository {
     return blacklisted.map(entry => entry.blockedUserId.toString());
   }
 
-  async isBlacklisted(userId: string, blacklistedUserId: string): Promise<boolean> {
-    const exists = await BlacklistModel.exists({
-      userId,
-      blockedUserId: blacklistedUserId
-    });
-    return !!exists;
+  async isBlacklisted(userId: string, blockedUserId: string): Promise<boolean> {
+    const entry = await BlacklistModel.findOne({ userId, blockedUserId });
+    return !!entry; 
   }
 }

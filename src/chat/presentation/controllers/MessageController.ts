@@ -12,6 +12,7 @@ const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 };
 
+
 export class MessageController {
   private sendMessageUseCase: any;
   private getMessagesUseCase: any;
@@ -54,32 +55,44 @@ export class MessageController {
   }
 
   async sendMessage(req: Request, res: Response): Promise<void> {
-    try {
-      const messageData = req.body;
-      const userId = (req as any).user?.id;
+  try {
+    const { chatId, content } = req.body;
+    const userId = (req as any).user?.id;
 
-      if (!userId) {
-        console.log('Unauthorized access: No user ID provided');
-        res.status(401).json({ message: 'Unauthorized' });
-        return;
-      }
-
-      const sender = await UserModel.findById(userId).select('name').exec();
-      const senderName = sender ? sender.name : 'Unknown User';
-      const senderProfileImageUrl = await getSenderProfileImageUrl(userId);
-      const messageWithSenderImage = {
-        ...messageData,
-        senderId: userId,
-        senderName,
-        senderProfileImageUrl,
-        readBy: [userId], // Initialize readBy with the sender
-      };
-      const message = await this.sendMessageUseCase.execute(messageWithSenderImage);
-      this.socketService.emitMessage(messageData.chatId, message);
-      res.status(200).json(message);
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      res.status(500).json({ message: 'Server error', error: error.message || error });
+    if (!userId) {
+      console.log('Unauthorized access: No user ID provided');
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
     }
+
+    if (!chatId || !content) {
+      res.status(400).json({ message: 'Missing required fields: chatId or content' });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+      console.log(`Invalid chatId: ${chatId}`);
+      res.status(400).json({ message: 'Invalid chatId format' });
+      return;
+    }
+
+    const sender = await UserModel.findById(userId).select('name').exec();
+    const senderName = sender ? sender.name : 'Unknown User';
+    const senderProfileImageUrl = await getSenderProfileImageUrl(userId);
+    const messageWithSenderImage = {
+      senderId: userId,
+      senderName,
+      content,
+      chatId,
+      senderProfileImageUrl,
+      readBy: [userId],
+    };
+    const message = await this.sendMessageUseCase.execute(messageWithSenderImage);
+    this.socketService.emitMessage(chatId, message);
+    res.status(200).json(message);
+  } catch (error: any) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ message: 'Server error', error: error.message || error });
   }
+}
 }

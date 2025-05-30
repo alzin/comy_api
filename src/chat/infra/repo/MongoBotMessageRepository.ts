@@ -1,11 +1,10 @@
 import mongoose, { Types } from 'mongoose';
 import { IBotMessageRepository, BotMessage } from '../../domain/repo/IBotMessageRepository';
-import BotMessageModel, { IBotMessageModel } from '../database/models/models/BotMessageModel';
+import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 
 export class MongoBotMessageRepository implements IBotMessageRepository {
   async create(botMessage: BotMessage): Promise<void> {
     try {
-      // Validate required fields
       if (!mongoose.Types.ObjectId.isValid(botMessage.senderId)) {
         throw new Error(`Invalid senderId: ${botMessage.senderId} is not a valid ObjectId`);
       }
@@ -52,7 +51,73 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         return null;
       }
 
-      const messageDoc = await BotMessageModel.findById(id).exec();
+      const messageDoc = await BotMessageModel.findById(id)
+        .populate('suggestedUser', '_id')
+        .exec();
+      if (!messageDoc) {
+        return null;
+      }
+
+      return {
+        id: messageDoc._id.toString(),
+        senderId: messageDoc.senderId?.toString() || '',
+        content: messageDoc.content || '',
+        chatId: messageDoc.chatId?.toString() || '',
+        createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        readBy: messageDoc.readBy?.map((id: mongoose.Types.ObjectId) => id.toString()) || [],
+        recipientId: messageDoc.recipientId?.toString(),
+        suggestedUser: messageDoc.suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined,
+        suggestionReason: messageDoc.suggestionReason,
+        status: messageDoc.status as 'pending' | 'accepted' | 'rejected' || 'pending',
+        isMatchCard: messageDoc.isMatchCard || false,
+        isSuggested: messageDoc.isSuggested || false,
+        suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
+        suggestedUserName: messageDoc.suggestedUserName,
+        suggestedUserCategory: messageDoc.suggestedUserCategory,
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl,
+        relatedUserId: (messageDoc.isSuggested || messageDoc.isMatchCard) && messageDoc.suggestedUser
+          ? (messageDoc.suggestedUser as any)._id.toString()
+          : undefined
+      };
+    } catch (error) {
+      console.error(`Error finding bot message with ID: ${id}`, error);
+      throw error;
+    }
+  }
+
+  async updateSuggestionStatus(id: string, status: 'accepted' | 'rejected'): Promise<void> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error(`Invalid message ID: ${id}`);
+      }
+
+      const result = await BotMessageModel.findByIdAndUpdate(id, { status }, { new: true }).exec();
+      if (!result) {
+        throw new Error(`Bot message with ID ${id} not found`);
+      }
+      console.log(`Updated suggestion status for message ${id} to ${status}`);
+    } catch (error) {
+      console.error(`Error updating suggestion status for message ${id}`, error);
+      throw error;
+    }
+  }
+
+  async findExistingSuggestion(chatId: string, senderId: string, recipientId: string, suggestedUserId: string): Promise<BotMessage | null> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(chatId) || !mongoose.Types.ObjectId.isValid(senderId) ||
+          !mongoose.Types.ObjectId.isValid(recipientId) || !mongoose.Types.ObjectId.isValid(suggestedUserId)) {
+        console.log(`Invalid IDs for finding existing suggestion: chatId=${chatId}, senderId=${senderId}, recipientId=${recipientId}, suggestedUserId=${suggestedUserId}`);
+        return null;
+      }
+
+      const messageDoc = await BotMessageModel.findOne({
+        chatId: chatId,
+        senderId: senderId,
+        recipientId: recipientId,
+        suggestedUser: suggestedUserId,
+        status: 'pending'
+      }).exec();
+
       if (!messageDoc) {
         return null;
       }
@@ -76,24 +141,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         senderProfileImageUrl: messageDoc.senderProfileImageUrl
       };
     } catch (error) {
-      console.error(`Error finding bot message with ID: ${id}`, error);
-      throw error;
-    }
-  }
-
-  async updateSuggestionStatus(id: string, status: 'accepted' | 'rejected'): Promise<void> {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new Error(`Invalid message ID: ${id}`);
-      }
-
-      const result = await BotMessageModel.findByIdAndUpdate(id, { status }, { new: true }).exec();
-      if (!result) {
-        throw new Error(`Bot message with ID ${id} not found`);
-      }
-      console.log(`Updated suggestion status for message ${id} to ${status}`);
-    } catch (error) {
-      console.error(`Error updating suggestion status for message ${id}`, error);
+      console.error(`Error finding existing suggestion for chatId: ${chatId}`, error);
       throw error;
     }
   }

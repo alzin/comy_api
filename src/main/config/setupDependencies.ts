@@ -7,6 +7,7 @@ import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessage
 import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
 import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
 import { MongoChatRepository } from '../../chat/infra/repo/MongoChatRepository';
+import { MongoFriendRepository } from '../../chat/infra/repo/MongoFriendRepository';
 import { VirtualChatService } from '../../chat/infra/services/VirtualChatService';
 import { MongoUserRepository } from '../../infra/repo/MongoUserRepository';
 import { CreateChatUseCase } from '../../chat/application/use-cases/CreateChatUseCase';
@@ -46,6 +47,7 @@ import { BulkEmailSender } from '../../infra/services/BulkEmailSender';
 import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
+import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
@@ -108,32 +110,25 @@ export function setupDependencies(server: any) {
   const messageRepository = new MongoMessageRepository();
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
+  const friendRepository = new MongoFriendRepository();
   const socketService = new SocketIOService(server, userRepository, messageRepository);
-  socketService.initialize(); 
+  socketService.initialize();
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
-  const virtualChatService = new VirtualChatService(
-    socketService,
-    userRepository,
-    botMessageRepository,
-    chatRepository,
-    blacklistRepository,
-    createChatUseCase
-  );
+  const generateBotResponseUseCase = new GenerateBotResponseUseCase(chatRepository);
+  const virtualChatService = new VirtualChatService();
   const sendMessageUseCase = new SendMessageUseCase(
     messageRepository,
     chatRepository,
     socketService,
-    virtualChatService,
-    userRepository // Added to fetch senderName
+    generateBotResponseUseCase,
+    userRepository
   );
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 
   const chatController = new ChatController(
     createChatUseCase,
-    getUserChatsUseCase,
-    botMessageRepository,
-    blacklistRepository
+    getUserChatsUseCase
   );
   const messageController = new MessageController(
     sendMessageUseCase,
@@ -141,9 +136,9 @@ export function setupDependencies(server: any) {
     socketService
   );
 
-  const virtualUserId = process.env.VIRTUAL_USER_ID;
+  const virtualUserId = process.env.BOT_ID;
   if (!virtualUserId) {
-    throw new Error('VIRTUAL_USER_ID is not defined in .env');
+    throw new Error('BOT_ID is not defined in .env');
   }
 
   return {
@@ -171,6 +166,7 @@ export function setupDependencies(server: any) {
     messageRepository,
     chatRepository,
     blacklistRepository,
+    friendRepository,
     virtualChatService,
     sendMessageUseCase,
     virtualUserId,

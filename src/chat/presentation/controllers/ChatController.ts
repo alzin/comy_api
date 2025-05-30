@@ -1,4 +1,3 @@
-// src/chat/presentation/controllers/ChatController.ts
 import { Request, Response } from 'express';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { GetUserChatsUseCase } from '../../application/use-cases/GetUserChatsUseCase';
@@ -8,10 +7,8 @@ import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistReposit
 export class ChatController {
   constructor(
     private createChatUseCase: CreateChatUseCase,
-    private getUserChatsUseCase: GetUserChatsUseCase,
-    private botMessageRepository: MongoBotMessageRepository,
-    private blacklistRepository: MongoBlacklistRepository
-  ) {}
+    private getUserChatsUseCase: GetUserChatsUseCase
+    ) {}
 
   async createChat(req: Request, res: Response): Promise<void> {
     try {
@@ -23,7 +20,7 @@ export class ChatController {
         return;
       }
 
-      const botId = '681c757539ec003942b3f97e';
+      const botId = process.env.ADMIN;
       const updatedUsers = isGroupChat ? [...new Set([...users, userId, botId])] : [...new Set([...users, userId])];
 
       const chat = await this.createChatUseCase.execute(

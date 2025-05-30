@@ -5,18 +5,18 @@ import { authMiddleware } from '../../../presentation/middlewares/authMiddleware
 import { MongoBotMessageRepository } from '../../infra/repo/MongoBotMessageRepository';
 import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistRepository';
 import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
+import { MongoFriendRepository } from '../../infra/repo/MongoFriendRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
 import mongoose from 'mongoose';
-import BotMessageModel from '../../../chat/infra/database/models/models/BotMessageModel';
+import BotMessageModel from '../../infra/database/models/BotMessageModel';
 import MessageModel from '../../../chat/infra/database/models/MessageModel';
 import { UserModel } from '../../../infra/database/models/UserModel';
+import { SuggestFriendsUseCase } from '../../application/use-cases/SuggestFriendsUseCase';
 
-// Utility function to add a delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Function to get sender profile image URL
 const getSenderProfileImageUrl = async (sender: string, dependencies: any, userId?: string): Promise<string> => {
   if (sender === 'COMY オフィシャル AI') {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
@@ -25,7 +25,6 @@ const getSenderProfileImageUrl = async (sender: string, dependencies: any, userI
   return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 };
 
-// Utility function to update readBy for all messages in a chat
 const updateReadByForChat = async (chatId: string, userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
   await BotMessageModel.updateMany(
@@ -48,6 +47,18 @@ export const setupChatRoutes = (
   const botMessageRepo = new MongoBotMessageRepository();
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
+  const friendRepo = new MongoFriendRepository();
+
+  const suggestFriendsUseCase = new SuggestFriendsUseCase(
+    dependencies.userRepository,
+    botMessageRepo,
+    chatRepo,
+    blacklistRepo,
+    friendRepo,
+    dependencies.chatService.createChatUseCase,
+    socketService,
+    dependencies.virtualUserId
+  );
 
   const router = express.Router();
 
@@ -136,7 +147,7 @@ export const setupChatRoutes = (
             content,
             chatId,
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-            readBy: [dependencies.virtualUserId], // Only bot
+            readBy: [dependencies.virtualUserId],
             isMatchCard: false,
             isSuggested: false,
             status: 'pending',
@@ -171,7 +182,7 @@ export const setupChatRoutes = (
         content: `${message.suggestedUser.name}さんにマッチの希望を送りました。`,
         chatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-        readBy: [dependencies.virtualUserId], // Only bot
+        readBy: [dependencies.virtualUserId],
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
@@ -197,13 +208,18 @@ export const setupChatRoutes = (
       let suggestedUserChatId: string | null = await chatRepo.getPrivateChatId(message.suggestedUser._id.toString(), dependencies.virtualUserId);
       if (!suggestedUserChatId) {
         console.log(`Creating new chat for suggested user ${message.suggestedUser._id.toString()} with virtual user ${dependencies.virtualUserId}`);
-        const newChat = await dependencies.chatService.createChatUseCase.execute(
-          [message.suggestedUser._id.toString(), dependencies.virtualUserId],
-          `Private Chat with Virtual Assistant`,
-          false
-        );
-        suggestedUserChatId = newChat.id;
-        console.log(`Created new chat: ${suggestedUserChatId}`);
+        try {
+          const newChat = await dependencies.chatService.createChatUseCase.execute(
+            [message.suggestedUser._id.toString(), dependencies.virtualUserId],
+            `Private Chat with Virtual Assistant`,
+            false
+          );
+          suggestedUserChatId = newChat.id;
+          console.log(`Created new chat: ${suggestedUserChatId}`);
+        } catch (error) {
+          console.error(`Failed to create chat for suggested user ${message.suggestedUser._id.toString()}:`, error);
+          return res.status(500).json({ message: 'Failed to create chat for suggested user' });
+        }
       }
 
       if (!suggestedUserChatId) {
@@ -212,7 +228,7 @@ export const setupChatRoutes = (
       }
 
       const suggestingUser = await UserModel.findById(userId).select('profileImageUrl name category').exec();
-      const suggestedUserProfileImageUrl = suggestingUser?.profileImageUrl || '';
+      const suggestedUserProfileImageUrl = suggestingUser?.profileImageUrl ?? '';
       const suggestedUserName = req.user?.name || 'User';
       const suggestedUserCategory = suggestingUser?.category || 'unknown';
 
@@ -223,7 +239,7 @@ export const setupChatRoutes = (
         content: matchMessageContent,
         chatId: suggestedUserChatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-        readBy: [dependencies.virtualUserId], // Only bot
+        readBy: [dependencies.virtualUserId],
         recipientId: message.suggestedUser._id.toString(),
         suggestedUser: userId,
         suggestionReason: 'Match request',
@@ -269,9 +285,9 @@ export const setupChatRoutes = (
         status: matchBotMessage.status,
         senderProfileImageUrl: botProfileImageUrl
       };
-      console.log(`Emitting match message with ID: ${matchMessage.id}, isMatchCard: ${matchMessage.isMatchCard}, isSuggested: ${matchMessage.isSuggested}, status: ${matchMessage.status}`);
       socketService.emitMessage(suggestedUserChatId, matchMessage);
       console.log(`Emitted match message ${matchBotMessage.id} to chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
+
       res.status(200).json({
         message: `${message.suggestedUser.name}さんにマッチの希望を送りました。`
       });
@@ -309,7 +325,6 @@ export const setupChatRoutes = (
         return res.status(500).json({ message: 'Invalid chat ID' });
       }
 
-      // Update readBy for all messages in the chat
       await updateReadByForChat(chatId, userId);
 
       console.log(`User ${userId} responded to match request ${messageId} with ${response}`);
@@ -355,7 +370,7 @@ export const setupChatRoutes = (
             content,
             chatId,
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-            readBy: [dependencies.virtualUserId], // Only bot
+            readBy: [dependencies.virtualUserId],
             isMatchCard: false,
             isSuggested: false,
             status: 'pending',
@@ -383,6 +398,9 @@ export const setupChatRoutes = (
         return res.status(200).json({ message: rejectMessages });
       }
 
+      await friendRepo.addFriend(userId, message.suggestedUser._id.toString());
+      console.log(`Added friendship between ${userId} and ${message.suggestedUser._id.toString()}`);
+
       const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
       const confirmBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
@@ -390,7 +408,7 @@ export const setupChatRoutes = (
         content: `${message.suggestedUser.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`,
         chatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-        readBy: [dependencies.virtualUserId], // Only bot
+        readBy: [dependencies.virtualUserId],
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
@@ -413,24 +431,28 @@ export const setupChatRoutes = (
       socketService.emitMessage(chatId, confirmMessage);
       console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      const botId = process.env.BOT_ID;
+      const botId = process.env.ADMIN;
       if (!botId) {
-        throw new Error('BOT_ID is not defined in .env');
+        throw new Error('ADMIN is not defined in .env');
       }
-      const users = [userId, message.suggestedUser._id.toString(), botId];
 
-      const suggestedUserName = message.suggestedUser.name || 'User';
+      const user1 = await UserModel.findById(userId).select('name').exec();
+      const user2 = await UserModel.findById(message.suggestedUser._id).select('name').exec();
+      if (!user1 || !user2) {
+        throw new Error('User or suggested user not found');
+      }
+
+      const users = [userId, message.suggestedUser._id.toString(), botId];
+      const chatName = `${user1.name}, ${user2.name}`;
       const newChat = await dependencies.chatService.createChatUseCase.execute(
         users,
-        `Group Chat with ${req.user?.name || 'User'}, ${suggestedUserName}, and Virtual Assistant`,
+        chatName,
         true
       );
 
-      const user1 = await UserModel.findById(userId).select('name category').exec();
-      const user2 = await UserModel.findById(message.suggestedUser._id).select('name category').exec();
       const groupMessages = [
-        `${user1?.name || 'User'}さん、お世話になっております！こちら${user2?.category || 'unknown'}カテゴリーの${user2?.name || 'User'}さんをご紹介します！${user2?.category || 'unknown'}カテゴリーの${user2?.name || 'User'}さんの強みは“自社の強みテーブル”です！`,
-        `${user2?.name || 'User'}さん、お世話になっております！こちら${user1?.category || 'unknown'}カテゴリーの${user1?.name || 'User'}さんをご紹介します！${user1?.category || 'unknown'}カテゴリーの${user1?.name || 'User'}さんの強みは”自社の強みテーブル”です！`,
+        `${user1.name}さん、お世話になっております！こちら${user2.category || 'unknown'}カテゴリーの${user2.name}さんをご紹介します！${user2.category || 'unknown'}カテゴリーの${user2.name}さんの強みは“自社の強みテーブル”です！`,
+        `${user2.name}さん、お世話になっております！こちら${user1.category || 'unknown'}カテゴリーの${user1.name}さんをご紹介します！${user1.category || 'unknown'}カテゴリーの${user1.name}さんの強みは”自社の強みテーブル”です！`,
         `是非お二人でお話をしてみてください！`
       ];
 
@@ -441,14 +463,14 @@ export const setupChatRoutes = (
           content,
           chatId: newChat.id,
           createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-          readBy: [botId], // Only bot
+          readBy: [botId],
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',
           senderProfileImageUrl: botProfileImageUrl
         };
         await botMessageRepo.create(groupBotMessage);
-        await delay(1000); // Add a 1-second delay between each message to ensure correct ordering
+        await delay(1000);
 
         const groupMessage: Message = {
           id: groupBotMessage.id,
@@ -490,7 +512,7 @@ export const setupChatRoutes = (
         content: notificationMessageContent,
         chatId: notifyChatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-        readBy: [dependencies.virtualUserId], 
+        readBy: [dependencies.virtualUserId],
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
@@ -532,8 +554,7 @@ export const setupChatRoutes = (
         return res.status(401).json({ error: 'Invalid or missing API Key' });
       }
 
-      const virtualChatService = req.app.locals.dependencies.virtualChatService;
-      await virtualChatService.suggestFriends();
+      await suggestFriendsUseCase.execute();
       return res.status(200).json({ message: 'Friend suggestions triggered successfully' });
     } catch (error) {
       console.error('Error triggering friend suggestions:', error);

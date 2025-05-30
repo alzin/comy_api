@@ -12,6 +12,7 @@ export interface Message {
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
+  relatedUserId?: string; 
   status?: 'pending' | 'accepted' | 'rejected';
   senderProfileImageUrl?: string;
 }
