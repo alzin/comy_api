@@ -438,11 +438,14 @@ export const setupChatRoutes = (
         throw new Error('ADMIN is not defined in .env');
       }
 
-      const user1 = await UserModel.findById(userId).select('name').exec();
-      const user2 = await UserModel.findById(message.suggestedUser._id).select('name').exec();
+      const user1 = await UserModel.findById(userId).select('name category').exec();
+      const user2 = await UserModel.findById(message.suggestedUser._id).select('name category').exec();
       if (!user1 || !user2) {
+        console.error(`User ${userId} or suggested user ${message.suggestedUser._id} not found`);
         throw new Error('User or suggested user not found');
       }
+
+      console.log(`Creating group chat for users: ${user1.name} (category: ${user1.category}), ${user2.name} (category: ${user2.category})`);
 
       const users = [userId, message.suggestedUser._id.toString(), botId];
       const chatName = `${user1.name}, ${user2.name}`;
@@ -507,7 +510,7 @@ export const setupChatRoutes = (
         return res.status(500).json({ message: 'Failed to create notification chat' });
       }
 
-      const notificationMessageContent = `${req.user?.name || 'User'}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`;
+      const notificationMessageContent = `${req.user?.name || 'User'}さんとのビジネスマッチができました。チャットで挨拶してみましょう。`;
       const notifyBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
@@ -540,7 +543,7 @@ export const setupChatRoutes = (
       console.log(`Emitted notification to ${message.suggestedUser._id.toString()} for new chat ${newChat.id}`);
 
       res.status(200).json({
-        message: `${message.suggestedUser.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`,
+        message: `${message.suggestedUser.name}さんとのビジネスマッチができました。チャットで挨拶してみましょう。`,
         chatId: newChat.id
       });
     } catch (error) {
