@@ -136,7 +136,24 @@ export class SocketIOService implements ISocketService {
   }
 
   emitMessage(chatId: string, message: Message): void {
-    this.io.to(chatId).emit('newMessage', message);
+    console.log(`Emitting message for chat ${chatId}, relatedUserId: ${message.relatedUserId}, isSuggested: ${message.isSuggested}, isMatchCard: ${message.isMatchCard}`);
+    this.io.to(chatId).emit('newMessage', {
+      id: message.id,
+      senderId: message.senderId,
+      senderName: message.senderName,
+      content: message.content,
+      chatId: message.chatId,
+      readBy: message.readBy,
+      createdAt: message.createdAt,
+      isMatchCard: message.isMatchCard,
+      isSuggested: message.isSuggested,
+      suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl,
+      suggestedUserName: message.suggestedUserName,
+      suggestedUserCategory: message.suggestedUserCategory,
+      status: message.status,
+      senderProfileImageUrl: message.senderProfileImageUrl,
+      relatedUserId: message.isSuggested || message.isMatchCard ? message.relatedUserId : undefined
+    });
   }
 
   emitUserStatus(userId: string, isOnline: boolean): void {

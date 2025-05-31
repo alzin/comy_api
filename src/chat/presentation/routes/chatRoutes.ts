@@ -266,7 +266,7 @@ export const setupChatRoutes = (
         });
       }
 
-      await botMessageRepo.create(matchBotMessage);
+      const savedMatchMessage = await botMessageRepo.create(matchBotMessage);
       console.log(`Created match bot message: ${matchBotMessage.id} in chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
 
       const matchMessage: Message = {
@@ -283,8 +283,10 @@ export const setupChatRoutes = (
         suggestedUserName: matchBotMessage.suggestedUserName,
         suggestedUserCategory: matchBotMessage.suggestedUserCategory,
         status: matchBotMessage.status,
-        senderProfileImageUrl: botProfileImageUrl
+        senderProfileImageUrl: botProfileImageUrl,
+        relatedUserId: userId 
       };
+      console.log(`Emitting match message with relatedUserId: ${matchMessage.relatedUserId}, isSuggested: ${matchMessage.isSuggested}, isMatchCard: ${matchMessage.isMatchCard}`);
       socketService.emitMessage(suggestedUserChatId, matchMessage);
       console.log(`Emitted match message ${matchBotMessage.id} to chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
 

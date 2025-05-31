@@ -89,7 +89,7 @@ export class SuggestFriendsUseCase {
           chatId: chat.id,
           senderId: this.virtualUserId,
           recipientId: user.id!,
-          suggestedUser: suggestedUser.id!,
+          suggestedUser: suggestedUser.id!, 
           suggestionReason: 'Random',
           status: 'pending',
           content: suggestionContent,
@@ -99,7 +99,8 @@ export class SuggestFriendsUseCase {
           isSuggested: true,
           suggestedUserProfileImageUrl: profileImageUrl,
           suggestedUserName,
-          suggestedUserCategory
+          suggestedUserCategory,
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
         };
 
         const existingMessage = await this.botMessageRepository.findExistingSuggestion(
@@ -114,10 +115,10 @@ export class SuggestFriendsUseCase {
         }
 
         await this.botMessageRepository.create(suggestionMessage);
-        console.log(`Saved suggestion message in chat ${chat.id}`);
+        console.log(`Saved suggestion message in chat ${chat.id}, suggestedUser: ${suggestedUser.id}`);
 
         const message: Message = {
-          id: suggestionMessage.id || '', // Will be set by repository
+          id: suggestionMessage.id || '', 
           senderId: this.virtualUserId,
           senderName: 'COMY オフィシャル AI',
           senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
@@ -130,9 +131,12 @@ export class SuggestFriendsUseCase {
           suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl ?? '',
           suggestedUserName: suggestionMessage.suggestedUserName,
           suggestedUserCategory: suggestionMessage.suggestedUserCategory,
-          status: suggestionMessage.status
+          status: suggestionMessage.status,
+          senderProfileImageUrl: suggestionMessage.senderProfileImageUrl,
+          relatedUserId: suggestedUser.id!
         };
 
+        console.log(`Emitting message with relatedUserId: ${message.relatedUserId}, isSuggested: ${message.isSuggested}, isMatchCard: ${message.isMatchCard}`);
         this.socketService.emitMessage(chat.id, message);
         console.log(`Emitted suggestion message to chat ${chat.id}`);
       };

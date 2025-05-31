@@ -58,7 +58,8 @@ export class MongoMessageRepository implements IMessageRepository {
         suggestedUserName: messageDoc.suggestedUserName,
         suggestedUserCategory: messageDoc.suggestedUserCategory,
         status: messageDoc.status,
-        senderProfileImageUrl: messageDoc.senderProfileImageUrl
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl,
+        relatedUserId: message.isSuggested || message.isMatchCard ? message.relatedUserId : undefined
       };
     } catch (error) {
       console.error(`Error creating message for chatId: ${message.chatId}`, error);
@@ -113,14 +114,16 @@ export class MongoMessageRepository implements IMessageRepository {
           : messageDoc.isMatchCard
           ? messageDoc.suggestedUserCategory
           : undefined,
-        relatedUserId: (isBotMessage && (messageDoc as IBotMessageModel).isSuggested) || (isBotMessage && !(messageDoc as IBotMessageModel).isSuggested && (messageDoc as IBotMessageModel).isMatchCard)
+        relatedUserId: isBotMessage && ((messageDoc as IBotMessageModel).isSuggested || (messageDoc as IBotMessageModel).isMatchCard)
           ? (messageDoc as IBotMessageModel).suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined
           : undefined,
         status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
           ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
           : undefined,
-        senderProfileImageUrl: senderProfileImageUrl
+        senderProfileImageUrl
       };
+
+      console.log(`mapToDomain: relatedUserId for fallback message: ${baseMessage.relatedUserId}`);
 
       if ('suggestedUser' in messageDoc && messageDoc.suggestedUser && baseMessage.isMatchCard) {
         const suggestedUser = messageDoc.suggestedUser as unknown as UserDocument;
@@ -138,6 +141,12 @@ export class MongoMessageRepository implements IMessageRepository {
     const sender = await UserModel.findById(senderId).select('name').exec();
     const senderName = sender ? sender.name : (senderId === '681547798892749fbe910c02' ? 'COMY オフィシャル AI' : 'Unknown User');
     const senderProfileImageUrl = messageDoc.senderProfileImageUrl || (await getSenderProfileImageUrl(senderId));
+
+    let relatedUserId: string | undefined;
+    if (isBotMessage && ((messageDoc as IBotMessageModel).isSuggested || (messageDoc as IBotMessageModel).isMatchCard)) {
+      relatedUserId = (messageDoc as IBotMessageModel).suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined;
+      console.log(`mapToDomain: relatedUserId set to ${relatedUserId} for message ${messageDoc._id}`);
+    }
 
     const baseMessage: Message = {
       id: messageDoc._id.toString(),
@@ -162,14 +171,14 @@ export class MongoMessageRepository implements IMessageRepository {
         : messageDoc.isMatchCard
         ? messageDoc.suggestedUserCategory
         : undefined,
-      relatedUserId: (isBotMessage && (messageDoc as IBotMessageModel).isSuggested) || (isBotMessage && !(messageDoc as IBotMessageModel).isSuggested && (messageDoc as IBotMessageModel).isMatchCard)
-        ? (messageDoc as IBotMessageModel).suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined
-        : undefined,
+      relatedUserId,
       status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && messageDoc.isMatchCard)
         ? (isBotMessage ? (messageDoc as IBotMessageModel).status : messageDoc.status) || 'pending'
         : undefined,
       senderProfileImageUrl
     };
+
+    console.log(`mapToDomain: relatedUserId for base message: ${baseMessage.relatedUserId}`);
 
     if ('suggestedUser' in messageDoc && messageDoc.suggestedUser && baseMessage.isMatchCard) {
       const suggestedUser = messageDoc.suggestedUser as unknown as UserDocument;
@@ -277,7 +286,7 @@ export class MongoMessageRepository implements IMessageRepository {
     ).exec();
 
     await BotMessageModel.updateMany(
-      { chatId: chatId },
+      { chatId },
       { $addToSet: { readBy: userObjectId } }
     ).exec();
   }
