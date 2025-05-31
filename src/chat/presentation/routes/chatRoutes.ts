@@ -6,6 +6,7 @@ import { MongoBotMessageRepository } from '../../infra/repo/MongoBotMessageRepos
 import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistRepository';
 import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
 import { MongoFriendRepository } from '../../infra/repo/MongoFriendRepository';
+import { MongoSuggestedPairRepository } from '../../infra/repo/MongoSuggestedPairRepository'; // New
 import { ISocketService } from '../../domain/services/ISocketService';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
@@ -31,14 +32,12 @@ const updateReadByForChat = async (chatId: string, userId: string) => {
     { chatId: chatId },
     { $addToSet: { readBy: userObjectId } }
   ).exec();
-
   await MessageModel.updateMany(
     { chat: chatId },
     { $addToSet: { readBy: userObjectId } }
   ).exec();
 };
 
-// Placeholder functions for dynamic image URLs and Zoom links (replace with your implementations)
 const getImageUrlForBusinessSheet = async (): Promise<string> => {
   return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/business-sheet-update.png';
 };
@@ -62,6 +61,7 @@ export const setupChatRoutes = (
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
   const friendRepo = new MongoFriendRepository();
+  const suggestedPairRepo = new MongoSuggestedPairRepository(); // New
 
   const suggestFriendsUseCase = new SuggestFriendsUseCase(
     dependencies.userRepository,
@@ -71,6 +71,7 @@ export const setupChatRoutes = (
     friendRepo,
     dependencies.chatService.createChatUseCase,
     socketService,
+    suggestedPairRepo, // New
     dependencies.virtualUserId
   );
 
@@ -691,12 +692,130 @@ export const setupChatRoutes = (
       if (!apiKey || apiKey !== process.env.API_KEY) {
         return res.status(401).json({ error: 'Invalid or missing API Key' });
       }
-
       await suggestFriendsUseCase.execute();
-      return res.status(200).json({ message: 'Friend suggestions triggered successfully' });
+      return res.status(200).json({ message: 'Friend suggestions stored successfully' });
     } catch (error) {
       console.error('Error triggering friend suggestions:', error);
       return res.status(500).json({ error: 'Failed to trigger friend suggestions' });
+    }
+  });
+
+  router.post('/send-suggested-friend', async (req: Request, res: Response) => {
+    try {
+      const apiKey = req.header('X-API-Key');
+      if (!apiKey || apiKey !== process.env.API_KEY) {
+        return res.status(401).json({ error: 'Invalid or missing API Key' });
+      }
+
+      const pendingPairs = await suggestedPairRepo.findPending();
+      console.log(`Found ${pendingPairs.length} pending suggestions`);
+
+      let sentCount = 0;
+      for (const pair of pendingPairs) {
+        // Handle populated userId and suggestedUserId
+        const userId = pair.userId._id.toString();
+        const suggestedUserId = pair.suggestedUserId._id.toString();
+
+        if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(suggestedUserId)) {
+          console.error(`Invalid ObjectId: userId=${userId}, suggestedUserId=${suggestedUserId}, pairId=${pair._id}`);
+          await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
+          continue;
+        }
+
+        const user = await UserModel.findById(userId).select('name').exec();
+        const suggestedUser = await UserModel.findById(suggestedUserId).select('name profileImageUrl category').exec();
+
+        if (!user || !suggestedUser) {
+          console.log(`User ${userId} or suggested user ${suggestedUserId} not found, skipping...`);
+          await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
+          continue;
+        }
+
+        const userName = user.name || 'User';
+        const suggestedUserName = suggestedUser.name || 'User';
+        const suggestedUserCategory = suggestedUser.category || 'unknown';
+        const profileImageUrl = suggestedUser.profileImageUrl || '';
+
+        let chat = await chatRepo.findByUsers([userId, dependencies.virtualUserId]);
+        if (!chat) {
+          console.log(`Creating new private chat for user ${userId} with virtual user`);
+          chat = await dependencies.chatService.createChatUseCase.execute(
+            [userId, dependencies.virtualUserId],
+            'Private Chat with Virtual Assistant',
+            false
+          );
+          console.log(`Created chat with ID: ${chat.id}`);
+        }
+
+        if (!chat.id) {
+          console.error(`Chat ID is null for user ${userId}`);
+          continue;
+        }
+
+        const existingMessage = await botMessageRepo.findExistingSuggestion(
+          chat.id,
+          dependencies.virtualUserId,
+          userId,
+          suggestedUserId
+        );
+        if (existingMessage) {
+          console.log(`Duplicate suggestion found for user ${userId} suggesting ${suggestedUserId}, skipping...`);
+          continue;
+        }
+
+        const suggestionContent = `${userName}さん、おはようございます！\n今週は${userName}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは“自社の強みテーブル”です！\nお繋がりを希望しますか？`;
+        const suggestionMessage: BotMessage = {
+          id: new mongoose.Types.ObjectId().toString(),
+          chatId: chat.id,
+          senderId: dependencies.virtualUserId,
+          recipientId: userId,
+          suggestedUser: suggestedUserId,
+          suggestionReason: 'Random',
+          status: 'pending',
+          content: suggestionContent,
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+          readBy: [dependencies.virtualUserId],
+          isMatchCard: true,
+          isSuggested: true,
+          suggestedUserProfileImageUrl: profileImageUrl,
+          suggestedUserName,
+          suggestedUserCategory,
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
+        };
+
+        await botMessageRepo.create(suggestionMessage);
+        console.log(`Saved suggestion message in chat ${chat.id}, suggestedUser: ${suggestedUserId}`);
+
+        const message: Message = {
+          id: suggestionMessage.id,
+          senderId: 'COMY オフィシャル AI',
+          senderName: 'COMY オフィシャル AI',
+          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
+          content: suggestionContent,
+          chatId: chat.id,
+          createdAt: suggestionMessage.createdAt,
+          readBy: suggestionMessage.readBy,
+          isMatchCard: suggestionMessage.isMatchCard,
+          isSuggested: suggestionMessage.isSuggested,
+          suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl,
+          suggestedUserName: suggestionMessage.suggestedUserName,
+          suggestedUserCategory: suggestionMessage.suggestedUserCategory,
+          status: suggestionMessage.status,
+          senderProfileImageUrl: suggestionMessage.senderProfileImageUrl,
+          relatedUserId: suggestedUserId
+        };
+
+        socketService.emitMessage(chat.id, message);
+        console.log(`Emitted suggestion message to chat ${chat.id}`);
+
+        await suggestedPairRepo.updateStatus(pair._id.toString(), 'sent');
+        sentCount++;
+      }
+
+      return res.status(200).json({ message: `Sent ${sentCount} suggestion messages successfully` });
+    } catch (error) {
+      console.error('Error sending suggested friends:', error);
+      return res.status(500).json({ error: 'Failed to send suggestion messages' });
     }
   });
 
