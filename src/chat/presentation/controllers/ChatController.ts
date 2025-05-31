@@ -1,14 +1,22 @@
+// File: src/chat/presentation/controllers/ChatController.ts
 import { Request, Response } from 'express';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { GetUserChatsUseCase } from '../../application/use-cases/GetUserChatsUseCase';
-import { MongoBotMessageRepository } from '../../infra/repo/MongoBotMessageRepository';
-import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistRepository';
+import { MongoChatRepository } from '../../infra/repo/MongoChatRepository'; 
 
 export class ChatController {
+  private createChatUseCase: CreateChatUseCase;
+  private getUserChatsUseCase: GetUserChatsUseCase;
+  private chatRepository: MongoChatRepository; 
+  private virtualUserId: string = '681547798892749fbe910c02'; 
   constructor(
-    private createChatUseCase: CreateChatUseCase,
-    private getUserChatsUseCase: GetUserChatsUseCase
-    ) {}
+    createChatUseCase: CreateChatUseCase,
+    getUserChatsUseCase: GetUserChatsUseCase
+  ) {
+    this.createChatUseCase = createChatUseCase;
+    this.getUserChatsUseCase = getUserChatsUseCase;
+    this.chatRepository = new MongoChatRepository();
+  }
 
   async createChat(req: Request, res: Response): Promise<void> {
     try {
@@ -43,9 +51,24 @@ export class ChatController {
         return;
       }
 
+      let botChatId = await this.chatRepository.getPrivateChatId(userId, this.virtualUserId);
+      if (!botChatId) {
+        console.log(`Create a new conversation for the user${userId}with bot ${this.virtualUserId}`);
+        const newChat = await this.createChatUseCase.execute(
+          [userId, this.virtualUserId],
+          'Private Chat with Virtual Assistant',
+          false
+        );
+        botChatId = newChat.id;
+        console.log(`A new conversation has been created: ${botChatId}`);
+      } else {
+        console.log(`For an existing conversation for the user${userId}: ${botChatId}`);
+      }
+
       const chats = await this.getUserChatsUseCase.execute(userId);
       res.status(200).json(chats);
     } catch (error: any) {
+      console.error('error', error);
       res.status(500).json({ error: error.message });
     }
   }

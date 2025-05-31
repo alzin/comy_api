@@ -1,46 +1,59 @@
+// File: src/chat/infra/database/models/BotMessageModel.ts
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { UserDocument } from '../../../../infra/database/models/UserModel';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
   _id: Types.ObjectId;
-  senderId: Types.ObjectId | UserDocument;
-  content: string;
+  senderId: string;
+  content: string; 
   chatId: Types.ObjectId;
   createdAt: string;
   readBy: Types.ObjectId[];
-  recipientId?: Types.ObjectId;
-  suggestedUser?: Types.ObjectId | UserDocument;
+  recipientId?: string;
+  suggestedUser?: Types.ObjectId;
   suggestionReason?: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status?: 'pending' | 'accepted' | 'rejected';
   isMatchCard: boolean;
   isSuggested: boolean;
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
-  relatedUserId?: string;
   senderProfileImageUrl?: string;
+  images?: Array<{ imageUrl: string; zoomLink: string }>;
 }
 
 const botMessageSchema = new Schema<IBotMessageModel>(
   {
-    senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    content: { type: String, required: true },
+    senderId: { type: String, required: true },
+    content: { type: String }, 
     chatId: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
-    createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
+    createdAt: { type: String, required: true },
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    recipientId: { type: Schema.Types.ObjectId, ref: 'User' },
+    recipientId: { type: String },
     suggestedUser: { type: Schema.Types.ObjectId, ref: 'User' },
     suggestionReason: { type: String },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
-    isMatchCard: { type: Boolean, default: false, required: true },
-    isSuggested: { type: Boolean, default: false, required: true },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected'] },
+    isMatchCard: { type: Boolean, default: false },
+    isSuggested: { type: Boolean, default: false },
     suggestedUserProfileImageUrl: { type: String },
     suggestedUserName: { type: String },
     suggestedUserCategory: { type: String },
     senderProfileImageUrl: { type: String },
-    relatedUserId: { type: String }
+    images: [
+      {
+        imageUrl: { type: String, required: true },
+        zoomLink: { type: String, required: true },
+      },
+    ],
   },
-  { timestamps: false, collection: 'botmessages' } 
+  { timestamps: false, collection: 'botmessages' }
 );
+
+botMessageSchema.pre('validate', function (next) {
+  if (!this.content && (!this.images || this.images.length === 0)) {
+    next(new Error('Either a content or images field must be provided.'));
+  } else {
+    next();
+  }
+});
 
 export default mongoose.model<IBotMessageModel>('BotMessage', botMessageSchema);

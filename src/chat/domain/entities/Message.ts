@@ -15,4 +15,5 @@ export interface Message {
   relatedUserId?: string; 
   status?: 'pending' | 'accepted' | 'rejected';
   senderProfileImageUrl?: string;
+  images?: Array<{ imageUrl: string; zoomLink: string }>;
 }

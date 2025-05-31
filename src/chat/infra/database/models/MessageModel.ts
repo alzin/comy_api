@@ -1,36 +1,46 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
-import { UserDocument } from '../../../../infra/database/models/UserModel';
 
 export interface IMessageModel extends Document<Types.ObjectId> {
   _id: Types.ObjectId;
-  sender: Types.ObjectId | UserDocument;
+  senderId: string;
+  senderName: string;
   content: string;
   chat: Types.ObjectId;
   createdAt: string;
   readBy: Types.ObjectId[];
   isMatchCard: boolean;
   isSuggested: boolean;
+  senderProfileImageUrl?: string;
   suggestedUserProfileImageUrl?: string;
   suggestedUserName?: string;
   suggestedUserCategory?: string;
   status?: 'pending' | 'accepted' | 'rejected';
-  senderProfileImageUrl?: string; // Added this field
+  relatedUserId?: string;
+  images?: Array<{ imageUrl: string; zoomLink: string }>;
 }
 
 const messageSchema = new Schema<IMessageModel>(
   {
-    sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    senderId: { type: String, required: true },
+    senderName: { type: String, required: true },
     content: { type: String, required: true },
     chat: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
+    createdAt: { type: String, required: true },
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    isMatchCard: { type: Boolean, default: false, required: true },
-    isSuggested: { type: Boolean, default: false, required: true },
+    isMatchCard: { type: Boolean, default: false },
+    isSuggested: { type: Boolean, default: false },
+    senderProfileImageUrl: { type: String },
     suggestedUserProfileImageUrl: { type: String },
     suggestedUserName: { type: String },
     suggestedUserCategory: { type: String },
     status: { type: String, enum: ['pending', 'accepted', 'rejected'] },
-    senderProfileImageUrl: { type: String }, 
-    createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }
+    relatedUserId: { type: String },
+    images: [
+      {
+        imageUrl: { type: String, required: true },
+        zoomLink: { type: String, required: true }
+      }
+    ]
   },
   { timestamps: false, collection: 'messages' }
 );
