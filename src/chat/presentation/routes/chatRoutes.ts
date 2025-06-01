@@ -548,9 +548,9 @@ export const setupChatRoutes = (
       socketService.emitMessage(chatId, confirmMessage);
       console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      const botId = process.env.ADMIN_MIDDING;
+      const botId = process.env.ADMIN;
       if (!botId) {
-        throw new Error('ADMIN_MIDDING is not defined in .env');
+        throw new Error('ADMIN is not defined in .env');
       }
 
       const user1 = await UserModel.findById(userId).select('name id');
@@ -582,7 +582,7 @@ export const setupChatRoutes = (
           senderId: botId,
           content,
           chatId: newChat.id,
-          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "createdAt" }),
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
           readBy: [botId],
           isMatchCard: false,
           isSuggested: false,
