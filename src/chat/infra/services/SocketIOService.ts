@@ -16,6 +16,7 @@ interface SendMessageData {
   chatId: string;
   content: string;
   senderId: string;
+  images?: Array<{ imageUrl: string; zoomLink: string }>;
 }
 
 export class SocketIOService implements ISocketService {
@@ -84,7 +85,7 @@ export class SocketIOService implements ISocketService {
       });
 
       socket.on('sendMessage', async (data: SendMessageData) => {
-        const { chatId, content, senderId } = data;
+        const { chatId, content, senderId, images } = data;
         try {
           const sender = await this.userRepository.findById(senderId);
           const senderName = sender ? sender.name : 'Unknown User';
@@ -97,7 +98,8 @@ export class SocketIOService implements ISocketService {
             readBy: [senderId],
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
             isMatchCard: false,
-            isSuggested: false
+            isSuggested: false,
+            images: images || [], 
           });
           this.emitMessage(chatId, message);
         } catch (error) {
@@ -152,7 +154,8 @@ export class SocketIOService implements ISocketService {
       suggestedUserCategory: message.suggestedUserCategory,
       status: message.status,
       senderProfileImageUrl: message.senderProfileImageUrl,
-      relatedUserId: message.isSuggested || message.isMatchCard ? message.relatedUserId : undefined
+      relatedUserId: message.isSuggested || message.isMatchCard ? message.relatedUserId : undefined,
+      images: message.images || [], // Include images in the emitted message
     });
   }
 
