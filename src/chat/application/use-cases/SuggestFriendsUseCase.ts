@@ -1,28 +1,27 @@
-// File: src/chat/application/use-cases/SuggestFriendsUseCase.ts
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 import { IFriendRepository } from '../../domain/repo/IFriendRepository';
-import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository'; // New
+import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
-import { ISocketService } from '../../domain/services/ISocketService'; // New
+import { ISocketService } from '../../domain/services/ISocketService';
 
 export class SuggestFriendsUseCase {
   private virtualUserId: string;
 
   constructor(
     private userRepository: IUserRepository,
-    private botMessageRepository: IBotMessageRepository, // Not used in new logic but kept for compatibility
+    private botMessageRepository: IBotMessageRepository,
     private chatRepository: IChatRepository,
     private blacklistRepository: IBlacklistRepository,
     private friendRepository: IFriendRepository,
     private createChatUseCase: CreateChatUseCase,
-    private socketService: ISocketService, // Added
-    private suggestedPairRepository: ISuggestedPairRepository, // New
-    virtualUserId: string // Added
+    private socketService: ISocketService,
+    private suggestedPairRepository: ISuggestedPairRepository,
+    virtualUserId: string
   ) {
     this.virtualUserId = virtualUserId;
   }
@@ -33,6 +32,11 @@ export class SuggestFriendsUseCase {
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+  }
+
+  private getOrderedPairKey(userId: string, suggestedUserId: string): string {
+    // Sort IDs to ensure A → B and B → A have the same key
+    return [userId, suggestedUserId].sort().join('-');
   }
 
   async execute(): Promise<void> {
@@ -55,8 +59,20 @@ export class SuggestFriendsUseCase {
       let suggestionCount = 0;
 
       const createSuggestion = async (user: User, suggestedUser: User) => {
-        const pairKey = `${user.id}-${suggestedUser.id}`;
-        if (suggestedPairs.has(pairKey)) return;
+        const pairKey = this.getOrderedPairKey(user.id!, suggestedUser.id!);
+        if (suggestedPairs.has(pairKey)) {
+          console.log(`Pair ${pairKey} already suggested, skipping...`);
+          return;
+        }
+
+        // Check for reciprocal suggestion in repository
+        const existingPair = await this.suggestedPairRepository.findByIds(user.id!, suggestedUser.id!);
+        const reciprocalPair = await this.suggestedPairRepository.findByIds(suggestedUser.id!, user.id!);
+        if (existingPair || reciprocalPair) {
+          console.log(`Suggestion or reciprocal suggestion already exists for pair ${pairKey}, skipping...`);
+          return;
+        }
+
         suggestedPairs.add(pairKey);
         suggestionCount++;
 
@@ -75,12 +91,6 @@ export class SuggestFriendsUseCase {
 
         if (!chat.id) {
           console.error(`Chat ID is null for user ${user.id}`);
-          return;
-        }
-
-        const existingPair = await this.suggestedPairRepository.findByIds(user.id!, suggestedUser.id!);
-        if (existingPair) {
-          console.log(`Duplicate suggestion found for user ${user.id} suggesting ${suggestedUser.id}, skipping...`);
           return;
         }
 
