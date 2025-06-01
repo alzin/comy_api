@@ -6,6 +6,7 @@ import { MongoBotMessageRepository } from '../../infra/repo/MongoBotMessageRepos
 import { MongoBlacklistRepository } from '../../infra/repo/MongoBlacklistRepository';
 import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
 import { MongoFriendRepository } from '../../infra/repo/MongoFriendRepository';
+import { MongoSuggestedPairRepository } from '../../infra/repo/MongoSuggestedPairRepository'; // New
 import { ISocketService } from '../../domain/services/ISocketService';
 import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { Message } from '../../../chat/domain/entities/Message';
@@ -31,11 +32,23 @@ const updateReadByForChat = async (chatId: string, userId: string) => {
     { chatId: chatId },
     { $addToSet: { readBy: userObjectId } }
   ).exec();
-
   await MessageModel.updateMany(
     { chat: chatId },
     { $addToSet: { readBy: userObjectId } }
   ).exec();
+};
+
+const getImageUrlForBusinessSheet = async (): Promise<string> => {
+  return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/business-sheet-update.png';
+};
+const generateZoomLinkForBusinessSheet = async (): Promise<string> => {
+  return 'https://zoom.us/j/business-sheet-meeting';
+};
+const getImageUrlForVirtualMeeting = async (): Promise<string> => {
+  return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/virtual-meeting.png';
+};
+const generateZoomLinkForVirtualMeeting = async (): Promise<string> => {
+  return 'https://zoom.us/j/virtual-meeting';
 };
 
 export const setupChatRoutes = (
@@ -48,6 +61,7 @@ export const setupChatRoutes = (
   const blacklistRepo = new MongoBlacklistRepository();
   const chatRepo = new MongoChatRepository();
   const friendRepo = new MongoFriendRepository();
+  const suggestedPairRepo = new MongoSuggestedPairRepository(); // New
 
   const suggestFriendsUseCase = new SuggestFriendsUseCase(
     dependencies.userRepository,
@@ -57,6 +71,7 @@ export const setupChatRoutes = (
     friendRepo,
     dependencies.chatService.createChatUseCase,
     socketService,
+    suggestedPairRepo, // New
     dependencies.virtualUserId
   );
 
@@ -133,18 +148,24 @@ export const setupChatRoutes = (
         await blacklistRepo.addToBlacklist(message.suggestedUser._id.toString(), userId);
         console.log(`Added ${message.suggestedUser._id.toString()} to blacklist of ${userId} and vice versa`);
 
+        const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
         const rejectMessages = [
-          `マッチングを却下しました。${req.user?.name || 'User'}さんのビジネスに合ったマッチングをご希望の場合は、ビジネスシートのブラッシュアップをしてください。`,
-          `お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。`,
-          `月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。`
+          {
+            content: `マッチングを却下しました。${req.user?.name || 'User'}さんのビジネスに合ったマッチングをご希望の場合は、ビジネスシートのブラッシュアップをしてください。`
+          },
+          {
+            content: `お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。`
+          },
+          {
+            content: `月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。`
+          }
         ];
 
-        const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
-        for (const content of rejectMessages) {
+        for (const msg of rejectMessages) {
           const rejectBotMessage: BotMessage = {
             id: new mongoose.Types.ObjectId().toString(),
             senderId: dependencies.virtualUserId,
-            content,
+            content: msg.content,
             chatId,
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
             readBy: [dependencies.virtualUserId],
@@ -172,7 +193,60 @@ export const setupChatRoutes = (
           console.log(`Created rejection bot message: ${rejectBotMessage.id} in chat ${chatId}`);
         }
 
-        return res.status(200).json({ message: rejectMessages });
+        const imageMessages = [
+          {
+            images: [
+              {
+                imageUrl: await getImageUrlForBusinessSheet(),
+                zoomLink: await generateZoomLinkForBusinessSheet()
+              }
+            ]
+          },
+          {
+            images: [
+              {
+                imageUrl: await getImageUrlForVirtualMeeting(),
+                zoomLink: await generateZoomLinkForVirtualMeeting()
+              }
+            ]
+          }
+        ];
+
+        for (const msg of imageMessages) {
+          const imageBotMessage: BotMessage = {
+            id: new mongoose.Types.ObjectId().toString(),
+            senderId: dependencies.virtualUserId,
+            content: '', 
+            chatId,
+            createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+            readBy: [dependencies.virtualUserId],
+            isMatchCard: false,
+            isSuggested: false,
+            status: 'pending',
+            senderProfileImageUrl: botProfileImageUrl,
+            images: msg.images
+          };
+          await botMessageRepo.create(imageBotMessage);
+          await delay(500);
+
+          const imageMessage: Message = {
+            id: imageBotMessage.id,
+            senderId: 'COMY オフィシャル AI',
+            senderName: 'COMY オフィシャル AI',
+            content: imageBotMessage.content || '',
+            chatId,
+            createdAt: imageBotMessage.createdAt!,
+            readBy: imageBotMessage.readBy,
+            isMatchCard: imageBotMessage.isMatchCard ?? false,
+            isSuggested: imageBotMessage.isSuggested ?? false,
+            senderProfileImageUrl: botProfileImageUrl,
+            images: imageBotMessage.images
+          };
+          socketService.emitMessage(chatId, imageMessage);
+          console.log(`Created image bot message: ${imageBotMessage.id} in chat ${chatId} with images: ${JSON.stringify(imageBotMessage.images)}`);
+        }
+
+        return res.status(200).json({ message: rejectMessages.map(msg => msg.content) });
       }
 
       const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
@@ -266,7 +340,7 @@ export const setupChatRoutes = (
         });
       }
 
-      await botMessageRepo.create(matchBotMessage);
+      const savedMatchMessage = await botMessageRepo.create(matchBotMessage);
       console.log(`Created match bot message: ${matchBotMessage.id} in chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
 
       const matchMessage: Message = {
@@ -283,8 +357,10 @@ export const setupChatRoutes = (
         suggestedUserName: matchBotMessage.suggestedUserName,
         suggestedUserCategory: matchBotMessage.suggestedUserCategory,
         status: matchBotMessage.status,
-        senderProfileImageUrl: botProfileImageUrl
+        senderProfileImageUrl: botProfileImageUrl,
+        relatedUserId: userId
       };
+      console.log(`Emitting match message with relatedUserId: ${matchMessage.relatedUserId}, isSuggested: ${matchMessage.isSuggested}, isMatchCard: ${matchMessage.isMatchCard}`);
       socketService.emitMessage(suggestedUserChatId, matchMessage);
       console.log(`Emitted match message ${matchBotMessage.id} to chat ${suggestedUserChatId} for user ${message.suggestedUser._id.toString()}`);
 
@@ -356,18 +432,25 @@ export const setupChatRoutes = (
         await blacklistRepo.addToBlacklist(message.suggestedUser._id.toString(), userId);
         console.log(`Added ${message.suggestedUser._id.toString()} to blacklist of ${userId} and vice versa`);
 
+        const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
         const rejectMessages = [
-          `マッチングを却下しました。${req.user?.name || 'User'}さんのビジネスに合ったマッチングをご希望の場合は、ビジネスシートのブラッシュアップをしてください。`,
-          `お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。`,
-          `月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。`
+          {
+            content: `マッチングを却下しました。${req.user?.name || 'User'}さんのビジネスに合ったマッチングをご希望の場合は、ビジネスシートのブラッシュアップをしてください。`
+          },
+          {
+            content: `お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。`
+          },
+          {
+            content: `月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。`
+          }
         ];
 
-        const botProfileImageUrl = await getSenderProfileImageUrl('COMY オフィシャル AI', dependencies);
-        for (const content of rejectMessages) {
+        // Send the three rejection messages
+        for (const msg of rejectMessages) {
           const rejectBotMessage: BotMessage = {
             id: new mongoose.Types.ObjectId().toString(),
             senderId: dependencies.virtualUserId,
-            content,
+            content: msg.content,
             chatId,
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
             readBy: [dependencies.virtualUserId],
@@ -395,7 +478,60 @@ export const setupChatRoutes = (
           console.log(`Created rejection bot message: ${rejectBotMessage.id} in chat ${chatId}`);
         }
 
-        return res.status(200).json({ message: rejectMessages });
+        const imageMessages = [
+          {
+            images: [
+              {
+                imageUrl: await getImageUrlForBusinessSheet(),
+                zoomLink: await generateZoomLinkForBusinessSheet()
+              }
+            ]
+          },
+          {
+            images: [
+              {
+                imageUrl: await getImageUrlForVirtualMeeting(),
+                zoomLink: await generateZoomLinkForVirtualMeeting()
+              }
+            ]
+          }
+        ];
+
+        for (const msg of imageMessages) {
+          const imageBotMessage: BotMessage = {
+            id: new mongoose.Types.ObjectId().toString(),
+            senderId: dependencies.virtualUserId,
+            content: '', 
+            chatId,
+            createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+            readBy: [dependencies.virtualUserId],
+            isMatchCard: false,
+            isSuggested: false,
+            status: 'pending',
+            senderProfileImageUrl: botProfileImageUrl,
+            images: msg.images
+          };
+          await botMessageRepo.create(imageBotMessage);
+          await delay(500);
+
+          const imageMessage: Message = {
+            id: imageBotMessage.id,
+            senderId: 'COMY オフィシャル AI',
+            senderName: 'COMY オフィシャル AI',
+            content: imageBotMessage.content || '',
+            chatId,
+            createdAt: imageBotMessage.createdAt!,
+            readBy: imageBotMessage.readBy,
+            isMatchCard: imageBotMessage.isMatchCard ?? false,
+            isSuggested: imageBotMessage.isSuggested ?? false,
+            senderProfileImageUrl: botProfileImageUrl,
+            images: imageBotMessage.images
+          };
+          socketService.emitMessage(chatId, imageMessage);
+          console.log(`Created image bot message: ${imageBotMessage.id} in chat ${chatId} with images: ${JSON.stringify(imageBotMessage.images)}`);
+        }
+
+        return res.status(200).json({ message: rejectMessages.map(msg => msg.content) });
       }
 
       await friendRepo.addFriend(userId, message.suggestedUser._id.toString());
@@ -405,7 +541,7 @@ export const setupChatRoutes = (
       const confirmBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
-        content: `${message.suggestedUser.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`,
+        content: `${message.suggestedUser.name}さんとのビジネスマッチができました。チャットで挨拶してみましょう。`,
         chatId,
         createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
         readBy: [dependencies.virtualUserId],
@@ -436,11 +572,14 @@ export const setupChatRoutes = (
         throw new Error('ADMIN is not defined in .env');
       }
 
-      const user1 = await UserModel.findById(userId).select('name').exec();
-      const user2 = await UserModel.findById(message.suggestedUser._id).select('name').exec();
+      const user1 = await UserModel.findById(userId).select('name category').exec();
+      const user2 = await UserModel.findById(message.suggestedUser._id).select('name category').exec();
       if (!user1 || !user2) {
+        console.error(`User ${userId} or suggested user ${message.suggestedUser._id} not found`);
         throw new Error('User or suggested user not found');
       }
+
+      console.log(`Creating group chat for users: ${user1.name} (category: ${user1.category}), ${user2.name} (category: ${user2.category})`);
 
       const users = [userId, message.suggestedUser._id.toString(), botId];
       const chatName = `${user1.name}, ${user2.name}`;
@@ -505,7 +644,7 @@ export const setupChatRoutes = (
         return res.status(500).json({ message: 'Failed to create notification chat' });
       }
 
-      const notificationMessageContent = `${req.user?.name || 'User'}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`;
+      const notificationMessageContent = `${req.user?.name || 'User'}さんとのビジネスマッチができました。チャットで挨拶してみましょう。`;
       const notifyBotMessage: BotMessage = {
         id: new mongoose.Types.ObjectId().toString(),
         senderId: dependencies.virtualUserId,
@@ -538,7 +677,7 @@ export const setupChatRoutes = (
       console.log(`Emitted notification to ${message.suggestedUser._id.toString()} for new chat ${newChat.id}`);
 
       res.status(200).json({
-        message: `${message.suggestedUser.name}さんとのビジネスマッチが承認されました。チャットで挨拶してみましょう。`,
+        message: `${message.suggestedUser.name}さんとのビジネスマッチができました。チャットで挨拶してみましょう。`,
         chatId: newChat.id
       });
     } catch (error) {
@@ -553,12 +692,130 @@ export const setupChatRoutes = (
       if (!apiKey || apiKey !== process.env.API_KEY) {
         return res.status(401).json({ error: 'Invalid or missing API Key' });
       }
-
       await suggestFriendsUseCase.execute();
-      return res.status(200).json({ message: 'Friend suggestions triggered successfully' });
+      return res.status(200).json({ message: 'Friend suggestions stored successfully' });
     } catch (error) {
       console.error('Error triggering friend suggestions:', error);
       return res.status(500).json({ error: 'Failed to trigger friend suggestions' });
+    }
+  });
+
+  router.post('/send-suggested-friend', async (req: Request, res: Response) => {
+    try {
+      const apiKey = req.header('X-API-Key');
+      if (!apiKey || apiKey !== process.env.API_KEY) {
+        return res.status(401).json({ error: 'Invalid or missing API Key' });
+      }
+
+      const pendingPairs = await suggestedPairRepo.findPending();
+      console.log(`Found ${pendingPairs.length} pending suggestions`);
+
+      let sentCount = 0;
+      for (const pair of pendingPairs) {
+        // Handle populated userId and suggestedUserId
+        const userId = pair.userId._id.toString();
+        const suggestedUserId = pair.suggestedUserId._id.toString();
+
+        if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(suggestedUserId)) {
+          console.error(`Invalid ObjectId: userId=${userId}, suggestedUserId=${suggestedUserId}, pairId=${pair._id}`);
+          await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
+          continue;
+        }
+
+        const user = await UserModel.findById(userId).select('name').exec();
+        const suggestedUser = await UserModel.findById(suggestedUserId).select('name profileImageUrl category').exec();
+
+        if (!user || !suggestedUser) {
+          console.log(`User ${userId} or suggested user ${suggestedUserId} not found, skipping...`);
+          await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
+          continue;
+        }
+
+        const userName = user.name || 'User';
+        const suggestedUserName = suggestedUser.name || 'User';
+        const suggestedUserCategory = suggestedUser.category || 'unknown';
+        const profileImageUrl = suggestedUser.profileImageUrl || '';
+
+        let chat = await chatRepo.findByUsers([userId, dependencies.virtualUserId]);
+        if (!chat) {
+          console.log(`Creating new private chat for user ${userId} with virtual user`);
+          chat = await dependencies.chatService.createChatUseCase.execute(
+            [userId, dependencies.virtualUserId],
+            'Private Chat with Virtual Assistant',
+            false
+          );
+          console.log(`Created chat with ID: ${chat.id}`);
+        }
+
+        if (!chat.id) {
+          console.error(`Chat ID is null for user ${userId}`);
+          continue;
+        }
+
+        const existingMessage = await botMessageRepo.findExistingSuggestion(
+          chat.id,
+          dependencies.virtualUserId,
+          userId,
+          suggestedUserId
+        );
+        if (existingMessage) {
+          console.log(`Duplicate suggestion found for user ${userId} suggesting ${suggestedUserId}, skipping...`);
+          continue;
+        }
+
+        const suggestionContent = `${userName}さん、おはようございます！\n今週は${userName}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは“自社の強みテーブル”です！\nお繋がりを希望しますか？`;
+        const suggestionMessage: BotMessage = {
+          id: new mongoose.Types.ObjectId().toString(),
+          chatId: chat.id,
+          senderId: dependencies.virtualUserId,
+          recipientId: userId,
+          suggestedUser: suggestedUserId,
+          suggestionReason: 'Random',
+          status: 'pending',
+          content: suggestionContent,
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+          readBy: [dependencies.virtualUserId],
+          isMatchCard: true,
+          isSuggested: true,
+          suggestedUserProfileImageUrl: profileImageUrl,
+          suggestedUserName,
+          suggestedUserCategory,
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
+        };
+
+        await botMessageRepo.create(suggestionMessage);
+        console.log(`Saved suggestion message in chat ${chat.id}, suggestedUser: ${suggestedUserId}`);
+
+        const message: Message = {
+          id: suggestionMessage.id,
+          senderId: 'COMY オフィシャル AI',
+          senderName: 'COMY オフィシャル AI',
+          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
+          content: suggestionContent,
+          chatId: chat.id,
+          createdAt: suggestionMessage.createdAt,
+          readBy: suggestionMessage.readBy,
+          isMatchCard: suggestionMessage.isMatchCard,
+          isSuggested: suggestionMessage.isSuggested,
+          suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl,
+          suggestedUserName: suggestionMessage.suggestedUserName,
+          suggestedUserCategory: suggestionMessage.suggestedUserCategory,
+          status: suggestionMessage.status,
+          senderProfileImageUrl: suggestionMessage.senderProfileImageUrl,
+          relatedUserId: suggestedUserId
+        };
+
+        socketService.emitMessage(chat.id, message);
+        console.log(`Emitted suggestion message to chat ${chat.id}`);
+
+        await suggestedPairRepo.updateStatus(pair._id.toString(), 'sent');
+        sentCount++;
+      }
+
+      return res.status(200).json({ message: `Sent ${sentCount} suggestion messages successfully` });
+    } catch (error) {
+      console.error('Error sending suggested friends:', error);
+      return res.status(500).json({ error: 'Failed to send suggestion messages' });
     }
   });
 

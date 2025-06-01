@@ -3,7 +3,7 @@ import { IBotMessageRepository, BotMessage } from '../../domain/repo/IBotMessage
 import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 
 export class MongoBotMessageRepository implements IBotMessageRepository {
-  async create(botMessage: BotMessage): Promise<void> {
+  async create(botMessage: BotMessage): Promise<BotMessage> {
     try {
       if (!mongoose.Types.ObjectId.isValid(botMessage.senderId)) {
         throw new Error(`Invalid senderId: ${botMessage.senderId} is not a valid ObjectId`);
@@ -34,10 +34,33 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserProfileImageUrl: botMessage.suggestedUserProfileImageUrl,
         suggestedUserName: botMessage.suggestedUserName,
         suggestedUserCategory: botMessage.suggestedUserCategory,
-        senderProfileImageUrl: botMessage.senderProfileImageUrl
+        senderProfileImageUrl: botMessage.senderProfileImageUrl,
+        images: botMessage.images // Include images field
       });
-      await messageDoc.save();
-      console.log(`Created bot message with ID: ${botMessage.id} in chat ${botMessage.chatId}`);
+
+      const savedDoc = await messageDoc.save();
+      console.log(`Created bot message with ID: ${botMessage.id} in chat ${botMessage.chatId}, suggestedUser: ${botMessage.suggestedUser}`);
+
+      // Map the saved document to BotMessage interface
+      return {
+        id: savedDoc._id.toString(),
+        senderId: savedDoc.senderId?.toString() || '',
+        content: savedDoc.content || '',
+        chatId: savedDoc.chatId?.toString() || '',
+        createdAt: savedDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        readBy: savedDoc.readBy?.map((id: mongoose.Types.ObjectId) => id.toString()) || [],
+        recipientId: savedDoc.recipientId?.toString(),
+        suggestedUser: savedDoc.suggestedUser ? (savedDoc.suggestedUser as any)._id.toString() : undefined,
+        suggestionReason: savedDoc.suggestionReason,
+        status: savedDoc.status as 'pending' | 'accepted' | 'rejected' || 'pending',
+        isMatchCard: savedDoc.isMatchCard || false,
+        isSuggested: savedDoc.isSuggested || false,
+        suggestedUserProfileImageUrl: savedDoc.suggestedUserProfileImageUrl,
+        suggestedUserName: savedDoc.suggestedUserName,
+        suggestedUserCategory: savedDoc.suggestedUserCategory,
+        senderProfileImageUrl: savedDoc.senderProfileImageUrl,
+        images: savedDoc.images // Return images field
+      };
     } catch (error) {
       console.error(`Error creating bot message for chatId: ${botMessage.chatId}`, error);
       throw error;
@@ -54,8 +77,15 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
       const messageDoc = await BotMessageModel.findById(id)
         .populate('suggestedUser', '_id')
         .exec();
+
       if (!messageDoc) {
         return null;
+      }
+
+      let relatedUserId: string | undefined;
+      if (messageDoc.isSuggested || messageDoc.isMatchCard) {
+        relatedUserId = messageDoc.suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined;
+        console.log(`findById: relatedUserId set to ${relatedUserId} for message ${id}`);
       }
 
       return {
@@ -75,9 +105,8 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserName: messageDoc.suggestedUserName,
         suggestedUserCategory: messageDoc.suggestedUserCategory,
         senderProfileImageUrl: messageDoc.senderProfileImageUrl,
-        relatedUserId: (messageDoc.isSuggested || messageDoc.isMatchCard) && messageDoc.suggestedUser
-          ? (messageDoc.suggestedUser as any)._id.toString()
-          : undefined
+        relatedUserId,
+        images: messageDoc.images // Include images field
       };
     } catch (error) {
       console.error(`Error finding bot message with ID: ${id}`, error);
@@ -111,15 +140,21 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
       }
 
       const messageDoc = await BotMessageModel.findOne({
-        chatId: chatId,
-        senderId: senderId,
-        recipientId: recipientId,
+        chatId,
+        senderId,
+        recipientId,
         suggestedUser: suggestedUserId,
         status: 'pending'
       }).exec();
 
       if (!messageDoc) {
         return null;
+      }
+
+      let relatedUserId: string | undefined;
+      if (messageDoc.isSuggested || messageDoc.isMatchCard) {
+        relatedUserId = messageDoc.suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined;
+        console.log(`findExistingSuggestion: relatedUserId set to ${relatedUserId} for message ${messageDoc._id}`);
       }
 
       return {
@@ -130,7 +165,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
         readBy: messageDoc.readBy?.map((id: mongoose.Types.ObjectId) => id.toString()) || [],
         recipientId: messageDoc.recipientId?.toString(),
-        suggestedUser: messageDoc.suggestedUser?.toString(),
+        suggestedUser: messageDoc.suggestedUser ? (messageDoc.suggestedUser as any)._id.toString() : undefined,
         suggestionReason: messageDoc.suggestionReason,
         status: messageDoc.status as 'pending' | 'accepted' | 'rejected' || 'pending',
         isMatchCard: messageDoc.isMatchCard || false,
@@ -138,7 +173,9 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
         suggestedUserName: messageDoc.suggestedUserName,
         suggestedUserCategory: messageDoc.suggestedUserCategory,
-        senderProfileImageUrl: messageDoc.senderProfileImageUrl
+        senderProfileImageUrl: messageDoc.senderProfileImageUrl,
+        relatedUserId,
+        images: messageDoc.images // Include images field
       };
     } catch (error) {
       console.error(`Error finding existing suggestion for chatId: ${chatId}`, error);

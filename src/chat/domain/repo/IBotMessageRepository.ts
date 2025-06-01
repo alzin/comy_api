@@ -16,10 +16,11 @@ export interface BotMessage {
   suggestedUserCategory?: string;
   senderProfileImageUrl?: string;
   relatedUserId?: string;
+  images?: Array<{ imageUrl: string; zoomLink: string }>; 
 }
 
 export interface IBotMessageRepository {
-  create(botMessage: BotMessage): Promise<void>;
+  create(botMessage: BotMessage): Promise<BotMessage>;
   findById(id: string): Promise<BotMessage | null>;
   updateSuggestionStatus(id: string, status: 'accepted' | 'rejected'): Promise<void>;
   findExistingSuggestion(chatId: string, senderId: string, recipientId: string, suggestedUserId: string): Promise<BotMessage | null>;

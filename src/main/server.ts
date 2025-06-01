@@ -1,3 +1,4 @@
+// File: src/main/index.ts
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -46,11 +47,9 @@ export async function startServer() {
 
   const dependencies = setupDependencies(server);
 
-  // Initialize virtual user using the Use Case
   const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(dependencies.userRepository);
   const virtualUserId = await initializeVirtualUserUseCase.execute();
 
-  // Update dependencies with virtualUserId
   app.locals.dependencies = {
     ...dependencies,
     virtualUserId
@@ -61,7 +60,6 @@ export async function startServer() {
     new ChatController(
       dependencies.chatService.createChatUseCase,
       dependencies.chatService.getUserChatsUseCase
-      // Removed botMessageRepository and blacklistRepository to match constructor
     ),
     new MessageController(
       dependencies.messageService.sendMessageUseCase,

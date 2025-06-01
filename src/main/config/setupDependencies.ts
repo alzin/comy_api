@@ -48,7 +48,7 @@ import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
-
+import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository'; // New
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
 const sendActiveUsersEmailUseCase = new SendActiveUsersEmailUseCase(activeUsersFetcher, emailSender);
@@ -140,6 +140,7 @@ export function setupDependencies(server: any) {
   if (!virtualUserId) {
     throw new Error('BOT_ID is not defined in .env');
   }
+  const suggestedPairRepository = new MongoSuggestedPairRepository(); // New
 
   return {
     userRepository,
@@ -167,6 +168,7 @@ export function setupDependencies(server: any) {
     chatRepository,
     blacklistRepository,
     friendRepository,
+    suggestedPairRepository, // New
     virtualChatService,
     sendMessageUseCase,
     virtualUserId,
