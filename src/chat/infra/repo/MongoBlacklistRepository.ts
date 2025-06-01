@@ -7,7 +7,6 @@ export class MongoBlacklistRepository implements IBlacklistRepository {
     await BlacklistModel.create({
       userId,
       blockedUserId: blacklistedUserId,
-      blockDuration: 7 
     });
   }
 

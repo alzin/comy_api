@@ -4,25 +4,25 @@ import { IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
 import { IFriendRepository } from '../../domain/repo/IFriendRepository';
-import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository';
+import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository'; // New
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
-import { ISocketService } from '../../domain/services/ISocketService';
+import { ISocketService } from '../../domain/services/ISocketService'; // New
 
 export class SuggestFriendsUseCase {
   private virtualUserId: string;
 
   constructor(
     private userRepository: IUserRepository,
-    private botMessageRepository: IBotMessageRepository,
+    private botMessageRepository: IBotMessageRepository, // Not used in new logic but kept for compatibility
     private chatRepository: IChatRepository,
     private blacklistRepository: IBlacklistRepository,
     private friendRepository: IFriendRepository,
     private createChatUseCase: CreateChatUseCase,
-    private socketService: ISocketService,
-    private suggestedPairRepository: ISuggestedPairRepository,
-    virtualUserId: string
+    private socketService: ISocketService, // Added
+    private suggestedPairRepository: ISuggestedPairRepository, // New
+    virtualUserId: string // Added
   ) {
     this.virtualUserId = virtualUserId;
   }
@@ -42,7 +42,7 @@ export class SuggestFriendsUseCase {
       const activeUsers = await this.userRepository.findActiveUsers();
       console.log(`Found ${activeUsers.length} active users`);
 
-      const validUsers = activeUsers.filter(u => u.id && u.subscriptionStatus === SubscriptionStatus.Active && u.id !== this.virtualUserId);
+      const validUsers = activeUsers.filter(u => u.id && u.subscriptionStatus === SubscriptionStatus.Active);
       console.log(`Found ${validUsers.length} valid active users`);
 
       if (validUsers.length < 2) {
@@ -51,20 +51,13 @@ export class SuggestFriendsUseCase {
       }
 
       const shuffledUsers = this.shuffle([...validUsers]);
-      const suggestedPairs = new Set<string>(); // Tracks pairs (userId-suggestedUserId)
-      const usersWhoSuggested = new Set<string>(); // Tracks users who have suggested someone
+      const suggestedPairs = new Set<string>();
       let suggestionCount = 0;
 
       const createSuggestion = async (user: User, suggestedUser: User) => {
         const pairKey = `${user.id}-${suggestedUser.id}`;
-        const reversePairKey = `${suggestedUser.id}-${user.id}`;
-        if (suggestedPairs.has(pairKey) || suggestedPairs.has(reversePairKey)) {
-          console.log(`Pair ${pairKey} or ${reversePairKey} already exists, skipping...`);
-          return;
-        }
-
+        if (suggestedPairs.has(pairKey)) return;
         suggestedPairs.add(pairKey);
-        usersWhoSuggested.add(user.id!);
         suggestionCount++;
 
         console.log(`Suggesting user: ${suggestedUser.name} (ID: ${suggestedUser.id}) to ${user.name} (ID: ${user.id})`);
@@ -99,9 +92,9 @@ export class SuggestFriendsUseCase {
         console.log(`Stored suggestion for user ${user.id} suggesting ${suggestedUser.id}`);
       };
 
-      for (const user of shuffledUsers) {
-        if (!user.id || usersWhoSuggested.has(user.id)) {
-          console.log(`Skipping user with ID ${user.id} (invalid or already suggested)`);
+      for (const user of validUsers) {
+        if (!user.id || user.id === this.virtualUserId) {
+          console.log(`Skipping user with ID ${user.id} (invalid or virtual user)`);
           continue;
         }
 
@@ -112,36 +105,43 @@ export class SuggestFriendsUseCase {
         console.log(`Blacklisted users for ${user.name}:`, blacklistedUserIds);
         console.log(`Existing friends for ${user.name}:`, friendUserIds);
 
-        const possibleSuggestions = shuffledUsers.filter(u =>
-          u.id &&
-          u.id !== user.id &&
-          u.id !== this.virtualUserId &&
-          !blacklistedUserIds.includes(u.id) &&
-          !friendUserIds.includes(u.id) &&
-          !suggestedPairs.has(`${u.id}-${user.id}`) // Prevent reverse suggestion
+        const possibleSuggestions = validUsers.filter(u =>
+          u.id && u.id !== user.id && u.id !== this.virtualUserId &&
+          !blacklistedUserIds.includes(u.id) && !friendUserIds.includes(u.id)
         );
 
         if (possibleSuggestions.length === 0) {
           console.log(`No possible suggestions for ${user.name} (ID: ${user.id})`);
+          const fallbackSuggestions = validUsers.filter(u =>
+            u.id && u.id !== user.id && u.id !== this.virtualUserId &&
+            !blacklistedUserIds.includes(u.id) && !friendUserIds.includes(u.id)
+          );
+          if (fallbackSuggestions.length === 0) {
+            console.log(`No fallback suggestions available for ${user.name}`);
+            continue;
+          }
+          const shuffledFallback = this.shuffle([...fallbackSuggestions]);
+          const suggestedUser = shuffledFallback[0];
+          const suggestedUserExists = await this.userRepository.findById(suggestedUser.id);
+          if (!suggestedUserExists) {
+            console.log(`Suggested user ${suggestedUser.id} does not exist, skipping...`);
+            continue;
+          }
+          await createSuggestion(user, suggestedUser as User);
           continue;
         }
 
-        const suggestedUser = possibleSuggestions[0];
+        const shuffledSuggestions = this.shuffle([...possibleSuggestions]);
+        const suggestedUser = shuffledSuggestions[0];
         const suggestedUserExists = await this.userRepository.findById(suggestedUser.id);
         if (!suggestedUserExists) {
           console.log(`Suggested user ${suggestedUser.id} does not exist, skipping...`);
           continue;
         }
-
-        await createSuggestion(user, suggestedUser);
+        await createSuggestion(user, suggestedUser as User);
       }
 
       console.log(`Friend suggestion process completed. Total suggestions stored: ${suggestionCount}`);
-      // Log users who didn't suggest anyone
-      const usersWithoutSuggestions = validUsers.filter(u => !usersWhoSuggested.has(u.id!));
-      if (usersWithoutSuggestions.length > 0) {
-        console.log(`Users without suggestions: ${usersWithoutSuggestions.map(u => `${u.name} (ID: ${u.id})`).join(', ')}`);
-      }
     } catch (error) {
       console.error('Error in suggestFriends:', error);
       throw error;
