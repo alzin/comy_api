@@ -1,3 +1,4 @@
+///src/chat/application/use-cases/CreateChatUseCase.ts
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat, ChatUser } from '../../domain/entities/Chat';
@@ -58,6 +59,7 @@ export class CreateChatUseCase {
       createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
       updatedAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
       latestMessage: null,
+      //profileImageUrl: ''
     };
 
     return await this.chatRepository.create(chat);

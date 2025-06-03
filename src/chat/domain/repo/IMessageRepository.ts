@@ -1,3 +1,4 @@
+///src/chat/domain/repo/IMessageRepository.ts
 import { Message } from '../../../chat/domain/entities/Message';
 
 export interface IMessageRepository {

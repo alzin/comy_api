@@ -1,3 +1,4 @@
+//src/chat/application/use-cases/GenerateBotResponseUseCase.ts
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 
 export class GenerateBotResponseUseCase {

@@ -1,4 +1,4 @@
-// MongoDB schema for friendships
+///src/chat/infra/database/models/FriendModel.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface Friend extends Document {

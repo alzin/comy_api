@@ -1,3 +1,4 @@
+///src/chat/application/use-cases/InitializeVirtualUserUseCase.ts
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
@@ -20,7 +21,7 @@ export class InitializeVirtualUserUseCase {
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
-        lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+        //lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
       };
       await this.userRepository.create(virtualUser as User);
       console.log('Virtual user created:', virtualUserEmail);

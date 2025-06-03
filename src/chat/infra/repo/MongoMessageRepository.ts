@@ -1,6 +1,7 @@
+// src/chat/infra/repo/MongoMessageRepository.ts
 import mongoose, { Types } from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
-import { Message } from '../../../chat/domain/entities/Message';
+import { Message } from '../../domain/entities/Message';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 import { ChatModel } from '../database/models/ChatModel';
@@ -27,12 +28,12 @@ export class MongoMessageRepository implements IMessageRepository {
       const senderProfileImageUrl = await getSenderProfileImageUrl(message.senderId);
       const readBy = [...new Set([...message.readBy, ...(userId ? [userId] : [])])];
       const messageDoc = new MessageModel({
-        _id: new mongoose.Types.ObjectId(message.id),
+        _id: message.id ? new mongoose.Types.ObjectId(message.id) : new mongoose.Types.ObjectId(),
         senderId: message.senderId,
         senderName: message.senderName,
         content: message.content,
         chat: message.chatId,
-        createdAt: message.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        createdAt: message.createdAt || new Date().toISOString(),
         readBy: readBy.map(id => new mongoose.Types.ObjectId(id)),
         isMatchCard: message.isMatchCard || false,
         isSuggested: message.isSuggested || false,
@@ -44,7 +45,7 @@ export class MongoMessageRepository implements IMessageRepository {
         images: message.images || [],
       });
       await messageDoc.save();
-      console.log(`Created message with ID: ${message.id} in chat ${message.chatId}, isMatchCard: ${message.isMatchCard}, isSuggested: ${message.isSuggested}, status: ${message.status}`);
+      console.log(`Created message with ID: ${messageDoc._id} in chat ${message.chatId}, isMatchCard: ${message.isMatchCard}, isSuggested: ${message.isSuggested}, status: ${message.status}`);
 
       return {
         id: messageDoc._id.toString(),
@@ -52,7 +53,7 @@ export class MongoMessageRepository implements IMessageRepository {
         senderName: messageDoc.senderName,
         content: messageDoc.content || '',
         chatId: messageDoc.chat.toString(),
-        createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        createdAt: messageDoc.createdAt.toString(),
         readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
         isMatchCard: messageDoc.isMatchCard,
         isSuggested: messageDoc.isSuggested,
@@ -101,7 +102,7 @@ export class MongoMessageRepository implements IMessageRepository {
         content: messageDoc.content || '',
         chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId)?.toString() || '',
         readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
-        createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        createdAt: messageDoc.createdAt.toString(),
         isMatchCard: isBotMessage ? (messageDoc as IBotMessageModel).isMatchCard : (messageDoc as IMessageModel).isMatchCard,
         isSuggested: isBotMessage ? (messageDoc as IBotMessageModel).isSuggested : (messageDoc as IMessageModel).isSuggested,
         suggestedUserProfileImageUrl: isBotMessage
@@ -128,8 +129,6 @@ export class MongoMessageRepository implements IMessageRepository {
         senderProfileImageUrl,
         images: messageDoc.images || [],
       };
-
-      console.log(`mapToDomain: relatedUserId for fallback message: ${baseMessage.relatedUserId}`);
 
       if (isBotMessage && (messageDoc as IBotMessageModel).suggestedUser && baseMessage.isMatchCard) {
         const suggestedUser = (messageDoc as IBotMessageModel).suggestedUser as unknown as UserDocument;
@@ -163,7 +162,7 @@ export class MongoMessageRepository implements IMessageRepository {
       content: messageDoc.content || '',
       chatId: ('chat' in messageDoc ? messageDoc.chat : messageDoc.chatId)?.toString() || '',
       readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
-      createdAt: messageDoc.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      createdAt: messageDoc.createdAt.toString(),
       isMatchCard: isBotMessage ? (messageDoc as IBotMessageModel).isMatchCard : (messageDoc as IMessageModel).isMatchCard,
       isSuggested: isBotMessage ? (messageDoc as IBotMessageModel).isSuggested : (messageDoc as IMessageModel).isSuggested,
       suggestedUserProfileImageUrl: isBotMessage
@@ -186,18 +185,6 @@ export class MongoMessageRepository implements IMessageRepository {
       senderProfileImageUrl,
       images: messageDoc.images || [],
     };
-
-    console.log(`mapToDomain: relatedUserId for base message: ${baseMessage.relatedUserId}`);
-
-    if (isBotMessage && (messageDoc as IBotMessageModel).suggestedUser && baseMessage.isMatchCard) {
-      const suggestedUser = (messageDoc as IBotMessageModel).suggestedUser as unknown as UserDocument;
-      return {
-        ...baseMessage,
-        suggestedUserProfileImageUrl: baseMessage.suggestedUserProfileImageUrl || suggestedUser.profileImageUrl || undefined,
-        suggestedUserName: baseMessage.suggestedUserName || suggestedUser.name || 'User',
-        suggestedUserCategory: baseMessage.suggestedUserCategory || suggestedUser.category || 'unknown',
-      };
-    }
 
     return baseMessage;
   }

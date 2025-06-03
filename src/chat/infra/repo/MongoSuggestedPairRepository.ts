@@ -7,7 +7,7 @@ export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
   async create(suggestion: { userId: string; suggestedUserId: string; status: 'pending' | 'sent' | 'rejected' }): Promise<string> {
     const created = await SuggestedPairModel.create({
       userId: new mongoose.Types.ObjectId(suggestion.userId),
-      suggestedUserId: new mongoose.Types.ObjectId(suggestion.suggestedUserId), // Fixed: Removed extra parenthesis
+      suggestedUserId: new mongoose.Types.ObjectId(suggestion.suggestedUserId), 
       status: suggestion.status,
       createdAt: new Date(),
     });

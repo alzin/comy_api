@@ -22,7 +22,7 @@ export class MongoUserRepository implements IUserRepository {
       subscriptionPlan: userDoc.subscriptionPlan,
       profileImageUrl: userDoc.profileImageUrl,
       isOnline: userDoc.isOnline,
-      lastActive: userDoc.lastActive,
+      //lastActive: userDoc.lastActive,
     };
   }
 
