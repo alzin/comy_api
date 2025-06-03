@@ -16,6 +16,7 @@ import MessageModel from '../../../chat/infra/database/models/MessageModel';
 import { UserModel } from '../../../infra/database/models/UserModel';
 import { SuggestFriendsUseCase } from '../../application/use-cases/SuggestFriendsUseCase';
 import SuggestedPairModel from '../../infra/database/models/SuggestedPairModel';
+import { CONFIG } from '../../../main/config/config';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -79,12 +80,12 @@ export const setupChatRoutes = (
   const router = express.Router();
 
   router.use((req: Request, res: Response, next: express.NextFunction) => {
-    console.log('Request path:', req.path); 
+    console.log('Request path:', req.path);
     if (req.path === '/suggest-friends' || req.path === '/send-suggested-friend') {
-      console.log('Skipping authMiddleware for:', req.path); 
+      console.log('Skipping authMiddleware for:', req.path);
       return next();
     }
-    console.log('Applying authMiddleware for:', req.path); 
+    console.log('Applying authMiddleware for:', req.path);
     return authMiddleware(dependencies.tokenService, dependencies.userRepository)(req, res, next);
   });
 
@@ -548,7 +549,7 @@ export const setupChatRoutes = (
       socketService.emitMessage(chatId, confirmMessage);
       console.log(`Created confirmation bot message: ${confirmBotMessage.id} in chat ${chatId}`);
 
-      const botId = process.env.ADMIN;
+      const botId = CONFIG.ADMIN;
       if (!botId) {
         throw new Error('ADMIN is not defined in .env');
       }
@@ -668,12 +669,12 @@ export const setupChatRoutes = (
   });
 
   router.post('/suggest-friends', async (req: Request, res: Response) => {
-    console.log('Reached /suggest-friends'); 
+    console.log('Reached /suggest-friends');
     try {
       const apiKey = req.header('X-API-Key');
-      console.log('API_KEY from .env:', process.env.API_KEY); 
-      console.log('X-API-Key from request:', apiKey); 
-      if (!apiKey || apiKey !== process.env.API_KEY) {
+      console.log('API_KEY from .env:', CONFIG.API_KEY);
+      console.log('X-API-Key from request:', apiKey);
+      if (!apiKey || apiKey !== CONFIG.API_KEY) {
         return res.status(401).json({ error: 'Invalid or missing API Key' });
       }
       await suggestFriendsUseCase.execute();
@@ -684,132 +685,132 @@ export const setupChatRoutes = (
     }
   });
 
-router.post('/send-suggested-friend', async (req: Request, res: Response) => {
-  console.log('Reached /send-suggested-friend');
-  try {
-    const apiKey = req.header('X-API-Key');
-    console.log('API_KEY from .env:', process.env.API_KEY);
-    console.log('X-API-Key from request:', apiKey);
-    if (!apiKey) {
-      return res.status(401).json({ error: 'Missing API Key' });
-    }
-    if (apiKey !== process.env.API_KEY) {
-      return res.status(401).json({ error: 'Invalid API Key' });
-    }
-
-    const pendingPairs = await suggestedPairRepo.findPending();
-    console.log(`Found ${pendingPairs.length} pending suggestions`);
-
-    let sentCount = 0;
-    for (const pair of pendingPairs) {
-      let userId, suggestedUserId;
-      try {
-        userId = pair.userId instanceof mongoose.Types.ObjectId ? pair.userId.toString() : new mongoose.Types.ObjectId(pair.userId);
-        suggestedUserId = pair.suggestedUserId instanceof mongoose.Types.ObjectId ? pair.suggestedUserId.toString() : new mongoose.Types.ObjectId(pair.suggestedUserId);
-      } catch (error) {
-        console.error(`Invalid userId or suggestedUserId in pair: ${JSON.stringify(pair)}`, error);
-        await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
-        continue;
+  router.post('/send-suggested-friend', async (req: Request, res: Response) => {
+    console.log('Reached /send-suggested-friend');
+    try {
+      const apiKey = req.header('X-API-Key');
+      console.log('API_KEY from .env:', CONFIG.API_KEY);
+      console.log('X-API-Key from request:', apiKey);
+      if (!apiKey) {
+        return res.status(401).json({ error: 'Missing API Key' });
+      }
+      if (apiKey !== CONFIG.API_KEY) {
+        return res.status(401).json({ error: 'Invalid API Key' });
       }
 
-      console.log(`Processing pair: userId=${userId}, suggestedUserId=${suggestedUserId}`);
+      const pendingPairs = await suggestedPairRepo.findPending();
+      console.log(`Found ${pendingPairs.length} pending suggestions`);
 
-      const user = await UserModel.findById(userId).select('name').exec();
-      const suggestedUser = await UserModel.findById(suggestedUserId).select('name profileImageUrl category').exec();
+      let sentCount = 0;
+      for (const pair of pendingPairs) {
+        let userId, suggestedUserId;
+        try {
+          userId = pair.userId instanceof mongoose.Types.ObjectId ? pair.userId.toString() : new mongoose.Types.ObjectId(pair.userId);
+          suggestedUserId = pair.suggestedUserId instanceof mongoose.Types.ObjectId ? pair.suggestedUserId.toString() : new mongoose.Types.ObjectId(pair.suggestedUserId);
+        } catch (error) {
+          console.error(`Invalid userId or suggestedUserId in pair: ${JSON.stringify(pair)}`, error);
+          await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
+          continue;
+        }
 
-      if (!user || !suggestedUser) {
-        console.log(`User ${userId} or suggested user ${suggestedUserId} not found, skipping...`);
-        await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
-        continue;
-      }
+        console.log(`Processing pair: userId=${userId}, suggestedUserId=${suggestedUserId}`);
 
-      const userName = user.name || 'User';
-      const suggestedUserName = suggestedUser.name || 'User';
-      const suggestedUserCategory = suggestedUser.category || 'unknown';
-      const profileImageUrl = suggestedUser.profileImageUrl || '';
+        const user = await UserModel.findById(userId).select('name').exec();
+        const suggestedUser = await UserModel.findById(suggestedUserId).select('name profileImageUrl category').exec();
 
-      let chat = await chatRepo.findByUsers([userId, dependencies.virtualUserId]);
-      if (!chat) {
-        console.log(`Creating new private chat for user ${userId} with virtual user`);
-        chat = await dependencies.chatService.createChatUseCase.execute(
-          [userId, dependencies.virtualUserId],
-          'Private Chat with Virtual Assistant',
-          false
+        if (!user || !suggestedUser) {
+          console.log(`User ${userId} or suggested user ${suggestedUserId} not found, skipping...`);
+          await suggestedPairRepo.updateStatus(pair._id.toString(), 'rejected');
+          continue;
+        }
+
+        const userName = user.name || 'User';
+        const suggestedUserName = suggestedUser.name || 'User';
+        const suggestedUserCategory = suggestedUser.category || 'unknown';
+        const profileImageUrl = suggestedUser.profileImageUrl || '';
+
+        let chat = await chatRepo.findByUsers([userId, dependencies.virtualUserId]);
+        if (!chat) {
+          console.log(`Creating new private chat for user ${userId} with virtual user`);
+          chat = await dependencies.chatService.createChatUseCase.execute(
+            [userId, dependencies.virtualUserId],
+            'Private Chat with Virtual Assistant',
+            false
+          );
+          console.log(`Created chat with ID: ${chat.id}`);
+        }
+
+        if (!chat.id) {
+          console.error(`Chat ID is null for user ${userId}`);
+          continue;
+        }
+
+        const existingMessage = await botMessageRepo.findExistingSuggestion(
+          chat.id,
+          dependencies.virtualUserId,
+          userId,
+          suggestedUserId
         );
-        console.log(`Created chat with ID: ${chat.id}`);
+        if (existingMessage) {
+          console.log(`Duplicate suggestion found for user ${userId} suggesting ${suggestedUserId}, skipping...`);
+          continue;
+        }
+
+        const suggestionContent = `${userName}さん、おはようございます！今週は${userName}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは「自社の強みテーブル」です。\nお繋がり希望しますか？`;
+        const suggestionMessage: any = {
+          id: new mongoose.Types.ObjectId().toString(),
+          chatId: chat.id,
+          senderId: dependencies.virtualUserId,
+          recipientId: userId,
+          suggestedUser: suggestedUserId,
+          suggestionReason: 'suggested',
+          status: 'pending',
+          content: suggestionContent,
+          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+          readBy: [dependencies.virtualUserId],
+          isMatchCard: true,
+          isSuggested: true,
+          suggestedUserProfileImageUrl: profileImageUrl,
+          suggestedUserName,
+          suggestedUserCategory,
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
+        };
+
+        await botMessageRepo.create(suggestionMessage);
+        console.log(`Saved suggestion message in chat ${chat.id}, suggestedUser: ${suggestedUserId}`);
+
+        const message: Message = {
+          id: suggestionMessage.id,
+          senderId: 'COMY オフィシャル AI',
+          senderName: 'COMY オフィシャル AI',
+          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
+          content: suggestionContent,
+          chatId: chat.id,
+          createdAt: suggestionMessage.createdAt,
+          readBy: suggestionMessage.readBy,
+          isMatchCard: suggestionMessage.isMatchCard,
+          isSuggested: suggestionMessage.isSuggested,
+          suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl,
+          suggestedUserName: suggestionMessage.suggestedUserName,
+          suggestedUserCategory: suggestionMessage.suggestedUserCategory,
+          status: suggestionMessage.status,
+          senderProfileImageUrl: suggestionMessage.senderProfileImageUrl,
+          relatedUserId: suggestedUserId
+        };
+
+        socketService.emitMessage(chat.id, message);
+        console.log(`Emitted suggestion message to chat ${chat.id}`);
+
+        await suggestedPairRepo.updateStatus(pair._id.toString(), 'sent');
+        sentCount++;
       }
 
-      if (!chat.id) {
-        console.error(`Chat ID is null for user ${userId}`);
-        continue;
-      }
-
-      const existingMessage = await botMessageRepo.findExistingSuggestion(
-        chat.id,
-        dependencies.virtualUserId,
-        userId,
-        suggestedUserId
-      );
-      if (existingMessage) {
-        console.log(`Duplicate suggestion found for user ${userId} suggesting ${suggestedUserId}, skipping...`);
-        continue;
-      }
-
-      const suggestionContent = `${userName}さん、おはようございます！今週は${userName}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは「自社の強みテーブル」です。\nお繋がり希望しますか？`;
-      const suggestionMessage: any = {
-        id: new mongoose.Types.ObjectId().toString(),
-        chatId: chat.id,
-        senderId: dependencies.virtualUserId,
-        recipientId: userId,
-        suggestedUser: suggestedUserId,
-        suggestionReason: 'suggested',
-        status: 'pending',
-        content: suggestionContent,
-        createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-        readBy: [dependencies.virtualUserId],
-        isMatchCard: true,
-        isSuggested: true,
-        suggestedUserProfileImageUrl: profileImageUrl,
-        suggestedUserName,
-        suggestedUserCategory,
-        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png'
-      };
-
-      await botMessageRepo.create(suggestionMessage);
-      console.log(`Saved suggestion message in chat ${chat.id}, suggestedUser: ${suggestedUserId}`);
-
-      const message: Message = {
-        id: suggestionMessage.id,
-        senderId: 'COMY オフィシャル AI',
-        senderName: 'COMY オフィシャル AI',
-        senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' },
-        content: suggestionContent,
-        chatId: chat.id,
-        createdAt: suggestionMessage.createdAt,
-        readBy: suggestionMessage.readBy,
-        isMatchCard: suggestionMessage.isMatchCard,
-        isSuggested: suggestionMessage.isSuggested,
-        suggestedUserProfileImageUrl: suggestionMessage.suggestedUserProfileImageUrl,
-        suggestedUserName: suggestionMessage.suggestedUserName,
-        suggestedUserCategory: suggestionMessage.suggestedUserCategory,
-        status: suggestionMessage.status,
-        senderProfileImageUrl: suggestionMessage.senderProfileImageUrl,
-        relatedUserId: suggestedUserId
-      };
-
-      socketService.emitMessage(chat.id, message);
-      console.log(`Emitted suggestion message to chat ${chat.id}`);
-
-      await suggestedPairRepo.updateStatus(pair._id.toString(), 'sent');
-      sentCount++;
+      return res.status(200).json({ message: `Sent ${sentCount} suggestion messages successfully` });
+    } catch (error) {
+      console.error('Error sending suggested friends:', error);
+      return res.status(500).json({ error: 'Failed to send suggestion messages' });
     }
-
-    return res.status(200).json({ message: `Sent ${sentCount} suggestion messages successfully` });
-  } catch (error) {
-    console.error('Error sending suggested friends:', error);
-    return res.status(500).json({ error: 'Failed to send suggestion messages' });
-  }
-});
+  });
 
   return router;
 };

@@ -1,12 +1,13 @@
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
+import { CONFIG } from '../../../main/config/config';
 
 export class InitializeVirtualUserUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(private userRepository: IUserRepository) { }
 
   async execute(): Promise<string> {
-    const virtualUserEmail = process.env.VIRTUAL_USER_EMAIL;
+    const virtualUserEmail = CONFIG.VIRTUAL_USER_EMAIL;
     let virtualUser = await this.userRepository.findByEmail(virtualUserEmail);
 
     const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
@@ -15,7 +16,7 @@ export class InitializeVirtualUserUseCase {
       virtualUser = {
         id: generateId(),
         email: virtualUserEmail,
-        password: process.env.VIRTUAL_USER_PASSWORD,
+        password: CONFIG.VIRTUAL_USER_PASSWORD,
         name: 'COMY オフィシャル AI',
         category: 'bot',
         isOnline: true,

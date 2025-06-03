@@ -49,6 +49,9 @@ import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/S
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository'; // New
+import { CONFIG } from "./config"
+
+
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
 const sendActiveUsersEmailUseCase = new SendActiveUsersEmailUseCase(activeUsersFetcher, emailSender);
@@ -136,7 +139,7 @@ export function setupDependencies(server: any) {
     socketService
   );
 
-  const virtualUserId = process.env.BOT_ID;
+  const virtualUserId = CONFIG.BOT_ID;
   if (!virtualUserId) {
     throw new Error('BOT_ID is not defined in .env');
   }

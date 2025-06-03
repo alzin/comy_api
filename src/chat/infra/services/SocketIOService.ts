@@ -6,6 +6,7 @@ import { Message } from '../../domain/entities/Message';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
+import { CONFIG } from '../../../main/config/config';
 
 interface UserSocket {
   userId: string;
@@ -32,7 +33,7 @@ export class SocketIOService implements ISocketService {
     this.chatRepository = new MongoChatRepository();
     this.io = new Server(server, {
       cors: {
-        origin: process.env.FRONT_URL,
+        origin: CONFIG.FRONT_URL,
         methods: ['GET', 'POST'],
         credentials: true,
       },
@@ -62,7 +63,7 @@ export class SocketIOService implements ISocketService {
 
       socket.on('authenticate', async (token) => {
         try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+          const decoded = jwt.verify(token, CONFIG.JWT_SECRET!) as {
             id: string;
           };
           const userId = decoded.id;
@@ -96,10 +97,10 @@ export class SocketIOService implements ISocketService {
             content,
             chatId,
             readBy: [senderId],
-            createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }), 
+            createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
             isMatchCard: false,
             isSuggested: false,
-            images: images || [], 
+            images: images || [],
           });
           this.emitMessage(chatId, message);
         } catch (error) {

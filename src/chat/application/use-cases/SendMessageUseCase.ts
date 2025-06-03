@@ -6,6 +6,7 @@ import { Message } from '../../domain/entities/Message';
 import { LatestMessage } from '../../domain/entities/Chat';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import mongoose from 'mongoose';
+import { CONFIG } from '../../../main/config/config';
 
 export class SendMessageUseCase {
   constructor(
@@ -14,7 +15,7 @@ export class SendMessageUseCase {
     private socketService: ISocketService,
     private generateBotResponseUseCase: GenerateBotResponseUseCase,
     private userRepository: IUserRepository
-  ) {}
+  ) { }
 
   private truncateContent(content: string): string {
     return content.length > 18 ? content.substring(0, 18) : content;
@@ -72,8 +73,8 @@ export class SendMessageUseCase {
 
     this.socketService.emitMessage(chatId, savedMessage);
 
-    const bot1Id = process.env.BOT_ID;
-    const bot2Id = process.env.ADMIN;
+    const bot1Id = CONFIG.BOT_ID;
+    const bot2Id = CONFIG.ADMIN;
 
     if (bot1Id && chat.users.some(user => user.id === bot1Id)) {
       const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, bot1Id);

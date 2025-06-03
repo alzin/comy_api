@@ -2,13 +2,14 @@
 import { Request, Response } from 'express';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { GetUserChatsUseCase } from '../../application/use-cases/GetUserChatsUseCase';
-import { MongoChatRepository } from '../../infra/repo/MongoChatRepository'; 
+import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
+import { CONFIG } from '../../../main/config/config';
 
 export class ChatController {
   private createChatUseCase: CreateChatUseCase;
   private getUserChatsUseCase: GetUserChatsUseCase;
-  private chatRepository: MongoChatRepository; 
-  private virtualUserId: string = '681547798892749fbe910c02'; 
+  private chatRepository: MongoChatRepository;
+  private virtualUserId: string = '681547798892749fbe910c02';
   constructor(
     createChatUseCase: CreateChatUseCase,
     getUserChatsUseCase: GetUserChatsUseCase
@@ -28,7 +29,7 @@ export class ChatController {
         return;
       }
 
-      const botId = process.env.ADMIN;
+      const botId = CONFIG.ADMIN;
       const updatedUsers = isGroupChat ? [...new Set([...users, userId, botId])] : [...new Set([...users, userId])];
 
       const chat = await this.createChatUseCase.execute(

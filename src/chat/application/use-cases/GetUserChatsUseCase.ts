@@ -1,12 +1,12 @@
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat } from '../../domain/entities/Chat';
-
+import { CONFIG } from '../../../main/config/config';
 export class GetUserChatsUseCase {
   private chatRepository: IChatRepository;
   private userRepository: IUserRepository;
-  private readonly botId: string = process.env.BOT_ID; 
-  private readonly adminId: string = process.env.ADMIN; 
+  private readonly botId: string = CONFIG.BOT_ID;
+  private readonly adminId: string = CONFIG.ADMIN;
 
   constructor(chatRepository: IChatRepository, userRepository: IUserRepository) {
     this.chatRepository = chatRepository;
@@ -30,7 +30,7 @@ export class GetUserChatsUseCase {
         );
 
         const filteredUsers = chat.isGroup
-          ? usersWithNames.filter((u) => u.id !== this.botId) 
+          ? usersWithNames.filter((u) => u.id !== this.botId)
           : usersWithNames;
 
         let usersWithRoles;
@@ -40,7 +40,7 @@ export class GetUserChatsUseCase {
           const nonAdminUsers = filteredUsers.filter((u) => u.id !== this.adminId);
           usersWithRoles = filteredUsers.map((user, index) => {
             if (user.id === this.adminId) {
-              return { ...user, role: 'admin' }; 
+              return { ...user, role: 'admin' };
             }
             return {
               ...user,
@@ -50,7 +50,7 @@ export class GetUserChatsUseCase {
         } else {
           usersWithRoles = filteredUsers.map((user) => {
             if (user.id === this.botId) {
-              return { ...user, role: 'bot' }; 
+              return { ...user, role: 'bot' };
             }
             if (user.id === this.adminId) {
               return { ...user, role: 'admin' };
@@ -77,7 +77,7 @@ export class GetUserChatsUseCase {
             const otherUsers = usersWithRoles.filter((u) => u.id !== userId);
             const adminUser = usersWithRoles.find((u) => u.role === 'admin');
             const otherNames = otherUsers
-              .filter((u) => u.role !== 'admin') 
+              .filter((u) => u.role !== 'admin')
               .map((u) => u.name)
               .join(', ');
             chatName = adminUser ? `${otherNames}, ${adminUser.name}` : otherNames || 'Group Chat';
