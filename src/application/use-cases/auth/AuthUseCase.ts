@@ -17,7 +17,7 @@ export class AuthUseCase implements IAuthUseCase {
     private encryptionService: IEncryptionService,
     private tokenService: ITokenService,
     private randomStringGenerator: IRandomStringGenerator
-  ) {}
+  ) { }
 
   async refreshAccessToken(refreshToken: string): Promise<string> {
     const decoded = (await this.tokenService.verify(
@@ -64,7 +64,8 @@ export class AuthUseCase implements IAuthUseCase {
       currentPeriodEnd: undefined,
       subscriptionPlan: undefined,
       isOnline: false,
-      lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+      lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      referrerName: undefined
     });
 
     const verificationUrl = `${CONFIG.SERVER_URL}auth/verify-email?token=${verificationToken}`;

@@ -50,6 +50,7 @@ import { ActiveUsersEmailController } from '../../presentation/controllers/Activ
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository'; // New
 import { CONFIG } from "./config"
+import { UpdateReferrerNameUseCase } from '../../application/use-cases/payment/UpdateReferrerNameUseCase';
 
 
 const emailSender = new BulkEmailSender();
@@ -104,7 +105,9 @@ export function setupDependencies(server: any) {
 
   const stripeService = new StripeService();
   const updateSubscriptionStatusUseCase = new UpdateSubscriptionStatusUseCase(userRepository);
-  const webhookController = new WebhookController(stripeService, updateSubscriptionStatusUseCase);
+  const updateReferrerNameUseCase = new UpdateReferrerNameUseCase(userRepository);
+
+  const webhookController = new WebhookController(stripeService, updateSubscriptionStatusUseCase, updateReferrerNameUseCase);
 
   const checkSubscriptionStatusUseCase = new CheckSubscriptionStatusUseCase(userRepository);
   const checkSubscriptionStatusController = new CheckSubscriptionStatusController(checkSubscriptionStatusUseCase);

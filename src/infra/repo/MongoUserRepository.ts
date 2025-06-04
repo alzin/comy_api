@@ -23,6 +23,7 @@ export class MongoUserRepository implements IUserRepository {
       profileImageUrl: userDoc.profileImageUrl,
       isOnline: userDoc.isOnline,
       lastActive: userDoc.lastActive,
+      referrerName: userDoc.referrerName
     };
   }
 
@@ -58,7 +59,7 @@ export class MongoUserRepository implements IUserRepository {
   }
 
   async findActiveUsers(): Promise<User[]> {
-    const users = await UserModel.find({ 
+    const users = await UserModel.find({
       email: { $ne: 'virtual@chat.com' },
       isEmailVerified: true
     }).exec();
@@ -77,7 +78,7 @@ export class MongoUserRepository implements IUserRepository {
     const updatedUser = await UserModel.findByIdAndUpdate(id, { $set: update }, { new: true }).exec();
     if (arguments.length === 2 && arguments[1] === update) {
       return updatedUser ? this.mapToDomain(updatedUser) : null;
-    } 
+    }
     return;
   }
 

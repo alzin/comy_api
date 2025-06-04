@@ -16,4 +16,5 @@ export interface User {
   subscriptionPlan?: string; // Changed String to string
   isOnline: boolean;
   lastActive: string;
+  referrerName?: string;
 }
