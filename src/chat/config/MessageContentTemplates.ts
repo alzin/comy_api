@@ -1,3 +1,4 @@
+///src/chat/config/MessageContentTemplates.ts
 interface MessageTemplate {
   text: string;
   images?: Array<{ imageUrl: string; zoomLink: string }>;

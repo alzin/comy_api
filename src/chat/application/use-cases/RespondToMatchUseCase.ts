@@ -1,3 +1,4 @@
+// File: RespondToMatchUseCase.ts
 import { IBotMessageRepository, BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
 import { IBlacklistRepository } from '../../domain/repo/IBlacklistRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
@@ -8,7 +9,6 @@ import { Message } from '../../domain/entities/Message';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from './../../config/MessageContentTemplates';
 
-// Helper function to add delay
 const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 interface RespondToMatchInput {
@@ -53,7 +53,7 @@ export class RespondToMatchUseCase {
 
     const user = await this.userRepository.findById(userId);
     const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl ;
+    const userProfileImageUrl = user?.profileImageUrl;
 
     const userResponse: Message = {
       id: await this.messageRepository.generateId(),
@@ -70,6 +70,8 @@ export class RespondToMatchUseCase {
     };
     await this.messageRepository.create(userResponse);
     this.socketService.emitMessage(chatId, userResponse);
+
+    await delay(350);
 
     if (response === 'マッチを希望しない') {
       await this.blacklistRepository.addToBlacklist(userId, matchRequest.suggestedUser._id);
@@ -96,7 +98,7 @@ export class RespondToMatchUseCase {
         };
         await this.botMessageRepository.create(botMessage);
         this.socketService.emitMessage(chatId, botMessage);
-        await delay(350); // Increased to 350ms delay
+        await delay(350);
       }
 
       const { text, images } = getTemplatedMessage('matchRejectedImages', {});
@@ -114,7 +116,7 @@ export class RespondToMatchUseCase {
       };
       await this.botMessageRepository.create(imageBotMessage);
       this.socketService.emitMessage(chatId, imageBotMessage);
-      await delay(350); // Add 350ms delay after images
+      await delay(350);
 
       return { message: botMessages.map(m => m.text).join('\n') };
     }
@@ -171,7 +173,7 @@ export class RespondToMatchUseCase {
       };
       await this.botMessageRepository.create(botMessage);
       this.socketService.emitMessage(newChat.id, botMessage);
-      await delay(350); // Keep 350ms delay for group messages
+      await delay(350);
     }
 
     let notifyChatId = await this.chatRepository.getPrivateChatId(matchRequest.suggestedUser._id, this.virtualUserId);
