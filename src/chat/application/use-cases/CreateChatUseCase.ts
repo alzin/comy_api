@@ -34,7 +34,7 @@ export class CreateChatUseCase {
         return {
           role,
           id,
-          image: user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+          image: user?.profileImageUrl ,
         };
       })
     );
