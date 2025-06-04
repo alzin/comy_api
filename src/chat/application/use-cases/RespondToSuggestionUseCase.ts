@@ -126,7 +126,7 @@ export class RespondToSuggestionUseCase {
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
-      senderProfileImageUrl: 'https://comy-test-images.s3.ap-northeast-1.amazonaws.com/bot.png',
+      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
       images: [],
     };
     await this.botMessageRepository.create(confirmBotMessage);
