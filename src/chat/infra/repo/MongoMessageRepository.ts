@@ -9,7 +9,7 @@ import { IChatRepository } from '../../domain/repo/IChatRepository';
 
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === '681547798892749fbe910c02') {
-    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
+    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
   }
   const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
   return user?.profileImageUrl ;

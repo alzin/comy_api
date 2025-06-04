@@ -53,7 +53,7 @@ export class RespondToMatchUseCase {
 
     const user = await this.userRepository.findById(userId);
     const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
+    const userProfileImageUrl = user?.profileImageUrl ;
 
     const userResponse: Message = {
       id: await this.messageRepository.generateId(),
