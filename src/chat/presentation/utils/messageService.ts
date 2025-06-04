@@ -14,7 +14,7 @@ export const sendBotMessage = async (
     senderId,
     content,
     chatId,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
     readBy: [senderId],
     isMatchCard: false,
     isSuggested: false,

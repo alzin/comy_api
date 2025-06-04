@@ -31,7 +31,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         senderId: new mongoose.Types.ObjectId(botMessage.senderId),
         content: botMessage.content,
         chatId: new mongoose.Types.ObjectId(botMessage.chatId),
-        createdAt: botMessage.createdAt || new Date().toISOString(),
+        createdAt: botMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
         readBy: botMessage.readBy.map(id => new mongoose.Types.ObjectId(id)),
         recipientId: botMessage.recipientId ? new mongoose.Types.ObjectId(botMessage.recipientId) : undefined,
         suggestedUser: botMessage.suggestedUser ? new mongoose.Types.ObjectId(botMessage.suggestedUser._id) : undefined,

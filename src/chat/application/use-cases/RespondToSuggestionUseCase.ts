@@ -1,11 +1,14 @@
-// src/chat/application/use-cases/RespondToSuggestionUseCase.ts
 import { IBotMessageRepository, BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
 import { IBlacklistRepository } from '../../domain/repo/IBlacklistRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
-import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
+import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../domain/entities/Message';
 import { CreateChatUseCase } from './CreateChatUseCase';
+import { getTemplatedMessage } from './../../config/MessageContentTemplates';
+
+// Helper function to add delay
+const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 interface RespondToSuggestionInput {
   messageId: string;
@@ -15,14 +18,14 @@ interface RespondToSuggestionInput {
 
 export class RespondToSuggestionUseCase {
   constructor(
-    private botMessageRepository: IBotMessageRepository,
-    private blacklistRepository: IBlacklistRepository,
-    private chatRepository: IChatRepository,
-    private socketService: ISocketService,
-    private userRepository: any, 
-    private createChatUseCase: CreateChatUseCase,
-    private virtualUserId: string,
-    private messageRepository: IMessageRepository
+    private readonly botMessageRepository: IBotMessageRepository,
+    private readonly blacklistRepository: IBlacklistRepository,
+    private readonly chatRepository: IChatRepository,
+    private readonly socketService: ISocketService,
+    private readonly userRepository: any,
+    private readonly createChatUseCase: CreateChatUseCase,
+    private readonly virtualUserId: string,
+    private readonly messageRepository: IMessageRepository
   ) {}
 
   async execute(input: RespondToSuggestionInput): Promise<{ message: string; chatId?: string }> {
@@ -47,18 +50,20 @@ export class RespondToSuggestionUseCase {
 
     const user = await this.userRepository.findById(userId);
     const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+    const userProfileImageUrl = user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/image/300px.png';
 
     const userResponseMessage: Message = {
+      id: await this.messageRepository.generateId(),
       senderId: userId,
       senderName,
       content: response,
       chatId,
-      createdAt: new Date().toISOString(),
       readBy: [userId],
+      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
       isMatchCard: false,
       isSuggested: false,
       senderProfileImageUrl: userProfileImageUrl,
+      images: [],
     };
     await this.messageRepository.create(userResponseMessage);
     this.socketService.emitMessage(chatId, userResponseMessage);
@@ -68,58 +73,61 @@ export class RespondToSuggestionUseCase {
       await this.blacklistRepository.addToBlacklist(suggestion.suggestedUser._id, userId);
 
       const botMessages = [
-        `マッチングを却下しました。${senderName}さんのビジネスに合ったマッチングをご希望の場合は、ビジネスシートのブラッシュアップをしてください。`,
-        `お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。`,
-        `月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。`,
+        getTemplatedMessage('suggestionRejected', { senderName }),
+        getTemplatedMessage('suggestionRejectedFollowUp1', {}),
+        getTemplatedMessage('suggestionRejectedFollowUp2', {}),
       ];
 
-      for (const content of botMessages) {
+      for (const { text } of botMessages) {
         const botMessage: BotMessage = {
           senderId: this.virtualUserId,
-          content,
+          content: text,
           chatId,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
           readBy: [this.virtualUserId],
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/images/bot.png',
+          images: [],
         };
         await this.botMessageRepository.create(botMessage);
         this.socketService.emitMessage(chatId, botMessage);
+        await delay(350); // Increased to 350ms delay
       }
 
+      const { text, images } = getTemplatedMessage('suggestionRejectedImages', {});
       const imageBotMessage: BotMessage = {
         senderId: this.virtualUserId,
-        content: '',
+        content: text,
         chatId,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
         readBy: [this.virtualUserId],
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
-        images: [
-          { imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-          { imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470', zoomLink: 'https://zoom.us/j/virtual-meeting' },
-        ],
+        senderProfileImageUrl: 'https://images-comy-test.s3.ap-northeast-1.amazonaws.com/bot-image.png',
+        images,
       };
       await this.botMessageRepository.create(imageBotMessage);
       this.socketService.emitMessage(chatId, imageBotMessage);
+      await delay(350); // Add 350ms delay after images
 
-      return { message: botMessages.join('\n') };
+      return { message: botMessages.map(m => m.text).join('\n') };
     }
 
+    const { text: confirmText } = getTemplatedMessage('suggestionAcceptedConfirmation', { suggestedUserName: suggestion.suggestedUser.name });
     const confirmBotMessage: BotMessage = {
       senderId: this.virtualUserId,
-      content: `${suggestion.suggestedUser.name}さんにマッチの希望を送りました。`,
+      content: confirmText,
       chatId,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
       readBy: [this.virtualUserId],
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+      senderProfileImageUrl: 'https://comy-test-images.s3.ap-northeast-1.amazonaws.com/bot.png',
+      images: [],
     };
     await this.botMessageRepository.create(confirmBotMessage);
     this.socketService.emitMessage(chatId, confirmBotMessage);
@@ -128,18 +136,22 @@ export class RespondToSuggestionUseCase {
     if (!suggestedUserChatId) {
       const newChat = await this.createChatUseCase.execute(
         [suggestion.suggestedUser._id, this.virtualUserId],
-        `Private Chat with Virtual Assistant`,
+        `Private Chat with Virtual User`,
         false
       );
       suggestedUserChatId = newChat.id;
     }
 
-    const matchMessageContent = `${suggestion.suggestedUser.name}さん、おはようございます！\n${suggestion.suggestedUser.name}さんに${user.category || 'unknown'}カテゴリーの${senderName}さんからマッチの希望が届いています。\nお繋がりを希望しますか？`;
+    const { text: matchMessageText } = getTemplatedMessage('suggestionMatchRequest', {
+      suggestedUserName: suggestion.suggestedUser.name,
+      senderName,
+      userCategory: user.category || 'unknown',
+    });
     const matchBotMessage: BotMessage = {
       senderId: this.virtualUserId,
-      content: matchMessageContent,
+      content: matchMessageText,
       chatId: suggestedUserChatId,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
       readBy: [this.virtualUserId],
       recipientId: suggestion.suggestedUser._id,
       suggestedUser: { _id: userId, name: senderName, profileImageUrl: user.profileImageUrl, category: user.category },
@@ -150,7 +162,8 @@ export class RespondToSuggestionUseCase {
       suggestedUserProfileImageUrl: user.profileImageUrl || '',
       suggestedUserName: senderName,
       suggestedUserCategory: user.category || 'unknown',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/images/bot.png',
+      images: [],
     };
 
     const existingMessage = await this.botMessageRepository.findExistingSuggestion(
@@ -164,6 +177,6 @@ export class RespondToSuggestionUseCase {
       this.socketService.emitMessage(suggestedUserChatId, matchBotMessage);
     }
 
-    return { message: `${suggestion.suggestedUser.name}さんにマッチの希望を送りました。` };
+    return { message: confirmText };
   }
 }

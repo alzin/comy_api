@@ -105,7 +105,7 @@ export function setupDependencies(server: any) {
   const checkSubscriptionStatusController = new CheckSubscriptionStatusController(checkSubscriptionStatusUseCase);
 
   const chatRepository = new MongoChatRepository();
-  const messageRepository = new MongoMessageRepository();
+  const messageRepository = new MongoMessageRepository(chatRepository); // Pass chatRepository
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
   const friendRepository = new MongoFriendRepository();

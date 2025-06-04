@@ -1,5 +1,5 @@
-//src/chat/application/use-cases/GenerateBotResponseUseCase.ts
 import { IChatRepository } from '../../domain/repo/IChatRepository';
+import { getTemplatedMessage } from './../../config/MessageContentTemplates';
 
 export class GenerateBotResponseUseCase {
   constructor(private chatRepository: IChatRepository) {}
@@ -18,12 +18,13 @@ export class GenerateBotResponseUseCase {
       return null;
     }
 
-    if (botId === bot1Id) {
-      return `COMY オフィシャル AI: Thanks for your message "${content}"! How can I assist you today?`;
-    } else if (botId === bot2Id) {
-      return `COMY オフィシャル AI: こんにちは！ "${content}" についてもっと教えてください！`;
+    if (!botId || ![bot1Id, bot2Id].includes(botId)) {
+      console.log(`Invalid botId: ${botId}`);
+      return null;
     }
 
-    return null;
+    const templateKey = botId === bot1Id ? 'bot1Response' : 'bot2Response';
+    const { text } = getTemplatedMessage(templateKey, { content });
+    return text;
   }
 }

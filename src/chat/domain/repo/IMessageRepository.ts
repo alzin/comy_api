@@ -1,8 +1,8 @@
-///src/chat/domain/repo/IMessageRepository.ts
-import { Message } from '../../../chat/domain/entities/Message';
+import { Message } from '../entities/Message';
 
 export interface IMessageRepository {
-  create(message: Message, userId?: string): Promise<Message>; 
+  create(message: Message, userId?: string): Promise<Message>;
   findByChatId(chatId: string, page?: number, limit?: number): Promise<Message[]>;
   updateReadBy(messageId: string, userId: string): Promise<void>;
+  generateId(): Promise<string>;
 }

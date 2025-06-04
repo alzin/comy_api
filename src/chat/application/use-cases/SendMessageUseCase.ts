@@ -1,4 +1,3 @@
-///src/chat/application/use-cases/SendMessageUseCase.ts
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
@@ -6,19 +5,18 @@ import { GenerateBotResponseUseCase } from './GenerateBotResponseUseCase';
 import { Message } from '../../domain/entities/Message';
 import { LatestMessage } from '../../domain/entities/Chat';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
-import mongoose from 'mongoose';
 
 export class SendMessageUseCase {
   constructor(
-    private messageRepository: IMessageRepository,
-    private chatRepository: IChatRepository,
-    private socketService: ISocketService,
-    private generateBotResponseUseCase: GenerateBotResponseUseCase,
-    private userRepository: IUserRepository
+    private readonly messageRepository: IMessageRepository,
+    private readonly chatRepository: IChatRepository,
+    private readonly socketService: ISocketService,
+    private readonly generateBotResponseUseCase: GenerateBotResponseUseCase,
+    private readonly userRepository: IUserRepository
   ) {}
 
   private truncateContent(content: string): string {
-    return content.length > 18 ? content.substring(0, 18) : content;
+    return content.length > 20 ? content.substring(0, 20) : content;
   }
 
   async execute(data: { senderId: string; content: string; chatId: string }): Promise<Message> {
@@ -28,11 +26,12 @@ export class SendMessageUseCase {
       throw new Error('Message content cannot be empty');
     }
 
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    // Validate IDs using repository methods
+    if (!(await this.chatRepository.isValidId(chatId))) {
       throw new Error(`Invalid chatId: ${chatId}`);
     }
 
-    if (!mongoose.Types.ObjectId.isValid(senderId)) {
+    if (!(await this.userRepository.isValidId(senderId))) {
       throw new Error(`Invalid senderId: ${senderId}`);
     }
 
@@ -50,16 +49,16 @@ export class SendMessageUseCase {
     const senderProfileImageUrl = sender.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
 
     const message: Message = {
-      id: new mongoose.Types.ObjectId().toString(),
+      id: await this.messageRepository.generateId(),
       senderId,
       senderName,
       content,
       chatId,
       readBy: [senderId],
-      createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
       isMatchCard: false,
       isSuggested: false,
-      senderProfileImageUrl
+      senderProfileImageUrl,
     };
 
     const savedMessage = await this.messageRepository.create(message);
@@ -73,24 +72,23 @@ export class SendMessageUseCase {
 
     this.socketService.emitMessage(chatId, savedMessage);
 
-    const bot1Id = process.env.BOT_ID;
-    const bot2Id = process.env.ADMIN;
+    const botId1 = process.env.BOT_ID;
+    const botId2 = process.env.ADMIN;
 
-    if (bot1Id && chat.users.some(user => user.id === bot1Id)) {
-      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, bot1Id);
+    if (botId1 && chat.users.some(user => user.id === botId1)) {
+      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, botId1);
       if (botResponse) {
         const botMessage: Message = {
-          id: new mongoose.Types.ObjectId().toString(),
-          senderId: bot1Id,
+          id: await this.messageRepository.generateId(),
+          senderId: botId1,
           senderName: 'COMY オフィシャル AI',
           content: botResponse,
           chatId,
-          readBy: [bot1Id],
-          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+          readBy: [botId1],
+          createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
           isMatchCard: false,
           isSuggested: false,
           senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
-          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' }
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
         const botLatestMessage: LatestMessage = {
@@ -104,21 +102,20 @@ export class SendMessageUseCase {
       }
     }
 
-    if (bot2Id && chat.users.some(user => user.id === bot2Id)) {
-      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, bot2Id);
+    if (botId2 && chat.users.some(user => user.id === botId2)) {
+      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, botId2);
       if (botResponse) {
         const botMessage: Message = {
-          id: new mongoose.Types.ObjectId().toString(),
-          senderId: bot2Id,
+          id: await this.messageRepository.generateId(),
+          senderId: botId2,
           senderName: 'COMY オフィシャル AI',
           content: botResponse,
           chatId,
-          readBy: [bot2Id],
-          createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+          readBy: [botId2],
+          createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
           isMatchCard: false,
           isSuggested: false,
           senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
-          senderDetails: { name: 'COMY オフィシャル AI', email: 'virtual@chat.com' }
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
         const botLatestMessage: LatestMessage = {

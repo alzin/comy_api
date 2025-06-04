@@ -1,4 +1,3 @@
-// src/chat/infra/repo/MongoChatRepository.ts
 import mongoose, { Types } from 'mongoose';
 import { ChatModel, IChatModel } from '../database/models/ChatModel';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
@@ -93,12 +92,15 @@ export class MongoChatRepository implements IChatRepository {
       createdAt: chatDoc.createdAt.toString(),
       updatedAt: chatDoc.updatedAt.toString(),
       latestMessage,
-      //profileImageUrl,
     };
   }
 
+  async isValidId(id: string): Promise<boolean> {
+    return mongoose.Types.ObjectId.isValid(id);
+  }
+
   async findById(chatId: string): Promise<Chat | null> {
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    if (!(await this.isValidId(chatId))) {
       return null;
     }
     const chatDoc = await ChatModel.findById(chatId)
@@ -111,11 +113,14 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async create(chat: Chat): Promise<Chat> {
+    const userIdsValid = await Promise.all(chat.users.map(user => this.isValidId(user.id)));
+    if (!userIdsValid.every(valid => valid)) {
+      throw new Error('Invalid user IDs in chat creation');
+    }
     const newChat = await ChatModel.create({
       name: chat.name,
       isGroupChat: chat.isGroup,
       users: chat.users.map((user: ChatUser) => new mongoose.Types.ObjectId(user.id)),
-      //profileImageUrl: chat.profileImageUrl,
       latestMessage: chat.latestMessage?.id ? new mongoose.Types.ObjectId(chat.latestMessage.id) : null,
       createdAt: chat.createdAt || new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
       updatedAt: chat.updatedAt || new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
@@ -131,7 +136,7 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async findByUserId(userId: string): Promise<Chat[]> {
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!(await this.isValidId(userId))) {
       return [];
     }
     const chats = await ChatModel.find({ users: new mongoose.Types.ObjectId(userId) })
@@ -141,7 +146,8 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async findByUsers(userIds: string[]): Promise<Chat | null> {
-    if (!userIds.every((id) => mongoose.Types.ObjectId.isValid(id))) {
+    const allValid = await Promise.all(userIds.map(id => this.isValidId(id)));
+    if (!allValid.every(valid => valid)) {
       return null;
     }
     const chat = await ChatModel.findOne({
@@ -157,7 +163,7 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async getPrivateChatId(userId: string, virtualUserId: string): Promise<string | null> {
-    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(virtualUserId)) {
+    if (!(await this.isValidId(userId)) || !(await this.isValidId(virtualUserId))) {
       console.log(`Invalid userId: ${userId} or virtualUserId: ${virtualUserId}`);
       return null;
     }
@@ -174,11 +180,14 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   async update(chatId: string, update: Partial<Chat>): Promise<void> {
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    if (!(await this.isValidId(chatId))) {
       return;
     }
     const updateFields: any = {};
     if (update.latestMessage?.id) {
+      if (!(await this.isValidId(update.latestMessage.id))) {
+        throw new Error('Invalid latestMessage ID');
+      }
       updateFields.latestMessage = new mongoose.Types.ObjectId(update.latestMessage.id);
     } else if (update.latestMessage === null) {
       updateFields.latestMessage = null;
@@ -189,9 +198,6 @@ export class MongoChatRepository implements IChatRepository {
     if (update.name) {
       updateFields.name = update.name;
     }
-    //if (update.profileImageUrl !== undefined) {
-      //updateFields.profileImageUrl = update.profileImageUrl;
-   // }
     if (update.createdAt) {
       updateFields.createdAt = update.createdAt;
     }

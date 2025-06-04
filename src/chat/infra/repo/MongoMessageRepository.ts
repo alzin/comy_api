@@ -1,4 +1,3 @@
-// src/chat/infra/repo/MongoMessageRepository.ts
 import mongoose, { Types } from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../domain/entities/Message';
@@ -6,6 +5,7 @@ import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
+import { IChatRepository } from '../../domain/repo/IChatRepository';
 
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === '681547798892749fbe910c02') {
@@ -16,13 +16,19 @@ const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
 };
 
 export class MongoMessageRepository implements IMessageRepository {
+  constructor(private chatRepository: IChatRepository) {}
+
+  async generateId(): Promise<string> {
+    return new mongoose.Types.ObjectId().toString();
+  }
+
   async create(message: Message, userId?: string): Promise<Message> {
     try {
-      if (!mongoose.Types.ObjectId.isValid(message.senderId)) {
-        throw new Error(`Invalid senderId: ${message.senderId} is not a valid ObjectId`);
+      if (!(await this.chatRepository.isValidId(message.chatId))) {
+        throw new Error(`Invalid chatId: ${message.chatId}`);
       }
-      if (!mongoose.Types.ObjectId.isValid(message.chatId)) {
-        throw new Error(`Invalid chatId: ${message.chatId} is not a valid ObjectId`);
+      if (!(await this.chatRepository.isValidId(message.senderId))) {
+        throw new Error(`Invalid senderId: ${message.senderId}`);
       }
 
       const senderProfileImageUrl = await getSenderProfileImageUrl(message.senderId);
@@ -33,7 +39,7 @@ export class MongoMessageRepository implements IMessageRepository {
         senderName: message.senderName,
         content: message.content,
         chat: message.chatId,
-        createdAt: message.createdAt || new Date().toISOString(),
+        createdAt: message.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
         readBy: readBy.map(id => new mongoose.Types.ObjectId(id)),
         isMatchCard: message.isMatchCard || false,
         isSuggested: message.isSuggested || false,
@@ -89,7 +95,7 @@ export class MongoMessageRepository implements IMessageRepository {
 
     console.log(`Processing message with senderId: ${senderId}, messageDoc:`, messageDoc);
 
-    if (!mongoose.Types.ObjectId.isValid(senderId)) {
+    if (!(await this.chatRepository.isValidId(senderId))) {
       console.error(`Invalid senderId detected: ${senderId} for messageDoc:`, messageDoc);
       const fallbackSenderId = '681547798892749fbe910c02';
       const senderName = 'COMY オフィシャル AI';
@@ -190,7 +196,7 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   private async isBotChat(chatId: string): Promise<boolean> {
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    if (!(await this.chatRepository.isValidId(chatId))) {
       return false;
     }
     const chat = await ChatModel.findById(chatId).exec();
@@ -202,7 +208,7 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   async findByChatId(chatId: string, page: number = 1, limit: number = 20): Promise<Message[]> {
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    if (!(await this.chatRepository.isValidId(chatId))) {
       console.log(`Invalid chatId: ${chatId}`);
       return [];
     }
@@ -244,10 +250,10 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   async updateReadBy(messageId: string, userId: string): Promise<void> {
-    if (!mongoose.Types.ObjectId.isValid(messageId)) {
+    if (!(await this.chatRepository.isValidId(messageId))) {
       throw new Error(`Invalid messageId: ${messageId}`);
     }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!(await this.chatRepository.isValidId(userId))) {
       throw new Error(`Invalid userId: ${userId}`);
     }
 
@@ -268,10 +274,10 @@ export class MongoMessageRepository implements IMessageRepository {
   }
 
   async updateReadByForChat(chatId: string, userId: string): Promise<void> {
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    if (!(await this.chatRepository.isValidId(chatId))) {
       throw new Error(`Invalid chatId: ${chatId}`);
     }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!(await this.chatRepository.isValidId(userId))) {
       throw new Error(`Invalid userId: ${userId}`);
     }
 
