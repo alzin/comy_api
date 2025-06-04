@@ -79,7 +79,7 @@ export class MongoChatRepository implements IChatRepository {
         return {
           role: userIdStr === botId ? 'bot' : (userIdStr === adminId ? 'admin' : 'user'),
           id: userIdStr,
-          image: user.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png',
+          image: user.profileImageUrl,
         };
       })
       : chatDoc.users.map((id: mongoose.Types.ObjectId) => {

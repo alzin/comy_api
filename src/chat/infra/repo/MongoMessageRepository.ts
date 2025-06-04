@@ -9,10 +9,10 @@ import { CONFIG } from '../../../main/config/config';
 
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === '681547798892749fbe910c02') {
-    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
+    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
   }
   const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
-  return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+  return user?.profileImageUrl ;
 };
 
 export class MongoMessageRepository implements IMessageRepository {
@@ -93,7 +93,7 @@ export class MongoMessageRepository implements IMessageRepository {
       console.error(`Invalid senderId detected: ${senderId} for messageDoc:`, messageDoc);
       const fallbackSenderId = '681547798892749fbe910c02';
       const senderName = 'COMY オフィシャル AI';
-      const senderProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+      const senderProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
 
       const baseMessage: Message = {
         id: messageDoc._id.toString(),

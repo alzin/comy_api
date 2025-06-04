@@ -6,10 +6,10 @@ import { UserModel } from '../../../infra/database/models/UserModel';
 // Utility function to get sender profile image URL
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === 'COMY オフィシャル AI') {
-    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
+    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
   }
   const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
-  return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+  return user?.profileImageUrl;
 };
 
 
