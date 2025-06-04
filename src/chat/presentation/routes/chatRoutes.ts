@@ -21,10 +21,10 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const getSenderProfileImageUrl = async (sender: string, dependencies: any, userId?: string): Promise<string> => {
   if (sender === 'COMY オフィシャル AI') {
-    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png';
+    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
   }
   const user = await UserModel.findById(sender).select('profileImageUrl').exec();
-  return user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+  return user?.profileImageUrl ;
 };
 
 const updateReadByForChat = async (chatId: string, userId: string) => {

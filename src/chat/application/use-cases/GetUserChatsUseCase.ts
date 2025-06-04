@@ -24,7 +24,7 @@ export class GetUserChatsUseCase {
             return {
               ...chatUser,
               name: user?.name || 'Unknown User',
-              image: user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png',
+              image: user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
             };
           })
         );

@@ -46,7 +46,7 @@ export class SendMessageUseCase {
     }
 
     const senderName = sender.name || 'Unknown User';
-    const senderProfileImageUrl = sender.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+    const senderProfileImageUrl = sender.profileImageUrl ;
 
     const message: Message = {
       id: new mongoose.Types.ObjectId().toString(),
