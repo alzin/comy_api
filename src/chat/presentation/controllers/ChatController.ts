@@ -8,7 +8,8 @@ export class ChatController {
   private createChatUseCase: CreateChatUseCase;
   private getUserChatsUseCase: GetUserChatsUseCase;
   private chatRepository: MongoChatRepository; 
-  private virtualUserId: string = '681547798892749fbe910c02'; 
+  private virtualUserId: string = process.env.BOT_ID; 
+  private adminId: string = process.env.ADMIN; 
   constructor(
     createChatUseCase: CreateChatUseCase,
     getUserChatsUseCase: GetUserChatsUseCase
@@ -52,8 +53,8 @@ export class ChatController {
       }
 
       let botChatId = await this.chatRepository.getPrivateChatId(userId, this.virtualUserId);
-      if (!botChatId) {
-        console.log(`Create a new conversation for the user${userId}with bot ${this.virtualUserId}`);
+      if (!botChatId && userId !== this.adminId) {
+        console.log(`Create a new conversation for the user ${userId} with bot ${this.virtualUserId}`);
         const newChat = await this.createChatUseCase.execute(
           [userId, this.virtualUserId],
           'Private Chat with Virtual Assistant',
@@ -61,8 +62,8 @@ export class ChatController {
         );
         botChatId = newChat.id;
         console.log(`A new conversation has been created: ${botChatId}`);
-      } else {
-        console.log(`For an existing conversation for the user${userId}: ${botChatId}`);
+      } else if (botChatId) {
+        console.log(`Found an existing conversation for the user ${userId}: ${botChatId}`);
       }
 
       const chats = await this.getUserChatsUseCase.execute(userId);

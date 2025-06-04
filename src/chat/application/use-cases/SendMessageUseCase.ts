@@ -46,7 +46,7 @@ export class SendMessageUseCase {
     }
 
     const senderName = sender.name || 'Unknown User';
-    const senderProfileImageUrl = sender.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/default-avatar.png';
+    const senderProfileImageUrl = sender.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
 
     const message: Message = {
       id: await this.messageRepository.generateId(),
