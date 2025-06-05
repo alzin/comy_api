@@ -73,6 +73,7 @@ export class MongoChatRepository implements IChatRepository {
             id: userIdStr,
             image: user.profileImageUrl ,
             name: user.name,
+
           };
         })
       : chatDoc.users.map((id: mongoose.Types.ObjectId) => {
