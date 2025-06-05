@@ -1,3 +1,4 @@
+//src/chat/application/use-cases/SuggestFriendsUseCase.ts
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IBotMessageRepository } from '../../domain/repo/IBotMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';

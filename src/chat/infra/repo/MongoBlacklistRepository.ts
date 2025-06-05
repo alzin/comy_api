@@ -3,6 +3,9 @@ import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistReposi
 import { BlacklistModel } from '../database/models/BlacklistModel';
 
 export class MongoBlacklistRepository implements IBlacklistRepository {
+  add(userId: string, suggestedUserId: string) {
+      throw new Error('Method not implemented.');
+  }
   async addToBlacklist(userId: string, blacklistedUserId: string): Promise<void> {
     await BlacklistModel.create({
       userId,

@@ -1,3 +1,4 @@
+///src/chat/application/use-cases/GetUserChatsUseCase.ts
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat } from '../../domain/entities/Chat';
