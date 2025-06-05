@@ -30,8 +30,8 @@ export const messageTemplates: MessageTemplates = {
   matchRejectedImages: {
     text: '',
     images: [
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
     ],
   },
   matchAcceptedConfirmation: {
@@ -63,8 +63,8 @@ export const messageTemplates: MessageTemplates = {
   suggestionRejectedImages: {
     text: '',
     images: [
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
     ],
   },
   suggestionAcceptedConfirmation: {
