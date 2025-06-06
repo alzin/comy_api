@@ -36,6 +36,7 @@ export class CreateChatUseCase {
           role,
           id,
           image: user?.profileImageUrl,
+
         };
       })
     );

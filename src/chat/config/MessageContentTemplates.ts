@@ -91,6 +91,7 @@ export function getTemplatedMessage(key: string, replacements: { [key: string]: 
   console.log(`Template ${key} before replacement: ${text}`);
   console.log(`Replacements: ${JSON.stringify(replacements)}`);
 
+  // Use regex to replace ${placeholder} with value
   for (const [placeholder, value] of Object.entries(replacements)) {
     const regex = new RegExp(`\\$\\{${placeholder}\\}`, 'g');
     text = text.replace(regex, value || '');
