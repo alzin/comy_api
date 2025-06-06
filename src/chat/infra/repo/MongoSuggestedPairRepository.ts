@@ -1,5 +1,6 @@
+// File: src/chat/infra/repo/MongoSuggestedPairRepository.ts
 import mongoose from 'mongoose';
-import SuggestedPairModel, { ISuggestedPair } from '../database/models/SuggestedPairModel';
+import { SuggestedPairModel, ISuggestedPair } from '../database/models/SuggestedPairModel';
 import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository';
 
 export class MongoSuggestedPairRepository implements ISuggestedPairRepository {

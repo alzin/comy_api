@@ -30,8 +30,8 @@ export const messageTemplates: MessageTemplates = {
   matchRejectedImages: {
     text: '',
     images: [
-      { imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-      { imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
     ],
   },
   matchAcceptedConfirmation: {
@@ -63,8 +63,8 @@ export const messageTemplates: MessageTemplates = {
   suggestionRejectedImages: {
     text: '',
     images: [
-      { imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-      { imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
     ],
   },
   suggestionAcceptedConfirmation: {
@@ -91,7 +91,6 @@ export function getTemplatedMessage(key: string, replacements: { [key: string]: 
   console.log(`Template ${key} before replacement: ${text}`);
   console.log(`Replacements: ${JSON.stringify(replacements)}`);
 
-  // Use regex to replace ${placeholder} with value
   for (const [placeholder, value] of Object.entries(replacements)) {
     const regex = new RegExp(`\\$\\{${placeholder}\\}`, 'g');
     text = text.replace(regex, value || '');

@@ -106,7 +106,7 @@ export class SocketIOService implements ISocketService {
             return;
           }
           const message: Message = await this.messageRepository.create({
-            id: '', // Let repository generate ID
+            id: '', 
             senderId,
             senderName: sender.name,
             content,
