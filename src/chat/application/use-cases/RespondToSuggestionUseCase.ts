@@ -1,4 +1,3 @@
-// File: RespondToSuggestionUseCase.ts
 import { IBotMessageRepository, BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
 import { IBlacklistRepository } from '../../domain/repo/IBlacklistRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
@@ -6,15 +5,15 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../domain/entities/Message';
 import { CreateChatUseCase } from './CreateChatUseCase';
-import { getTemplatedMessage } from './../../config/MessageContentTemplates';
-
-const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+import { getTemplatedMessage } from '../../config/MessageContentTemplates';
 
 interface RespondToSuggestionInput {
   messageId: string;
   response: 'マッチを希望する' | 'マッチを希望しない';
   userId: string;
 }
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export class RespondToSuggestionUseCase {
   constructor(
@@ -67,8 +66,9 @@ export class RespondToSuggestionUseCase {
     };
     await this.messageRepository.create(userResponseMessage);
     this.socketService.emitMessage(chatId, userResponseMessage);
+    console.log(`Emitted user response message ${userResponseMessage.id} in chat ${chatId}`);
 
-    await delay(350);
+    await delay(800); // Delay to ensure user response appears first
 
     if (response === 'マッチを希望しない') {
       await this.blacklistRepository.addToBlacklist(userId, suggestion.suggestedUser._id);
@@ -80,13 +80,15 @@ export class RespondToSuggestionUseCase {
         getTemplatedMessage('suggestionRejectedFollowUp2', {}),
       ];
 
-      for (const { text } of botMessages) {
+      for (let i = 0; i < botMessages.length; i++) {
+        const { text } = botMessages[i];
         const botMessage: BotMessage = {
+          id: await this.botMessageRepository.generateId(),
           senderId: this.virtualUserId,
           content: text,
           chatId,
           createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-          readBy: [this.virtualUserId],
+          readBy: [this.virtualUserId, userId], // Include userId in readBy
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',
@@ -95,36 +97,40 @@ export class RespondToSuggestionUseCase {
         };
         await this.botMessageRepository.create(botMessage);
         this.socketService.emitMessage(chatId, botMessage);
-        await delay(350);
+        console.log(`Emitted bot message ${botMessage.id} in chat ${chatId}: ${text}`);
+        await delay(300); // Delay between bot messages
       }
 
+      await delay(800); // Additional delay before image message
       const { text, images } = getTemplatedMessage('suggestionRejectedImages', {});
       const imageBotMessage: BotMessage = {
+        id: await this.botMessageRepository.generateId(),
         senderId: this.virtualUserId,
         content: text,
         chatId,
         createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-        readBy: [this.virtualUserId],
+        readBy: [this.virtualUserId, userId], // Include userId in readBy
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl: 'https://images-comy-test.s3.ap-northeast-1.amazonaws.com/bot-image.png',
+        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-image.png',
         images,
       };
       await this.botMessageRepository.create(imageBotMessage);
       this.socketService.emitMessage(chatId, imageBotMessage);
-      await delay(350);
+      console.log(`Emitted image bot message ${imageBotMessage.id} in chat ${chatId} with images: ${JSON.stringify(images)}`);
 
       return { message: botMessages.map(m => m.text).join('\n') };
     }
 
     const { text: confirmText } = getTemplatedMessage('suggestionAcceptedConfirmation', { suggestedUserName: suggestion.suggestedUser.name });
     const confirmBotMessage: BotMessage = {
+      id: await this.botMessageRepository.generateId(),
       senderId: this.virtualUserId,
       content: confirmText,
       chatId,
       createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-      readBy: [this.virtualUserId],
+      readBy: [this.virtualUserId, userId], // Include userId in readBy
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
@@ -133,6 +139,7 @@ export class RespondToSuggestionUseCase {
     };
     await this.botMessageRepository.create(confirmBotMessage);
     this.socketService.emitMessage(chatId, confirmBotMessage);
+    console.log(`Emitted confirmation bot message ${confirmBotMessage.id} in chat ${chatId}`);
 
     let suggestedUserChatId = await this.chatRepository.getPrivateChatId(suggestion.suggestedUser._id, this.virtualUserId);
     if (!suggestedUserChatId) {
@@ -150,6 +157,7 @@ export class RespondToSuggestionUseCase {
       userCategory: user.category || 'unknown',
     });
     const matchBotMessage: BotMessage = {
+      id: await this.botMessageRepository.generateId(),
       senderId: this.virtualUserId,
       content: matchMessageText,
       chatId: suggestedUserChatId,
@@ -177,6 +185,7 @@ export class RespondToSuggestionUseCase {
     if (!existingMessage) {
       await this.botMessageRepository.create(matchBotMessage);
       this.socketService.emitMessage(suggestedUserChatId, matchBotMessage);
+      console.log(`Emitted match request message ${matchBotMessage.id} in chat ${suggestedUserChatId}`);
     }
 
     return { message: confirmText };

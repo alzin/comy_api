@@ -21,7 +21,6 @@ export class InitializeVirtualUserUseCase {
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
-        //lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
       };
       await this.userRepository.create(virtualUser as User);
       console.log('Virtual user created:', virtualUserEmail);

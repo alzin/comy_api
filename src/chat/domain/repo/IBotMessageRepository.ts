@@ -28,6 +28,7 @@ export interface BotMessage {
 }
 
 export interface IBotMessageRepository {
+  generateId(): string | PromiseLike<string>;
   createAsync(matchBotMessage: BotMessage): unknown;
   updateStatus(messageId: string, arg1: string): unknown;
   findByIdWithSuggestedUser(messageId: string): Promise<BotMessage | null>;

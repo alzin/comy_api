@@ -1,16 +1,28 @@
-// src/chat/infra/repo/MongoBotMessageRepository.ts
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { IBotMessageRepository, BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
 import BotMessageModel from '../database/models/BotMessageModel';
 import { UserDocument } from '../../../infra/database/models/UserModel';
 
 export class MongoBotMessageRepository implements IBotMessageRepository {
-  createAsync(matchBotMessage: BotMessage): unknown {
-    throw new Error('Method not implemented.');
+  generateId(): string {
+    return new Types.ObjectId().toHexString();
   }
-  updateStatus(messageId: string, arg1: string): unknown {
-    throw new Error('Method not implemented.');
+
+  async createAsync(botMessage: BotMessage): Promise<BotMessage> {
+    return this.create(botMessage);
   }
+
+  async updateStatus(messageId: string, status: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(messageId)) {
+      throw new Error(`Invalid message ID: ${messageId}`);
+    }
+    const result = await BotMessageModel.findByIdAndUpdate(messageId, { status }, { new: true }).exec();
+    if (!result) {
+      throw new Error(`Bot message with ID ${messageId} not found`);
+    }
+    console.log(`Updated status for message ${messageId} to ${status}`);
+  }
+
   async create(botMessage: BotMessage): Promise<BotMessage> {
     try {
       if (!mongoose.Types.ObjectId.isValid(botMessage.senderId)) {
@@ -31,7 +43,7 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         senderId: new mongoose.Types.ObjectId(botMessage.senderId),
         content: botMessage.content,
         chatId: new mongoose.Types.ObjectId(botMessage.chatId),
-        createdAt: botMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        createdAt: botMessage.createdAt || new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
         readBy: botMessage.readBy.map(id => new mongoose.Types.ObjectId(id)),
         recipientId: botMessage.recipientId ? new mongoose.Types.ObjectId(botMessage.recipientId) : undefined,
         suggestedUser: botMessage.suggestedUser ? new mongoose.Types.ObjectId(botMessage.suggestedUser._id) : undefined,
