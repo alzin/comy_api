@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { IUserRepository } from '../../domain/repo/IUserRepository';
 import { User } from '../../domain/entities/User';
 import { UserModel, UserDocument } from '../database/models/UserModel';
@@ -22,8 +23,9 @@ export class MongoUserRepository implements IUserRepository {
       subscriptionPlan: userDoc.subscriptionPlan,
       profileImageUrl: userDoc.profileImageUrl,
       isOnline: userDoc.isOnline,
-      lastActive: userDoc.lastActive,
+      // lastActive: userDoc.lastActive,
       referrerName: userDoc.referrerName
+
     };
   }
 
@@ -36,13 +38,20 @@ export class MongoUserRepository implements IUserRepository {
     };
   }
 
-  async create(user: User): Promise<User> {
+  async isValidId(id: string): Promise<boolean> {
+    return mongoose.Types.ObjectId.isValid(id);
+  }
+
+  async create(user: Omit<User, 'id'>): Promise<User> {
     const newUser = new UserModel(user);
     const savedUser = await newUser.save();
     return this.mapToDomain(savedUser);
   }
 
   async findById(id: string): Promise<User | null> {
+    if (!(await this.isValidId(id))) {
+      return null;
+    }
     return this.findOneAndMap({ _id: id });
   }
 
@@ -61,7 +70,7 @@ export class MongoUserRepository implements IUserRepository {
   async findActiveUsers(): Promise<User[]> {
     const users = await UserModel.find({
       email: { $ne: 'virtual@chat.com' },
-      isEmailVerified: true
+      isEmailVerified: true,
     }).exec();
     const mappedUsers = users.map(user => this.mapToDomain(user));
     console.log('Active users fetched:', mappedUsers.map(u => ({ id: u.id, email: u.email, name: u.name, isEmailVerified: u.isEmailVerified })));
@@ -75,6 +84,9 @@ export class MongoUserRepository implements IUserRepository {
   async update(id: string, update: Partial<User>): Promise<User | null>;
   async update(userId: string, userData: Partial<User>): Promise<void>;
   async update(id: string, update: Partial<User>): Promise<User | null | void> {
+    if (!(await this.isValidId(id))) {
+      return null;
+    }
     const updatedUser = await UserModel.findByIdAndUpdate(id, { $set: update }, { new: true }).exec();
     if (arguments.length === 2 && arguments[1] === update) {
       return updatedUser ? this.mapToDomain(updatedUser) : null;
@@ -83,6 +95,9 @@ export class MongoUserRepository implements IUserRepository {
   }
 
   async updateUserStatus(userId: string, isOnline: boolean): Promise<boolean> {
+    if (!(await this.isValidId(userId))) {
+      return false;
+    }
     try {
       await UserModel.findByIdAndUpdate(userId, {
         isOnline,
@@ -124,20 +139,9 @@ export class MongoUserRepository implements IUserRepository {
           },
         },
       },
-      {
-        $addFields: {
-          totalScore: { $add: ['$exactMatchScore', '$partialMatchScore'] },
-        },
-      },
+      { $addFields: { totalScore: { $add: ['$exactMatchScore', '$partialMatchScore'] } } },
       { $sort: { totalScore: -1 } as any },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          category: 1,
-          profileImageUrl: 1,
-        },
-      },
+      { $project: { _id: 1, name: 1, category: 1, profileImageUrl: 1 } },
     ];
 
     const users = await UserModel.aggregate(pipeline).exec();
@@ -145,15 +149,18 @@ export class MongoUserRepository implements IUserRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (!(await this.isValidId(id))) {
+      return;
+    }
     await UserModel.findByIdAndDelete(id).exec();
   }
 
-  private async findOneAndMap(query: object): Promise<User | null> {
+  private async findOneAndMap(query: { [key: string]: any }): Promise<User | null> {
     const userDoc = await UserModel.findOne(query).exec();
     return userDoc ? this.mapToDomain(userDoc) : null;
   }
 
-  private async findAndMapToUserInfo(query: object): Promise<UserInfo[]> {
+  private async findAndMapToUserInfo(query: { [key: string]: any }): Promise<UserInfo[]> {
     const users = await UserModel.find(query, 'name category profileImageUrl').lean().exec();
     return users.map(this.mapToUserInfo);
   }

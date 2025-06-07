@@ -1,11 +1,13 @@
+// src/chat/infra/services/SocketIOService.ts
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { Message } from '../../domain/entities/Message';
+import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
-import { MongoChatRepository } from '../../infra/repo/MongoChatRepository';
+import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { CONFIG } from '../../../main/config/config';
 
 interface UserSocket {
@@ -25,12 +27,17 @@ export class SocketIOService implements ISocketService {
   private onlineUsers: UserSocket[] = [];
   private userRepository: IUserRepository;
   private messageRepository: IMessageRepository;
-  private chatRepository: MongoChatRepository;
+  private chatRepository: IChatRepository;
 
-  constructor(server: any, userRepository: IUserRepository, messageRepository: IMessageRepository) {
+  constructor(
+    server: any,
+    userRepository: IUserRepository,
+    messageRepository: IMessageRepository,
+    chatRepository: IChatRepository
+  ) {
     this.userRepository = userRepository;
     this.messageRepository = messageRepository;
-    this.chatRepository = new MongoChatRepository();
+    this.chatRepository = chatRepository;
     this.io = new Server(server, {
       cors: {
         origin: CONFIG.FRONT_URL,
@@ -47,6 +54,10 @@ export class SocketIOService implements ISocketService {
 
       socket.on('joinChat', async (chatId: string) => {
         try {
+          if (!mongoose.Types.ObjectId.isValid(chatId)) {
+            socket.emit('error', { message: 'Invalid chat ID' });
+            return;
+          }
           const chat = await this.chatRepository.findById(chatId);
           if (!chat) {
             console.error(`Chat ${chatId} not found`);
@@ -88,18 +99,26 @@ export class SocketIOService implements ISocketService {
       socket.on('sendMessage', async (data: SendMessageData) => {
         const { chatId, content, senderId, images } = data;
         try {
+          if (!mongoose.Types.ObjectId.isValid(senderId) || !mongoose.Types.ObjectId.isValid(chatId)) {
+            socket.emit('error', { message: 'Invalid sender or chat ID' });
+            return;
+          }
           const sender = await this.userRepository.findById(senderId);
-          const senderName = sender ? sender.name : 'Unknown User';
+          if (!sender) {
+            socket.emit('error', { message: 'Sender not found' });
+            return;
+          }
           const message: Message = await this.messageRepository.create({
-            id: new mongoose.Types.ObjectId().toString(),
+            id: '', // Let repository generate ID
             senderId,
-            senderName,
+            senderName: sender.name,
             content,
             chatId,
             readBy: [senderId],
             createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
             isMatchCard: false,
             isSuggested: false,
+            senderProfileImageUrl: sender.profileImageUrl || '',
             images: images || [],
           });
           this.emitMessage(chatId, message);
@@ -138,26 +157,52 @@ export class SocketIOService implements ISocketService {
     });
   }
 
-  emitMessage(chatId: string, message: Message): void {
-    console.log(`Emitting message for chat ${chatId}, relatedUserId: ${message.relatedUserId}, isSuggested: ${message.isSuggested}, isMatchCard: ${message.isMatchCard}`);
+  emitMessage(chatId: string, message: Message | BotMessage): void {
+    const messageToEmit = this.transformToMessage(message);
+    console.log(`Emitting message for chat ${chatId}, relatedUserId: ${messageToEmit.relatedUserId}, isSuggested: ${messageToEmit.isSuggested}, isMatchCard: ${messageToEmit.isMatchCard}`);
     this.io.to(chatId).emit('newMessage', {
-      id: message.id,
-      senderId: message.senderId,
-      senderName: message.senderName,
-      content: message.content,
-      chatId: message.chatId,
-      readBy: message.readBy,
-      createdAt: message.createdAt,
-      isMatchCard: message.isMatchCard,
-      isSuggested: message.isSuggested,
-      suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl,
-      suggestedUserName: message.suggestedUserName,
-      suggestedUserCategory: message.suggestedUserCategory,
-      status: message.status,
-      senderProfileImageUrl: message.senderProfileImageUrl,
-      relatedUserId: message.isSuggested || message.isMatchCard ? message.relatedUserId : undefined,
-      images: message.images || [], // Include images in the emitted message
+      id: messageToEmit.id,
+      senderId: messageToEmit.senderId,
+      senderName: messageToEmit.senderName,
+      content: messageToEmit.content,
+      chatId: messageToEmit.chatId,
+      readBy: messageToEmit.readBy,
+      createdAt: messageToEmit.createdAt,
+      isMatchCard: messageToEmit.isMatchCard,
+      isSuggested: messageToEmit.isSuggested,
+      suggestedUserProfileImageUrl: messageToEmit.suggestedUserProfileImageUrl,
+      suggestedUserName: messageToEmit.suggestedUserName,
+      suggestedUserCategory: messageToEmit.suggestedUserCategory,
+      status: messageToEmit.status,
+      senderProfileImageUrl: messageToEmit.senderProfileImageUrl,
+      relatedUserId: messageToEmit.isSuggested || messageToEmit.isMatchCard ? messageToEmit.relatedUserId : undefined,
+      images: messageToEmit.images || [],
     });
+  }
+
+  private transformToMessage(message: Message | BotMessage): Message {
+    if ('senderName' in message) {
+      return message as Message;
+    }
+    const botMessage = message as BotMessage;
+    return {
+      id: botMessage.id || '',
+      senderId: botMessage.senderId,
+      senderName: 'COMY オフィシャル AI',
+      content: botMessage.content || '',
+      chatId: botMessage.chatId,
+      readBy: botMessage.readBy || [],
+      createdAt: botMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      isMatchCard: botMessage.isMatchCard || false,
+      isSuggested: botMessage.isSuggested || false,
+      suggestedUserProfileImageUrl: botMessage.suggestedUserProfileImageUrl,
+      suggestedUserName: botMessage.suggestedUserName,
+      suggestedUserCategory: botMessage.suggestedUserCategory,
+      status: botMessage.status,
+      senderProfileImageUrl: botMessage.senderProfileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+      relatedUserId: botMessage.relatedUserId,
+      images: botMessage.images || [],
+    };
   }
 
   emitUserStatus(userId: string, isOnline: boolean): void {

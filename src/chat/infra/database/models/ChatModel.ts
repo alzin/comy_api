@@ -1,3 +1,4 @@
+///src/chat/infra/database/models/ChatModel.ts
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IChatModel extends Document<Types.ObjectId> {

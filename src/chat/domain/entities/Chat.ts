@@ -1,3 +1,4 @@
+////src/chat/domain/entities/Chat.ts
 export interface LatestMessage {
   id: string;
   content: string;
@@ -13,6 +14,7 @@ export interface ChatUser {
 }
 
 export interface Chat {
+  //profileImageUrl: string;
   id: string;
   name: string;
   isGroup: boolean;

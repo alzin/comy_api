@@ -1,6 +1,3 @@
-import { Server } from 'socket.io';
-import { createServer } from 'http';
-import express from 'express';
 import { SocketIOService } from '../../chat/infra/services/SocketIOService';
 import { MessageController } from '../../chat/presentation/controllers/MessageController';
 import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessageUseCase';
@@ -51,7 +48,6 @@ import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/Gen
 import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository'; // New
 import { CONFIG } from "./config"
 import { UpdateReferrerNameUseCase } from '../../application/use-cases/payment/UpdateReferrerNameUseCase';
-
 
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
@@ -113,11 +109,11 @@ export function setupDependencies(server: any) {
   const checkSubscriptionStatusController = new CheckSubscriptionStatusController(checkSubscriptionStatusUseCase);
 
   const chatRepository = new MongoChatRepository();
-  const messageRepository = new MongoMessageRepository();
+  const messageRepository = new MongoMessageRepository(chatRepository); // Pass chatRepository
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
   const friendRepository = new MongoFriendRepository();
-  const socketService = new SocketIOService(server, userRepository, messageRepository);
+  const socketService = new SocketIOService(server, userRepository, messageRepository, chatRepository);
   socketService.initialize();
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
@@ -146,7 +142,13 @@ export function setupDependencies(server: any) {
   if (!virtualUserId) {
     throw new Error('BOT_ID is not defined in .env');
   }
-  const suggestedPairRepository = new MongoSuggestedPairRepository(); // New
+
+  const adminBotId = process.env.ADMIN;
+  if (!adminBotId) {
+    throw new Error('ADMIN is not defined in .env');
+  }
+
+  const suggestedPairRepository = new MongoSuggestedPairRepository();
 
   return {
     userRepository,
@@ -174,10 +176,11 @@ export function setupDependencies(server: any) {
     chatRepository,
     blacklistRepository,
     friendRepository,
-    suggestedPairRepository, // New
+    suggestedPairRepository,
     virtualChatService,
     sendMessageUseCase,
     virtualUserId,
+    adminBotId,
     chatController,
     messageController,
   };

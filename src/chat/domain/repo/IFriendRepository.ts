@@ -1,4 +1,4 @@
-// Interface for friend repository operations
+//src/chat/domain/repo/IFriendRepository.ts
 import { Friend } from '../../infra/database/models/FriendModel';
 
 export interface IFriendRepository {

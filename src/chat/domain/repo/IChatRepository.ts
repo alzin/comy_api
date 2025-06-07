@@ -1,4 +1,3 @@
-///src/chat/domain/repo/IChatRepository.ts
 import { Chat } from '../entities/Chat';
 
 export interface IChatRepository {
@@ -8,4 +7,5 @@ export interface IChatRepository {
   findByUsers(userIds: string[]): Promise<Chat | null>;
   getPrivateChatId(userId: string, virtualUserId: string): Promise<string | null>;
   update(chatId: string, update: Partial<Chat>): Promise<void>;
+  isValidId(id: string): Promise<boolean>;
 }
