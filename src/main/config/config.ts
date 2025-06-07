@@ -27,4 +27,19 @@ export const CONFIG = {
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
   AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME || "",
+
+  BOT_ID: process.env.BOT_ID,
+  ADMIN: process.env.ADMIN,
+
+  VIRTUAL_USER_EMAIL: process.env.VIRTUAL_USER_EMAIL,
+  VIRTUAL_USER_PASSWORD: process.env.VIRTUAL_USER_PASSWORD,
+
+  API_KEY: process.env.API_KEY,
+  LITERAL_API_KEY: process.env.LITERAL_API_KEY,
+
+
+
+
+
+
 };

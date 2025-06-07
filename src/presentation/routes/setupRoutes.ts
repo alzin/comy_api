@@ -10,13 +10,14 @@ import { LiteralClient } from '@literalai/client';
 import { setupChatRoutes } from '../../chat/presentation/routes/chatRoutes';
 import { ChatController } from '../../chat/presentation/controllers/ChatController';
 import { MessageController } from '../../chat/presentation/controllers/MessageController';
+import { CONFIG } from '../../main/config/config';
 
 const serviceAdapter = new OpenAIAdapter({
   model: 'gpt-4o-mini',
 });
 
 const literalAiClient = new LiteralClient({
-  apiKey: process.env.LITERAL_API_KEY,
+  apiKey: CONFIG.LITERAL_API_KEY,
 });
 
 literalAiClient.instrumentation.openai({ client: serviceAdapter });

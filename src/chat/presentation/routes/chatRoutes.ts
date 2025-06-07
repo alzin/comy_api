@@ -15,12 +15,13 @@ import { MongoSuggestedPairRepository } from '../../infra/repo/MongoSuggestedPai
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
+import { CONFIG } from '../../../main/config/config';
 
 interface ChatRouteDependencies {
   userRepository: IUserRepository;
   messageRepository: IMessageRepository;
   chatService: { createChatUseCase: CreateChatUseCase };
-  tokenService: any; 
+  tokenService: any;
   virtualUserId: string;
   adminBotId: string;
 }
@@ -134,7 +135,7 @@ export const setupChatRoutes = (
 
   router.post('/suggest-friends', async (req: Request, res: Response) => {
     const apiKey = req.header('X-API-Key');
-    if (!apiKey || apiKey !== process.env.API_KEY) {
+    if (!apiKey || apiKey !== CONFIG.API_KEY) {
       return res.status(401).json({ error: 'Invalid or missing API key' });
     }
     try {
@@ -148,7 +149,7 @@ export const setupChatRoutes = (
 
   router.post('/send-suggested-friend', async (req: Request, res: Response) => {
     const apiKey = req.header('X-API-Key');
-    if (!apiKey || apiKey !== process.env.API_KEY) {
+    if (!apiKey || apiKey !== CONFIG.API_KEY) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

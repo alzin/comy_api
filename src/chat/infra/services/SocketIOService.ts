@@ -8,6 +8,7 @@ import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
+import { CONFIG } from '../../../main/config/config';
 
 interface UserSocket {
   userId: string;
@@ -39,7 +40,7 @@ export class SocketIOService implements ISocketService {
     this.chatRepository = chatRepository;
     this.io = new Server(server, {
       cors: {
-        origin: process.env.FRONT_URL,
+        origin: CONFIG.FRONT_URL,
         methods: ['GET', 'POST'],
         credentials: true,
       },
@@ -73,7 +74,9 @@ export class SocketIOService implements ISocketService {
 
       socket.on('authenticate', async (token) => {
         try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+          const decoded = jwt.verify(token, CONFIG.JWT_SECRET!) as {
+            id: string;
+          };
           const userId = decoded.id;
 
           this.onlineUsers.push({ userId, socketId: socket.id });
@@ -189,7 +192,7 @@ export class SocketIOService implements ISocketService {
       content: botMessage.content || '',
       chatId: botMessage.chatId,
       readBy: botMessage.readBy || [],
-      createdAt: botMessage.createdAt ||  new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      createdAt: botMessage.createdAt || new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
       isMatchCard: botMessage.isMatchCard || false,
       isSuggested: botMessage.isSuggested || false,
       suggestedUserProfileImageUrl: botMessage.suggestedUserProfileImageUrl,

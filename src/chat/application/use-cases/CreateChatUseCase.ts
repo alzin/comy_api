@@ -2,12 +2,12 @@
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat, ChatUser } from '../../domain/entities/Chat';
-
+import { CONFIG } from '../../../main/config/config';
 export class CreateChatUseCase {
   constructor(
     private chatRepository: IChatRepository,
     private userRepository: IUserRepository
-  ) {}
+  ) { }
 
   async execute(
     userIds: string[],
@@ -18,7 +18,7 @@ export class CreateChatUseCase {
       throw new Error('At least two users are required to create a chat');
     }
 
-    const botId = process.env.BOT_ID;
+    const botId = CONFIG.BOT_ID;
     if (isGroup && !userIds.includes(botId)) {
       userIds.push(botId);
     }
@@ -31,7 +31,7 @@ export class CreateChatUseCase {
     const usersDetails: ChatUser[] = await Promise.all(
       userIds.map(async (id) => {
         const user = await this.userRepository.findById(id);
-        const role = id === botId ? 'bot' : (id === process.env.ADMIN ? 'admin' : 'user');
+        const role = id === botId ? 'bot' : (id === CONFIG.ADMIN ? 'admin' : 'user');
         return {
           role,
           id,

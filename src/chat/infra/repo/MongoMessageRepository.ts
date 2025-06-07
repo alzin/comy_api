@@ -6,17 +6,18 @@ import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessage
 import { ChatModel } from '../database/models/ChatModel';
 import { UserModel, UserDocument } from '../../../infra/database/models/UserModel';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
+import { CONFIG } from '../../../main/config/config';
 
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === '681547798892749fbe910c02') {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
   }
   const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
-  return user?.profileImageUrl ;
+  return user?.profileImageUrl;
 };
 
 export class MongoMessageRepository implements IMessageRepository {
-  constructor(private chatRepository: IChatRepository) {}
+  constructor(private chatRepository: IChatRepository) { }
 
   async generateId(): Promise<string> {
     return new mongoose.Types.ObjectId().toString();
@@ -117,13 +118,13 @@ export class MongoMessageRepository implements IMessageRepository {
         suggestedUserName: isBotMessage
           ? (messageDoc as IBotMessageModel).suggestedUserName
           : (messageDoc as IMessageModel).isMatchCard
-          ? (messageDoc as IMessageModel).suggestedUserName
-          : undefined,
+            ? (messageDoc as IMessageModel).suggestedUserName
+            : undefined,
         suggestedUserCategory: isBotMessage
           ? (messageDoc as IBotMessageModel).suggestedUserCategory
           : (messageDoc as IMessageModel).isMatchCard
-          ? (messageDoc as IMessageModel).suggestedUserCategory
-          : undefined,
+            ? (messageDoc as IMessageModel).suggestedUserCategory
+            : undefined,
         relatedUserId: isBotMessage && ((messageDoc as IBotMessageModel).isSuggested || (messageDoc as IBotMessageModel).isMatchCard)
           ? (messageDoc as IBotMessageModel).suggestedUser
             ? ((messageDoc as IBotMessageModel).suggestedUser as any)._id.toString()
@@ -177,13 +178,13 @@ export class MongoMessageRepository implements IMessageRepository {
       suggestedUserName: isBotMessage
         ? (messageDoc as IBotMessageModel).suggestedUserName
         : (messageDoc as IMessageModel).isMatchCard
-        ? (messageDoc as IMessageModel).suggestedUserName
-        : undefined,
+          ? (messageDoc as IMessageModel).suggestedUserName
+          : undefined,
       suggestedUserCategory: isBotMessage
         ? (messageDoc as IBotMessageModel).suggestedUserCategory
         : (messageDoc as IMessageModel).isMatchCard
-        ? (messageDoc as IMessageModel).suggestedUserCategory
-        : undefined,
+          ? (messageDoc as IMessageModel).suggestedUserCategory
+          : undefined,
       relatedUserId,
       status: (isBotMessage && (messageDoc as IBotMessageModel).isMatchCard) || (!isBotMessage && (messageDoc as IMessageModel).isMatchCard)
         ? (isBotMessage ? (messageDoc as IBotMessageModel).status : (messageDoc as IMessageModel).status) || 'pending'
@@ -203,7 +204,7 @@ export class MongoMessageRepository implements IMessageRepository {
     if (!chat || chat.isGroupChat) {
       return false;
     }
-    const virtualUserId = process.env.BOT_ID;
+    const virtualUserId = CONFIG.BOT_ID;
     return chat.users.some((userId: mongoose.Types.ObjectId) => userId.toString() === virtualUserId);
   }
 
