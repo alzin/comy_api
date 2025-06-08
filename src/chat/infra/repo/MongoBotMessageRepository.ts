@@ -82,8 +82,8 @@ export class MongoBotMessageRepository implements IBotMessageRepository {
         suggestedUserProfileImageUrl: savedDoc.suggestedUserProfileImageUrl,
         suggestedUserName: savedDoc.suggestedUserName,
         suggestedUserCategory: savedDoc.suggestedUserCategory,
-        senderProfileImageUrl: savedDoc.senderProfileImageUrl,
-        relatedUserId: savedDoc.suggestedUser ? savedDoc.suggestedUser.toString() : undefined,
+        senderProfileImageUrl: savedDoc.suggestedUserProfileImageUrl,
+        relatedUserId: botMessage.relatedUserId || (savedDoc.suggestedUser ? savedDoc.suggestedUser.toString() : undefined),
         images: savedDoc.images || [],
       };
     } catch (error) {

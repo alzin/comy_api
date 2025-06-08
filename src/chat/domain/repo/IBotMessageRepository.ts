@@ -14,7 +14,7 @@ export interface BotMessage {
   createdAt: string;
   readBy: string[];
   recipientId?: string;
-  suggestedUser?: SuggestedUser; // Updated to object
+  suggestedUser?: SuggestedUser; 
   suggestionReason?: string;
   status?: 'pending' | 'accepted' | 'rejected';
   isMatchCard?: boolean;

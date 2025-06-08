@@ -49,7 +49,7 @@ export class SocketIOService implements ISocketService {
     }
     const botMessage = message as BotMessage;
     return {
-      id: botMessage.id || new mongoose.Types.ObjectId().toString(), // توليد id إذا كان undefined
+      id: botMessage.id || new mongoose.Types.ObjectId().toString(),
       senderId: botMessage.senderId,
       senderName: 'COMY オフィシャル AI',
       content: botMessage.content || '',
@@ -62,7 +62,7 @@ export class SocketIOService implements ISocketService {
       suggestedUserName: botMessage.suggestedUserName,
       suggestedUserCategory: botMessage.suggestedUserCategory,
       status: botMessage.status,
-      senderProfileImageUrl: botMessage.senderProfileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+      senderProfileImageUrl: botMessage.senderProfileImageUrl,
       relatedUserId: botMessage.relatedUserId,
       images: botMessage.images || [],
     };

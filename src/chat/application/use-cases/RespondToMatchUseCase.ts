@@ -52,7 +52,7 @@ export class RespondToMatchUseCase {
 
     const user = await this.userRepository.findById(userId);
     const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/image/300px.png';
+    const userProfileImageUrl = user?.profileImageUrl;
 
     const userResponse: Message = {
       id: await this.messageRepository.generateId(),
@@ -95,7 +95,7 @@ export class RespondToMatchUseCase {
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
           images: [],
         };
         await this.botMessageRepository.create(botMessage);
@@ -116,7 +116,7 @@ export class RespondToMatchUseCase {
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
         images,
       };
       await this.botMessageRepository.create(imageBotMessage);
@@ -139,7 +139,7 @@ export class RespondToMatchUseCase {
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
       images: [],
     };
     await this.botMessageRepository.create(confirmBotMessage);
@@ -176,7 +176,7 @@ export class RespondToMatchUseCase {
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
         images: [],
       };
       await this.botMessageRepository.create(botMessage);
@@ -206,7 +206,7 @@ export class RespondToMatchUseCase {
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
       images: [],
     };
     await this.botMessageRepository.create(notifyBotMessage);

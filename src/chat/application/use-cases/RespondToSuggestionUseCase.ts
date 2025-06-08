@@ -49,7 +49,7 @@ export class RespondToSuggestionUseCase {
 
     const user = await this.userRepository.findById(userId);
     const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl || 'https://comy-test.s3.ap-northeast-1.amazonaws.com/image/300px.png';
+    const userProfileImageUrl = user?.profileImageUrl ;
 
     const userResponseMessage: Message = {
       id: await this.messageRepository.generateId(),
@@ -92,7 +92,7 @@ export class RespondToSuggestionUseCase {
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/images/bot.png',
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
           images: [],
         };
         await this.botMessageRepository.create(botMessage);
@@ -113,7 +113,7 @@ export class RespondToSuggestionUseCase {
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-image.png',
+        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
         images,
       };
       await this.botMessageRepository.create(imageBotMessage);
@@ -169,10 +169,10 @@ export class RespondToSuggestionUseCase {
       status: 'pending',
       isMatchCard: true,
       isSuggested: false,
-      suggestedUserProfileImageUrl: user.profileImageUrl || '',
+      suggestedUserProfileImageUrl: user.profileImageUrl ,
       suggestedUserName: senderName,
       suggestedUserCategory: user.category || 'unknown',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/images/bot.png',
+      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
       images: [],
     };
 
