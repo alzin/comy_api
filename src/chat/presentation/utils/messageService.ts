@@ -1,4 +1,4 @@
-// src/chat/presentation/utils/messageService.ts
+////src/chat/presentation/utils/messageService.ts
 import { ISocketService } from '../../domain/services/ISocketService';
 import { IBotMessageRepository, BotMessage } from '../../domain/repo/IBotMessageRepository';
 
@@ -19,9 +19,24 @@ export const sendBotMessage = async (
     isMatchCard: false,
     isSuggested: false,
     status: 'pending',
-    senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+    senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+    relatedUserId: additionalOptions.relatedUserId || (additionalOptions.isSuggested && additionalOptions.suggestedUser?._id ? additionalOptions.suggestedUser._id : undefined),
     ...additionalOptions,
   };
-  await botMessageRepo.create(botMessage);
-  socketService.emitMessage(chatId, botMessage);
+
+  if (botMessage.isSuggested && !botMessage.relatedUserId) {
+    throw new Error('relatedUserId is required for suggestion messages');
+  }
+
+  console.log('sendBotMessage: Creating bot message:', {
+    id: botMessage.id,
+    chatId: botMessage.chatId,
+    relatedUserId: botMessage.relatedUserId,
+    suggestedUser: botMessage.suggestedUser?._id,
+    isSuggested: botMessage.isSuggested,
+  });
+
+  const savedMessage = await botMessageRepo.create(botMessage);
+
+  socketService.emitMessage(chatId, savedMessage);
 };

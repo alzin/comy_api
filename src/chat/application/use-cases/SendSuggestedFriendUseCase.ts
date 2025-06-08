@@ -6,6 +6,7 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { MongoSuggestedPairRepository } from '../../infra/repo/MongoSuggestedPairRepository';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from '../../config/MessageContentTemplates';
+import { sendBotMessage } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/chat/presentation/utils/messageService'; // استيراد sendBotMessage
 
 export class SendSuggestedFriendUseCase {
   constructor(
@@ -17,31 +18,6 @@ export class SendSuggestedFriendUseCase {
     private createChatUseCase: CreateChatUseCase,
     private virtualUserId: string
   ) {}
-
-  private async sendBotMessage(
-    templateKey: string,
-    chatId: string,
-    additionalFields: Partial<BotMessage>,
-    replacements: { [key: string]: string }
-  ) {
-    const { text, images } = getTemplatedMessage(templateKey, replacements);
-    const botMessage: BotMessage = {
-      senderId: this.virtualUserId,
-      content: text,
-      chatId,
-      createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
-      readBy: [this.virtualUserId],
-      isMatchCard: false,
-      isSuggested: false,
-      status: 'pending',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
-      images: images || [],
-      ...additionalFields,
-    };
-    console.log(`Sending bot message to chat ${chatId}: ${text}`);
-    await this.botMessageRepo.create(botMessage);
-    this.socketService.emitMessage(chatId, botMessage);
-  }
 
   async execute(): Promise<{ message: string; sentCount: number }> {
     try {
@@ -110,9 +86,13 @@ export class SendSuggestedFriendUseCase {
         };
         console.log(`Preparing suggestion for user ${user.name} (ID: ${userId}) with suggested user ${suggestedUser.name} (ID: ${suggestedUserId})`);
 
-        await this.sendBotMessage(
-          'suggestedFriendIntro',
+        const { text, images } = getTemplatedMessage('suggestedFriendIntro', replacements);
+        await sendBotMessage( // استدعاء الدالة من messageService.ts
+          text,
           chat.id,
+          this.virtualUserId,
+          this.socketService,
+          this.botMessageRepo,
           {
             recipientId: userId,
             suggestedUser: {
@@ -128,8 +108,9 @@ export class SendSuggestedFriendUseCase {
             suggestedUserProfileImageUrl: suggestedUser.profileImageUrl || '',
             suggestedUserName: suggestedUser.name || '',
             suggestedUserCategory: suggestedUser.category || 'unknown',
-          },
-          replacements
+            relatedUserId: suggestedUserId, // إضافة relatedUserId صراحة
+            images: images || [],
+          }
         );
 
         await this.suggestedPairRepo.updateStatus(pair._id.toString(), 'sent');
