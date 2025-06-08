@@ -6,8 +6,7 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { MongoSuggestedPairRepository } from '../../infra/repo/MongoSuggestedPairRepository';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from '../../config/MessageContentTemplates';
-import { sendBotMessage } from '/Users/lubna/Desktop/COMY_BACK_NEW/comy_api/src/chat/presentation/utils/messageService'; // استيراد sendBotMessage
-
+import { sendBotMessage } from '../../presentation/utils/messageService';
 export class SendSuggestedFriendUseCase {
   constructor(
     private userRepository: IUserRepository,
@@ -17,7 +16,7 @@ export class SendSuggestedFriendUseCase {
     private suggestedPairRepo: MongoSuggestedPairRepository,
     private createChatUseCase: CreateChatUseCase,
     private virtualUserId: string
-  ) {}
+  ) { }
 
   async execute(): Promise<{ message: string; sentCount: number }> {
     try {
