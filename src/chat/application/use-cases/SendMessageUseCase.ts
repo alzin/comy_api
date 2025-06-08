@@ -89,7 +89,7 @@ export class SendMessageUseCase {
           createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
           isMatchCard: false,
           isSuggested: false,
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
         const botLatestMessage: LatestMessage = {
@@ -116,7 +116,7 @@ export class SendMessageUseCase {
           createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
           isMatchCard: false,
           isSuggested: false,
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot-avatar.png',
+          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
         };
         const savedBotMessage = await this.messageRepository.create(botMessage);
         const botLatestMessage: LatestMessage = {

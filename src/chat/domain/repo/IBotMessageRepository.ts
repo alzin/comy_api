@@ -14,7 +14,7 @@ export interface BotMessage {
   createdAt: string;
   readBy: string[];
   recipientId?: string;
-  suggestedUser?: SuggestedUser; // Updated to object
+  suggestedUser?: SuggestedUser; 
   suggestionReason?: string;
   status?: 'pending' | 'accepted' | 'rejected';
   isMatchCard?: boolean;
@@ -28,6 +28,7 @@ export interface BotMessage {
 }
 
 export interface IBotMessageRepository {
+  generateId(): string | PromiseLike<string>;
   createAsync(matchBotMessage: BotMessage): unknown;
   updateStatus(messageId: string, arg1: string): unknown;
   findByIdWithSuggestedUser(messageId: string): Promise<BotMessage | null>;

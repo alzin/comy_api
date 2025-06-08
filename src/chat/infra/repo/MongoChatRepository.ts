@@ -22,12 +22,12 @@ export class MongoChatRepository implements IChatRepository {
   private mapMessageToDomain(messageDoc: IMessageModel | IBotMessageModel | null): LatestMessage | null {
     if (!messageDoc) return null;
 
-    const content = messageDoc.content || '';
-    const truncatedContent = content.length > 18 ? content.substring(0, 18) : content;
+    //const content = messageDoc.content || '';
+    //const truncatedContent = content.length > 18 ? content.substring(0, 18) : content;
 
     return {
       id: messageDoc._id.toString(),
-      content: truncatedContent,
+      content:messageDoc.content,
       createdAt: messageDoc.createdAt.toString(),
       readBy: messageDoc.readBy.map((id: mongoose.Types.ObjectId) => id.toString()),
     };

@@ -113,7 +113,7 @@ export function setupDependencies(server: any) {
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
   const friendRepository = new MongoFriendRepository();
-  const socketService = new SocketIOService(server, userRepository, messageRepository, chatRepository);
+  const socketService = new SocketIOService(server, userRepository, messageRepository);
   socketService.initialize();
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
@@ -143,7 +143,7 @@ export function setupDependencies(server: any) {
     throw new Error('BOT_ID is not defined in .env');
   }
 
-  const adminBotId = process.env.ADMIN;
+  const adminBotId = CONFIG.ADMIN;
   if (!adminBotId) {
     throw new Error('ADMIN is not defined in .env');
   }
