@@ -5,6 +5,7 @@ import { GenerateBotResponseUseCase } from './GenerateBotResponseUseCase';
 import { Message } from '../../domain/entities/Message';
 import { LatestMessage } from '../../domain/entities/Chat';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
+import { CONFIG } from '../../../main/config/config';
 
 export class SendMessageUseCase {
   constructor(
@@ -13,7 +14,7 @@ export class SendMessageUseCase {
     private readonly socketService: ISocketService,
     private readonly generateBotResponseUseCase: GenerateBotResponseUseCase,
     private readonly userRepository: IUserRepository
-  ) {}
+  ) { }
 
   private truncateContent(content: string): string {
     return content.length > 20 ? content.substring(0, 20) : content;
@@ -46,7 +47,7 @@ export class SendMessageUseCase {
     }
 
     const senderName = sender.name || 'Unknown User';
-    const senderProfileImageUrl = sender.profileImageUrl ;
+    const senderProfileImageUrl = sender.profileImageUrl;
 
     const message: Message = {
       id: await this.messageRepository.generateId(),
@@ -72,8 +73,8 @@ export class SendMessageUseCase {
 
     this.socketService.emitMessage(chatId, savedMessage);
 
-    const botId1 = process.env.BOT_ID;
-    const botId2 = process.env.ADMIN;
+    const botId1 = CONFIG.BOT_ID;
+    const botId2 = CONFIG.ADMIN;
 
     if (botId1 && chat.users.some(user => user.id === botId1)) {
       const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, botId1);

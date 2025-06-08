@@ -4,6 +4,7 @@ import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { Chat, LatestMessage, ChatUser } from '../../domain/entities/Chat';
 import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
+import { CONFIG } from '../../../main/config/config';
 
 interface PopulatedUser {
   _id: mongoose.Types.ObjectId;
@@ -33,8 +34,8 @@ export class MongoChatRepository implements IChatRepository {
   }
 
   private async mapToDomain(chatDoc: IChatModel | PopulatedChatDocument): Promise<Chat> {
-    const botId = process.env.BOT_ID;
-    const adminId = process.env.ADMIN;
+    const botId = CONFIG.BOT_ID;
+    const adminId = CONFIG.ADMIN;
 
     const isPopulated = (doc: any): doc is PopulatedChatDocument =>
       doc.users && doc.users[0] && 'name' in doc.users[0];
@@ -67,23 +68,23 @@ export class MongoChatRepository implements IChatRepository {
 
     const users: ChatUser[] = isPopulated(chatDoc)
       ? chatDoc.users.map((user: PopulatedUser) => {
-          const userIdStr = user._id.toString();
-          return {
-            role: userIdStr === botId ? 'bot' : userIdStr === adminId ? 'admin' : 'user',
-            id: userIdStr,
-            image: user.profileImageUrl ,
-            name: user.name,
+        const userIdStr = user._id.toString();
+        return {
+          role: userIdStr === botId ? 'bot' : (userIdStr === adminId ? 'admin' : 'user'),
+          id: userIdStr,
+          image: user.profileImageUrl,
+          name: user.name,
 
-          };
-        })
+        };
+      })
       : chatDoc.users.map((id: mongoose.Types.ObjectId) => {
-          const userIdStr = id.toString();
-          return {
-            role: userIdStr === botId ? 'bot' : userIdStr === adminId ? 'admin' : 'user',
-            id: userIdStr,
-            image: '',
-          };
-        });
+        const userIdStr = id.toString();
+        return {
+          role: userIdStr === botId ? 'bot' : (userIdStr === adminId ? 'admin' : 'user'),
+          id: userIdStr,
+          image: '',
+        };
+      });
 
     return {
       id: chatDoc._id.toString(),

@@ -45,7 +45,9 @@ import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
-import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository';
+import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository'; // New
+import { CONFIG } from "./config"
+import { UpdateReferrerNameUseCase } from '../../application/use-cases/payment/UpdateReferrerNameUseCase';
 
 const emailSender = new BulkEmailSender();
 const activeUsersFetcher = new ActiveUsersFetcher();
@@ -99,7 +101,9 @@ export function setupDependencies(server: any) {
 
   const stripeService = new StripeService();
   const updateSubscriptionStatusUseCase = new UpdateSubscriptionStatusUseCase(userRepository);
-  const webhookController = new WebhookController(stripeService, updateSubscriptionStatusUseCase);
+  const updateReferrerNameUseCase = new UpdateReferrerNameUseCase(userRepository);
+
+  const webhookController = new WebhookController(stripeService, updateSubscriptionStatusUseCase, updateReferrerNameUseCase);
 
   const checkSubscriptionStatusUseCase = new CheckSubscriptionStatusUseCase(userRepository);
   const checkSubscriptionStatusController = new CheckSubscriptionStatusController(checkSubscriptionStatusUseCase);
@@ -134,12 +138,12 @@ export function setupDependencies(server: any) {
     socketService
   );
 
-  const virtualUserId = process.env.BOT_ID;
+  const virtualUserId = CONFIG.BOT_ID;
   if (!virtualUserId) {
     throw new Error('BOT_ID is not defined in .env');
   }
 
-  const adminBotId = process.env.ADMIN;
+  const adminBotId = CONFIG.ADMIN;
   if (!adminBotId) {
     throw new Error('ADMIN is not defined in .env');
   }

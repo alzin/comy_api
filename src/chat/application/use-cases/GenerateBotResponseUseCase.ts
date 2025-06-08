@@ -1,12 +1,13 @@
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { getTemplatedMessage } from './../../config/MessageContentTemplates';
+import { CONFIG } from '../../../main/config/config';
 
 export class GenerateBotResponseUseCase {
-  constructor(private chatRepository: IChatRepository) {}
+  constructor(private chatRepository: IChatRepository) { }
 
   async execute(chatId: string, content: string, botId: string): Promise<string | null> {
-    const bot1Id = process.env.BOT_ID;
-    const bot2Id = process.env.ADMIN;
+    const bot1Id = CONFIG.BOT_ID;
+    const bot2Id = CONFIG.ADMIN;
 
     const chat = await this.chatRepository.findById(chatId);
     if (!chat) {
