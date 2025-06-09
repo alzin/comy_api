@@ -173,6 +173,7 @@ export class RespondToSuggestionUseCase {
       suggestedUserName: senderName,
       suggestedUserCategory: user.category || 'unknown',
       senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+      relatedUserId: userId,
       images: [],
     };
 
