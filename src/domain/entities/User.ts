@@ -1,7 +1,7 @@
 import { SubscriptionStatus } from "./SubscriptionStatus";
 
 export interface User {
-  id: string; // Changed from id?: string
+  id?: string;
   email: string;
   name: string;
   category: string;
