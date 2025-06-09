@@ -13,7 +13,6 @@ export class InitializeVirtualUserUseCase {
 
     if (!virtualUser) {
       virtualUser = {
-        id: CONFIG.BOT_ID,
         email: virtualUserEmail,
         password: CONFIG.VIRTUAL_USER_PASSWORD,
         name: 'COMY オフィシャル AI',
