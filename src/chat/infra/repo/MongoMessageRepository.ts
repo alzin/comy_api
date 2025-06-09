@@ -9,7 +9,7 @@ import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { CONFIG } from '../../../main/config/config';
 
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
-  if (senderId === '681547798892749fbe910c02') {
+  if (senderId === CONFIG.BOT_ID) {
     return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
   }
   const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
@@ -98,7 +98,7 @@ export class MongoMessageRepository implements IMessageRepository {
 
     if (!(await this.chatRepository.isValidId(senderId))) {
       console.error(`Invalid senderId detected: ${senderId} for messageDoc:`, messageDoc);
-      const fallbackSenderId = '681547798892749fbe910c02';
+      const fallbackSenderId = CONFIG.BOT_ID;
       const senderName = 'COMY オフィシャル AI';
       const senderProfileImageUrl = 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
 
@@ -151,7 +151,7 @@ export class MongoMessageRepository implements IMessageRepository {
     }
 
     const sender = await UserModel.findById(senderId).select('name').exec();
-    const senderName = sender ? sender.name : (senderId === '681547798892749fbe910c02' ? 'COMY オフィシャル AI' : 'Unknown User');
+    const senderName = sender ? sender.name : (senderId === CONFIG.BOT_ID ? 'COMY オフィシャル AI' : 'Unknown User');
     const senderProfileImageUrl = messageDoc.senderProfileImageUrl || (await getSenderProfileImageUrl(senderId));
 
     let relatedUserId: string | undefined;
