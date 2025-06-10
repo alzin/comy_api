@@ -214,20 +214,20 @@ export class MongoMessageRepository implements IMessageRepository {
       return [];
     }
 
-    const skip = (page - 1) * limit;
+    // const skip = (page - 1) * limit;
 
     try {
       const messages = await MessageModel.find({ chat: chatId })
-        .skip(skip)
-        .limit(limit)
+        // .skip(skip)
+        // .limit(limit)
         .sort({ createdAt: -1 })
         .lean()
         .exec() as IMessageModel[];
 
       const botMessages = await BotMessageModel.find({ chatId })
         .populate('suggestedUser', '_id')
-        .skip(skip)
-        .limit(limit)
+        // .skip(skip)
+        // .limit(limit)
         .sort({ createdAt: -1 })
         .lean()
         .exec() as IBotMessageModel[];
@@ -240,10 +240,12 @@ export class MongoMessageRepository implements IMessageRepository {
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
-      const paginatedMessages = allMessages.slice(0, limit);
+      // const paginatedMessages = allMessages.slice(0, limit);
 
-      console.log(`Fetched ${paginatedMessages.length} messages for chatId: ${chatId}`);
-      return paginatedMessages.length > 0 ? paginatedMessages : [];
+      // console.log(`Fetched ${paginatedMessages.length} messages for chatId: ${chatId}`);
+      // return paginatedMessages.length > 0 ? paginatedMessages : [];
+      // 
+      return allMessages.length > 0 ? allMessages : [];
     } catch (error) {
       console.error(`Error fetching messages for chatId: ${chatId}`, error);
       throw error;
