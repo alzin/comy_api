@@ -42,6 +42,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Dummy Data directories
+dummy_data/
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
