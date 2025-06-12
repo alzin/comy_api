@@ -1,10 +1,10 @@
-// File: src/chat/infra/database/models/SuggestedPairModel.ts
+// src/chat/infra/database/models/SuggestedPairModel.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISuggestedPair extends Document {
   userId: mongoose.Types.ObjectId;
   suggestedUserId: mongoose.Types.ObjectId;
-  status: 'pending' | 'sent' ;
+  status: 'pending' | 'sent' | 'rejected'; 
   matchType: string;
   similarity: number;
   reason: string;
@@ -16,7 +16,7 @@ export interface ISuggestedPair extends Document {
 const SuggestedPairSchema = new Schema<ISuggestedPair>({
   userId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
   suggestedUserId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
-  status: { type: String, enum: ['pending', 'sent'], required: true },
+  status: { type: String, enum: ['pending', 'sent', 'rejected'], required: true }, 
   matchType: { type: String, default: '' },
   similarity: { type: Number, default: 0 },
   reason: { type: String, default: '' },
