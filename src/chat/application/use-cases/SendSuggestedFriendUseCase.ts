@@ -86,7 +86,7 @@ export class SendSuggestedFriendUseCase {
         console.log(`Preparing suggestion for user ${user.name} (ID: ${userId}) with suggested user ${suggestedUser.name} (ID: ${suggestedUserId})`);
 
         const { text, images } = getTemplatedMessage('suggestedFriendIntro', replacements);
-        await sendBotMessage( // استدعاء الدالة من messageService.ts
+        await sendBotMessage( 
           text,
           chat.id,
           this.virtualUserId,
@@ -107,7 +107,7 @@ export class SendSuggestedFriendUseCase {
             suggestedUserProfileImageUrl: suggestedUser.profileImageUrl || '',
             suggestedUserName: suggestedUser.name || '',
             suggestedUserCategory: suggestedUser.category || 'unknown',
-            relatedUserId: suggestedUserId, // إضافة relatedUserId صراحة
+            relatedUserId: suggestedUserId, 
             images: images || [],
           }
         );
