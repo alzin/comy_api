@@ -25,27 +25,16 @@ literalAiClient.instrumentation.openai({ client: serviceAdapter });
 export function setupRoutes(app: express.Application, dependencies: any) {
   app.get('/', (_, res) => res.status(200).send('OK'));
 
-  // Apply auth middleware globally, except for specific routes
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.path.startsWith('/auth') || req.path === '/webhook' || req.path === '/') {
-      return next();
-    }
-    return authMiddleware(dependencies.tokenService, dependencies.userRepository)(req, res, next);
-  });
+  app.use(
+    authMiddleware(dependencies.tokenService, dependencies.userRepository),
+  );
 
   app.use('/create-checkout-session', setupStripeRoutes(dependencies.stripeController));
   app.use('/business-sheets', setupBusinessSheetRoutes(dependencies.businessSheetController));
   app.use('/auth', setupAuthRoutes(dependencies.authController));
   app.use('/api/chats', setupChatRoutes(
-    new ChatController(
-      dependencies.chatService.createChatUseCase,
-      dependencies.chatService.getUserChatsUseCase
-    ),
-    new MessageController(
-      dependencies.messageService.sendMessageUseCase,
-      dependencies.messageService.getMessagesUseCase,
-      dependencies.socketService
-    ),
+    dependencies.chatController,
+    dependencies.messageController,
     dependencies,
     dependencies.socketService
   ));
