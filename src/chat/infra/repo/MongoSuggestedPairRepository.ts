@@ -1,10 +1,26 @@
-// File: src/chat/infra/repo/MongoSuggestedPairRepository.ts
 import mongoose from 'mongoose';
-import { SuggestedPairModel, ISuggestedPair } from '../database/models/SuggestedPairModel';
+import { SuggestedPairModel } from '../database/models/SuggestedPairModel';
 import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository';
+import { SuggestedPair } from '../../domain/entities/SuggestedPair';
+import { ISuggestedPairMongoose } from '../database/models/SuggestedPairModel';
 
 export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
-  async create(suggestion: { userId: string; suggestedUserId: string; status: 'pending' | 'sent' | 'rejected' }): Promise<string> {
+  private toDomain(pair: ISuggestedPairMongoose): SuggestedPair {
+    return {
+      _id: pair._id.toString(),
+      userId: pair.userId.toString(),
+      suggestedUserId: pair.suggestedUserId.toString(),
+      status: pair.status,
+      matchType: pair.matchType,
+      similarity: pair.similarity,
+      reason: pair.reason,
+      matchedTextA: pair.matchedTextA,
+      matchedTextB: pair.matchedTextB,
+      createdAt: pair.createdAt,
+    };
+  }
+
+  async create(suggestion: { userId: string; suggestedUserId: string; status: 'pending' | 'sent' }): Promise<string> {
     if (!mongoose.Types.ObjectId.isValid(suggestion.userId) || !mongoose.Types.ObjectId.isValid(suggestion.suggestedUserId)) {
       throw new Error('Invalid userId or suggestedUserId');
     }
@@ -12,40 +28,36 @@ export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
       userId: new mongoose.Types.ObjectId(suggestion.userId),
       suggestedUserId: new mongoose.Types.ObjectId(suggestion.suggestedUserId),
       status: suggestion.status,
-      createdAt: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
     });
     return created._id.toString();
   }
 
-  async findByIds(userId: string, suggestedUserId: string): Promise<ISuggestedPair | null> {
+  async findByIds(userId: string, suggestedUserId: string): Promise<SuggestedPair | null> {
     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(suggestedUserId)) {
       return null;
     }
-    return await SuggestedPairModel.findOne({
+    const pair = await SuggestedPairModel.findOne({
       userId: new mongoose.Types.ObjectId(userId),
       suggestedUserId: new mongoose.Types.ObjectId(suggestedUserId),
+      status: { $in: ['pending', 'sent'] },
     }).exec();
+    return pair ? this.toDomain(pair) : null;
   }
 
-  async findPending(): Promise<ISuggestedPair[]> {
-    return await SuggestedPairModel.find({ status: 'pending' })
-      .populate('userId', 'name')
-      .populate('suggestedUserId', 'name profileImageUrl category')
-      .exec();
+  async findPending(validateIds: boolean = false): Promise<SuggestedPair[]> {
+    let pairs = await SuggestedPairModel.find({ status: 'pending' }).exec();
+    if (validateIds) {
+      pairs = pairs.filter(pair => mongoose.Types.ObjectId.isValid(pair.userId) && mongoose.Types.ObjectId.isValid(pair.suggestedUserId));
+    }
+    return pairs.map(pair => this.toDomain(pair));
   }
 
-  async findPendingWithValidIds(): Promise<ISuggestedPair[]> {
-    const pairs = await SuggestedPairModel.find({ status: 'pending' })
-      .populate('userId', 'name')
-      .populate('suggestedUserId', 'name profileImageUrl category')
-      .exec();
-    return pairs.filter(pair =>
-      mongoose.Types.ObjectId.isValid(pair.userId) &&
-      mongoose.Types.ObjectId.isValid(pair.suggestedUserId)
-    );
+  async findPendingWithValidIds(): Promise<SuggestedPair[]> {
+    return this.findPending(true);
   }
 
-  async updateStatus(id: string, status: 'pending' | 'sent' | 'rejected'): Promise<void> {
+  async updateStatus(id: string, status: 'pending' | 'sent'): Promise<void> {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error('Invalid pair ID');
     }

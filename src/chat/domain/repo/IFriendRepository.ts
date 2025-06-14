@@ -1,5 +1,5 @@
-//src/chat/domain/repo/IFriendRepository.ts
-import { Friend } from '../../infra/database/models/FriendModel';
+// src/chat/domain/repo/IFriendRepository.ts
+import { Friend } from '../entities/Friend';
 
 export interface IFriendRepository {
   addFriend(userId: string, friendId: string): Promise<void>;
