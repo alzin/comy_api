@@ -7,7 +7,7 @@ export interface SuggestedUser {
 }
 
 export interface BotMessage {
-  id?: string; // Optional to match messageService.ts
+  id?: string; 
   senderId: string;
   content: string;
   chatId: string;

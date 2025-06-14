@@ -1,28 +1,22 @@
-// src/chat/infra/database/models/SuggestedPairModel.ts
 import mongoose, { Schema, Document } from 'mongoose';
+import { SuggestedPair } from '../../../domain/entities/SuggestedPair';
 
-export interface ISuggestedPair extends Document {
+export interface ISuggestedPairMongoose extends Document, Omit<SuggestedPair, '_id' | 'userId' | 'suggestedUserId'> {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   suggestedUserId: mongoose.Types.ObjectId;
-  status: 'pending' | 'sent' | 'rejected'; 
-  matchType: string;
-  similarity: number;
-  reason: string;
-  matchedTextA: string;
-  matchedTextB: string;
-  createdAt: string;
 }
 
-const SuggestedPairSchema = new Schema<ISuggestedPair>({
+const SuggestedPairSchema = new Schema<ISuggestedPairMongoose>({
   userId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
   suggestedUserId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
-  status: { type: String, enum: ['pending', 'sent', 'rejected'], required: true }, 
+  status: { type: String, enum: ['pending', 'sent'], required: true },
   matchType: { type: String, default: '' },
   similarity: { type: Number, default: 0 },
   reason: { type: String, default: '' },
   matchedTextA: { type: String, default: '' },
   matchedTextB: { type: String, default: '' },
-  createdAt: { type: String, default: () => new Date().toISOString() },
+  createdAt: { type: String, default: () => new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) },
 });
 
-export const SuggestedPairModel = mongoose.model<ISuggestedPair>('SuggestedPair', SuggestedPairSchema);
+export const SuggestedPairModel = mongoose.model<ISuggestedPairMongoose>('SuggestedPair', SuggestedPairSchema);

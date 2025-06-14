@@ -1,11 +1,26 @@
-// src/chat/infra/repo/MongoSuggestedPairRepository.ts
 import mongoose from 'mongoose';
 import { SuggestedPairModel } from '../database/models/SuggestedPairModel';
 import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository';
 import { SuggestedPair } from '../../domain/entities/SuggestedPair';
+import { ISuggestedPairMongoose } from '../database/models/SuggestedPairModel';
 
 export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
-  async create(suggestion: { userId: string; suggestedUserId: string; status: 'pending' | 'sent'| 'rejected' }): Promise<string> {
+  private toDomain(pair: ISuggestedPairMongoose): SuggestedPair {
+    return {
+      _id: pair._id.toString(),
+      userId: pair.userId.toString(),
+      suggestedUserId: pair.suggestedUserId.toString(),
+      status: pair.status,
+      matchType: pair.matchType,
+      similarity: pair.similarity,
+      reason: pair.reason,
+      matchedTextA: pair.matchedTextA,
+      matchedTextB: pair.matchedTextB,
+      createdAt: pair.createdAt,
+    };
+  }
+
+  async create(suggestion: { userId: string; suggestedUserId: string; status: 'pending' | 'sent' }): Promise<string> {
     if (!mongoose.Types.ObjectId.isValid(suggestion.userId) || !mongoose.Types.ObjectId.isValid(suggestion.suggestedUserId)) {
       throw new Error('Invalid userId or suggestedUserId');
     }
@@ -13,7 +28,7 @@ export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
       userId: new mongoose.Types.ObjectId(suggestion.userId),
       suggestedUserId: new mongoose.Types.ObjectId(suggestion.suggestedUserId),
       status: suggestion.status,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
     });
     return created._id.toString();
   }
@@ -25,58 +40,24 @@ export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
     const pair = await SuggestedPairModel.findOne({
       userId: new mongoose.Types.ObjectId(userId),
       suggestedUserId: new mongoose.Types.ObjectId(suggestedUserId),
-      status: { $in: ['pending', 'sent','rejected'] },
+      status: { $in: ['pending', 'sent'] },
     }).exec();
-    if (!pair) return null;
-    return {
-      _id: pair._id.toString(),
-      userId: pair.userId.toString(),
-      suggestedUserId: pair.suggestedUserId.toString(),
-      status: pair.status as 'pending' | 'sent'| 'rejected',
-      matchType: pair.matchType,
-      similarity: pair.similarity,
-      reason: pair.reason,
-      matchedTextA: pair.matchedTextA,
-      matchedTextB: pair.matchedTextB,
-      createdAt: pair.createdAt,
-    };
+    return pair ? this.toDomain(pair) : null;
   }
 
-  async findPending(): Promise<SuggestedPair[]> {
-    const pairs = await SuggestedPairModel.find({ status: 'pending' }).exec();
-    return pairs.map(pair => ({
-      _id: pair._id.toString(),
-      userId: pair.userId.toString(),
-      suggestedUserId: pair.suggestedUserId.toString(),
-      status: pair.status as 'pending',
-      matchType: pair.matchType,
-      similarity: pair.similarity,
-      reason: pair.reason,
-      matchedTextA: pair.matchedTextA,
-      matchedTextB: pair.matchedTextB,
-      createdAt: pair.createdAt,
-    }));
+  async findPending(validateIds: boolean = false): Promise<SuggestedPair[]> {
+    let pairs = await SuggestedPairModel.find({ status: 'pending' }).exec();
+    if (validateIds) {
+      pairs = pairs.filter(pair => mongoose.Types.ObjectId.isValid(pair.userId) && mongoose.Types.ObjectId.isValid(pair.suggestedUserId));
+    }
+    return pairs.map(pair => this.toDomain(pair));
   }
 
   async findPendingWithValidIds(): Promise<SuggestedPair[]> {
-    const pairs = await SuggestedPairModel.find({ status: 'pending' }).exec();
-    return pairs
-      .filter(pair => mongoose.Types.ObjectId.isValid(pair.userId) && mongoose.Types.ObjectId.isValid(pair.suggestedUserId))
-      .map(pair => ({
-        _id: pair._id.toString(),
-        userId: pair.userId.toString(),
-        suggestedUserId: pair.suggestedUserId.toString(),
-        status: pair.status as 'pending',
-        matchType: pair.matchType,
-        similarity: pair.similarity,
-        reason: pair.reason,
-        matchedTextA: pair.matchedTextA,
-        matchedTextB: pair.matchedTextB,
-        createdAt: pair.createdAt,
-      }));
+    return this.findPending(true);
   }
 
-  async updateStatus(id: string, status: 'pending' | 'sent'| 'rejected'): Promise<void> {
+  async updateStatus(id: string, status: 'pending' | 'sent'): Promise<void> {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error('Invalid pair ID');
     }

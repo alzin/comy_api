@@ -1,10 +1,9 @@
 // src/chat/domain/entities/SuggestedPair.ts
 export interface SuggestedPair {
-  _id: any;
-  id?: string;
-  userId: any;
-  suggestedUserId: any;
-  status: 'pending' | 'sent'| 'rejected' ;
+  _id: string;
+  userId: string;
+  suggestedUserId: string;
+  status: 'pending' | 'sent';
   matchType?: string;
   similarity?: number;
   reason?: string;
