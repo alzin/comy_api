@@ -14,7 +14,7 @@ export class SendMessageUseCase {
     private readonly socketService: ISocketService,
     private readonly generateBotResponseUseCase: GenerateBotResponseUseCase,
     private readonly userRepository: IUserRepository
-  ) { }
+  ) {}
 
   private truncateContent(content: string): string {
     return content.length > 20 ? content.substring(0, 20) : content;
@@ -27,7 +27,6 @@ export class SendMessageUseCase {
       throw new Error('Message content cannot be empty');
     }
 
-    // Validate IDs using repository methods
     if (!(await this.chatRepository.isValidId(chatId))) {
       throw new Error(`Invalid chatId: ${chatId}`);
     }
@@ -49,7 +48,25 @@ export class SendMessageUseCase {
     const senderName = sender.name || 'Unknown User';
     const senderProfileImageUrl = sender.profileImageUrl;
 
-    const message: Message = {
+    const message = await this.createMessage(senderId, senderName, content, chatId, senderProfileImageUrl);
+    const savedMessage = await this.sendMessage(message, chatId);
+
+    const botId1 = CONFIG.BOT_ID;
+    const botId2 = CONFIG.ADMIN;
+
+    if (botId1 && chat.users.some(user => user.id === botId1)) {
+      await this.handleBotResponse(chatId, content, botId1);
+    }
+
+    if (botId2 && chat.users.some(user => user.id === botId2)) {
+      await this.handleBotResponse(chatId, content, botId2);
+    }
+
+    return savedMessage;
+  }
+
+  private async createMessage(senderId: string, senderName: string, content: string, chatId: string, senderProfileImageUrl?: string): Promise<Message> {
+    return {
       id: await this.messageRepository.generateId(),
       senderId,
       senderName,
@@ -61,75 +78,36 @@ export class SendMessageUseCase {
       isSuggested: false,
       senderProfileImageUrl,
     };
+  }
 
-    const savedMessage = await this.messageRepository.create(message);
-    const latestMessage: LatestMessage = {
+  private createLatestMessage(savedMessage: Message): LatestMessage {
+    return {
       id: savedMessage.id,
       content: this.truncateContent(savedMessage.content),
       createdAt: savedMessage.createdAt,
       readBy: savedMessage.readBy,
     };
+  }
+
+  private async sendMessage(message: Message, chatId: string): Promise<Message> {
+    const savedMessage = await this.messageRepository.create(message);
+    const latestMessage = this.createLatestMessage(savedMessage);
     await this.chatRepository.update(chatId, { latestMessage });
-
     this.socketService.emitMessage(chatId, savedMessage);
-
-    const botId1 = CONFIG.BOT_ID;
-    const botId2 = CONFIG.ADMIN;
-
-    if (botId1 && chat.users.some(user => user.id === botId1)) {
-      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, botId1);
-      if (botResponse) {
-        const botMessage: Message = {
-          id: await this.messageRepository.generateId(),
-          senderId: botId1,
-          senderName: 'COMY オフィシャル AI',
-          content: botResponse,
-          chatId,
-          readBy: [botId1],
-          createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-          isMatchCard: false,
-          isSuggested: false,
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
-        };
-        const savedBotMessage = await this.messageRepository.create(botMessage);
-        const botLatestMessage: LatestMessage = {
-          id: savedBotMessage.id,
-          content: this.truncateContent(savedBotMessage.content),
-          createdAt: savedBotMessage.createdAt,
-          readBy: savedBotMessage.readBy,
-        };
-        await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
-        this.socketService.emitMessage(chatId, savedBotMessage);
-      }
-    }
-
-    if (botId2 && chat.users.some(user => user.id === botId2)) {
-      const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, botId2);
-      if (botResponse) {
-        const botMessage: Message = {
-          id: await this.messageRepository.generateId(),
-          senderId: botId2,
-          senderName: 'COMY オフィシャル AI',
-          content: botResponse,
-          chatId,
-          readBy: [botId2],
-          createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-          isMatchCard: false,
-          isSuggested: false,
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
-        };
-        const savedBotMessage = await this.messageRepository.create(botMessage);
-        const botLatestMessage: LatestMessage = {
-          id: savedBotMessage.id,
-          content: this.truncateContent(savedBotMessage.content),
-          createdAt: savedBotMessage.createdAt,
-          readBy: savedBotMessage.readBy,
-        };
-        await this.chatRepository.update(chatId, { latestMessage: botLatestMessage });
-        this.socketService.emitMessage(chatId, savedBotMessage);
-      }
-    }
-
     return savedMessage;
+  }
+
+  private async handleBotResponse(chatId: string, content: string, botId: string): Promise<void> {
+    const botResponse = await this.generateBotResponseUseCase.execute(chatId, content, botId);
+    if (botResponse) {
+      const botMessage = await this.createMessage(
+        botId,
+        'COMY オフィシャル AI',
+        botResponse,
+        chatId,
+        'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg'
+      );
+      await this.sendMessage(botMessage, chatId);
+    }
   }
 }
