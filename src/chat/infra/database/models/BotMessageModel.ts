@@ -2,6 +2,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
+  relatedUserId: string;
   _id: Types.ObjectId;
   senderId: string;
   content: string; 
