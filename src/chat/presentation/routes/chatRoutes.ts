@@ -16,6 +16,7 @@ import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { CONFIG } from '../../../main/config/config';
+import { IBusinessSheetRepository } from '../../../domain/repo/IBusinessSheetRepository';
 
 interface ChatRouteDependencies {
   userRepository: IUserRepository;
@@ -24,6 +25,7 @@ interface ChatRouteDependencies {
   tokenService: any;
   virtualUserId: string;
   adminBotId: string;
+  businessSheetRepository: IBusinessSheetRepository
 }
 
 
@@ -82,7 +84,8 @@ export const setupChatRoutes = (
     socketService,
     suggestedPairRepo,
     dependencies.chatService.createChatUseCase,
-    dependencies.virtualUserId
+    dependencies.virtualUserId,
+    dependencies.businessSheetRepository
   );
 
   const router = express.Router();

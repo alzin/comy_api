@@ -76,7 +76,7 @@ export const messageTemplates: MessageTemplates = {
 
   // chatRoutes.ts templates (send-suggested-friend)
   suggestedFriendIntro: {
-    text: '${userName}さん、おはようございます！今週は${userName}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは「自社の強みテーブル」です。\nお繋がり希望しますか？',
+    text: '${userName}さん、おはようございます！今週は${userName}さんにおすすめの方で${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！\n${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは ${companyStrengths}です。\nお繋がり希望しますか？',
   },
 };
 

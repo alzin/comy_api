@@ -28,7 +28,7 @@ export class RespondToMatchUseCase {
     private readonly virtualUserId: string,
     private readonly adminBotId: string,
     private readonly messageRepository: IMessageRepository
-  ) {}
+  ) { }
 
   async execute(input: RespondToMatchInput): Promise<{ message: string; chatId?: string }> {
     const { messageId, response, userId } = input;
@@ -91,7 +91,7 @@ export class RespondToMatchUseCase {
           content: text,
           chatId,
           createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-          readBy: [this.virtualUserId, userId], 
+          readBy: [this.virtualUserId, userId],
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',

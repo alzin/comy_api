@@ -5,6 +5,7 @@ import { ISocketService } from '../../domain/services/ISocketService';
 import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairRepository';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from '../../config/MessageContentTemplates';
+import { IBusinessSheetRepository } from '../../../domain/repo/IBusinessSheetRepository';
 
 export class SendSuggestedFriendUseCase {
   constructor(
@@ -14,8 +15,10 @@ export class SendSuggestedFriendUseCase {
     private socketService: ISocketService,
     private suggestedPairRepo: ISuggestedPairRepository,
     private createChatUseCase: CreateChatUseCase,
-    private virtualUserId: string
-  ) {}
+    private virtualUserId: string,
+    private businessSheetRepository: IBusinessSheetRepository,
+
+  ) { }
 
   async execute(): Promise<{ message: string; sentCount: number }> {
     try {
@@ -28,6 +31,7 @@ export class SendSuggestedFriendUseCase {
 
         const user = await this.userRepository.findById(userId);
         const suggestedUser = await this.userRepository.findById(suggestedUserId);
+
 
         if (!user || !suggestedUser) {
           console.error(`User ${userId} or suggestedUser ${suggestedUserId} not found`);
@@ -55,10 +59,13 @@ export class SendSuggestedFriendUseCase {
           continue;
         }
 
+        const userBusinessSheet = await this.businessSheetRepository.findByUserId(suggestedUserId)
+
         const replacements = {
           userName: user.name || 'User',
           suggestedUserName: suggestedUser.name || 'Unknown',
           suggestedUserCategory: suggestedUser.category || 'unknown',
+          companyStrengths: userBusinessSheet.companyStrengths || '「自社の強みテーブル」'
         };
 
         const { text, images } = getTemplatedMessage('suggestedFriendIntro', replacements);
