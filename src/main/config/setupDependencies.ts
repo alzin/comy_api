@@ -197,5 +197,6 @@ export function setupDependencies(server: any) {
     adminBotId,
     chatController,
     messageController,
+    businessSheetRepository
   };
 }
