@@ -75,7 +75,7 @@ export function setupDependencies(server: any) {
   // Repository
   const userRepository = new MongoUserRepository();
   const chatRepository = new MongoChatRepository();
-  const messageRepository = new MongoMessageRepository(chatRepository); // Pass chatRepository
+  const messageRepository = new MongoMessageRepository(userRepository, chatRepository);
   const botMessageRepository = new MongoBotMessageRepository();
   const blacklistRepository = new MongoBlacklistRepository();
   const friendRepository = new MongoFriendRepository();

@@ -14,8 +14,9 @@ export abstract class BaseRepository<T extends Document> {
     }
   }
 
-  protected generateId(): string {
-    return new Types.ObjectId().toHexString();
+  protected generateId(asyncVersion: boolean = false): string | Promise<string> {
+  const id = new Types.ObjectId().toHexString();
+  return asyncVersion ? Promise.resolve(id) : id;
   }
 
   protected toObjectId(id: string): Types.ObjectId {

@@ -11,8 +11,8 @@ export class MongoBotMessageRepository extends BaseRepository<IBotMessageModel> 
   }
 
   generateId(): string {
-    return super.generateId();
-  }
+  return super.generateId() as string;
+}
 
   private toDomain(messageDoc: IBotMessageModel, suggestedUser?: UserDocument): BotMessage {
     return {

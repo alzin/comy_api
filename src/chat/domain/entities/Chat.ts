@@ -22,4 +22,5 @@ export interface Chat {
   createdAt: string;
   updatedAt: string;
   latestMessage?: LatestMessage | null;
+  profileImageUrl?: string;
 }
