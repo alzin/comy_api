@@ -6,4 +6,5 @@ export interface ISuggestedPairRepository {
   findByIds(userId: string, suggestedUserId: string): Promise<SuggestedPair | null>;
   findPending(): Promise<SuggestedPair[]>;
   updateStatus(id: string, status: 'pending' | 'sent' | 'rejected'): Promise<void>;
+  updateStatusesBatch(pairIds: string[], status: 'pending' | 'sent'): Promise<void>;
 }

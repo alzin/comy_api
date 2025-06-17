@@ -63,4 +63,23 @@ export class MongoSuggestedPairRepository implements ISuggestedPairRepository {
     }
     await SuggestedPairModel.findByIdAndUpdate(id, { status }).exec();
   }
+
+  async updateStatusesBatch(pairIds: string[], status: 'pending' | 'sent'): Promise<void> {
+    try {
+      const validPairIds = pairIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+      if (validPairIds.length !== pairIds.length) {
+        throw new Error('One or more invalid pair IDs provided');
+      }
+
+      const objectIds = validPairIds.map(id => new mongoose.Types.ObjectId(id));
+
+      await SuggestedPairModel.updateMany(
+        { _id: { $in: objectIds } },
+        { $set: { status } }
+      ).exec();
+    } catch (error) {
+      console.error('Error updating batch pair statuses:', error);
+      throw new Error('Failed to update batch pair statuses');
+    }
+  }
 }
