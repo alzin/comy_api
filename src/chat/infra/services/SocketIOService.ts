@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { Message } from '../../domain/entities/Message';
-import { BotMessage } from '../../domain/repo/IBotMessageRepository'; // تأكد من استيراد BotMessage
+import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
@@ -89,6 +89,17 @@ export class SocketIOService implements ISocketService {
       relatedUserId: messageToEmit.isSuggested || messageToEmit.isMatchCard ? messageToEmit.relatedUserId : undefined,
       images: messageToEmit.images || [],
     });
+  }
+
+  async emitMessagesBatch(messages: { chatId: string; message: BotMessage }[]): Promise<void> {
+    try {
+      messages.forEach(({ chatId, message }) => {
+        this.emitMessage(chatId, message);
+      });
+    } catch (error) {
+      console.error('Error emitting batch messages:', error);
+      throw new Error('Failed to emit batch messages');
+    }
   }
 
   initialize(): void {
