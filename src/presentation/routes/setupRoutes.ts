@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import { setupBusinessSheetRoutes } from './BusinessSheetRoutes';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { setupAuthRoutes } from './authRoutes';
@@ -8,8 +8,6 @@ import { createActiveUsersEmailRoutes } from './activeUsersEmailRoutes';
 import { CopilotRuntime, OpenAIAdapter, copilotRuntimeNodeHttpEndpoint } from '@copilotkit/runtime';
 import { LiteralClient } from '@literalai/client';
 import { setupChatRoutes } from '../../chat/presentation/routes/chatRoutes';
-import { ChatController } from '../../chat/presentation/controllers/ChatController';
-import { MessageController } from '../../chat/presentation/controllers/MessageController';
 import { CONFIG } from '../../main/config/config';
 
 const serviceAdapter = new OpenAIAdapter({
@@ -25,9 +23,7 @@ literalAiClient.instrumentation.openai({ client: serviceAdapter });
 export function setupRoutes(app: express.Application, dependencies: any) {
   app.get('/', (_, res) => res.status(200).send('OK'));
 
-  app.use(
-    authMiddleware(dependencies.tokenService, dependencies.userRepository),
-  );
+  app.use(authMiddleware(dependencies.tokenService, dependencies.userRepository));
 
   app.use('/create-checkout-session', setupStripeRoutes(dependencies.stripeController));
   app.use('/business-sheets', setupBusinessSheetRoutes(dependencies.businessSheetController));
@@ -35,8 +31,8 @@ export function setupRoutes(app: express.Application, dependencies: any) {
   app.use('/api/chats', setupChatRoutes(
     dependencies.chatController,
     dependencies.messageController,
-    dependencies,
-    dependencies.socketService
+    dependencies.respondTregarController,
+    dependencies.suggestFriendController
   ));
 
   app.get('/check-auth', (req: Request, res: Response) => {
