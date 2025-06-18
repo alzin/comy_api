@@ -105,7 +105,7 @@ export class SendMessageUseCase {
         'COMY オフィシャル AI',
         botResponse,
         chatId,
-        'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg'
+        CONFIG.BOT_IMAGE_URL
       );
       await this.sendMessage(botMessage, chatId);
     }

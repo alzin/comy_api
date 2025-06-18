@@ -10,7 +10,6 @@ import { CONFIG } from '../../../main/config/config';
 interface PopulatedUser {
   _id: Types.ObjectId;
   name: string;
-  email: string;
   profileImageUrl: string;
 }
 
@@ -28,11 +27,12 @@ type ChatUpdateFields = {
 };
 
 export class MongoChatRepository implements IChatRepository {
-  // Constants
   private readonly BOT_ID = CONFIG.BOT_ID;
   private readonly ADMIN_ID = CONFIG.ADMIN;
 
-  // Helper Methods
+  constructor() {
+  }
+
   private mapToLatestMessage(messageDoc: IMessageModel | IBotMessageModel | null): LatestMessage | null {
     if (!messageDoc) return null;
 
@@ -68,8 +68,8 @@ export class MongoChatRepository implements IChatRepository {
     return {
       id: userId,
       role: this.getUserRole(userId),
-      name: isPopulated(user) ? user.name : '',
-      image: isPopulated(user) ? user.profileImageUrl : '',
+      name: isPopulated(user) ? user.name || 'Unknown User' : 'Unknown User',
+      image: isPopulated(user) ? user.profileImageUrl || '' : '',
     };
   }
 
@@ -110,7 +110,6 @@ export class MongoChatRepository implements IChatRepository {
     }
   }
 
-  // Main Methods
   async isValidId(id: string): Promise<boolean> {
     return Types.ObjectId.isValid(id);
   }
@@ -119,7 +118,7 @@ export class MongoChatRepository implements IChatRepository {
     if (!(await this.isValidId(chatId))) return null;
 
     const chatDoc = await ChatModel.findById(chatId)
-      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .populate<{ users: PopulatedUser[] }>('users', 'name profileImageUrl')
       .exec();
 
     return chatDoc ? this.mapToChatDomain(chatDoc) : null;
@@ -138,7 +137,7 @@ export class MongoChatRepository implements IChatRepository {
     });
 
     const populatedChat = await ChatModel.findById(newChat._id)
-      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .populate<{ users: PopulatedUser[] }>('users', 'name profileImageUrl')
       .exec();
 
     if (!populatedChat) throw new Error('Failed to populate created chat');
@@ -149,7 +148,7 @@ export class MongoChatRepository implements IChatRepository {
     if (!(await this.isValidId(userId))) return [];
 
     const chats = await ChatModel.find({ users: new Types.ObjectId(userId) })
-      .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+      .populate<{ users: PopulatedUser[] }>('users', 'name profileImageUrl')
       .exec();
 
     return Promise.all(chats.map(chat => this.mapToChatDomain(chat)));
@@ -165,7 +164,7 @@ export class MongoChatRepository implements IChatRepository {
         $size: userIds.length,
       },
     })
-    .populate<{ users: PopulatedUser[] }>('users', 'name email profileImageUrl')
+    .populate<{ users: PopulatedUser[] }>('users', 'name profileImageUrl')
     .exec();
 
     return chat ? this.mapToChatDomain(chat) : null;

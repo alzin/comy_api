@@ -36,7 +36,7 @@ export const CONFIG = {
 
   API_KEY: process.env.API_KEY,
   LITERAL_API_KEY: process.env.LITERAL_API_KEY,
-
+  BOT_IMAGE_URL:process.env.BOT_IMAGE_URL
 
 
 

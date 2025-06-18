@@ -12,7 +12,7 @@ import { IChatRepository } from '../../domain/repo/IChatRepository';
 // Constants and Types
 const BOT_DETAILS = {
   name: 'COMY オフィシャル AI',
-  profileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg'
+  profileImageUrl: CONFIG.BOT_IMAGE_URL
 };
 
 type SenderDetails = {
