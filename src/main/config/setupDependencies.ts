@@ -68,7 +68,7 @@ import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggest
 
 
 
-export async function setupDependencies(server: any) {
+export function setupDependencies(server: any) {
 
   const virtualUserId = CONFIG.BOT_ID;
   if (!virtualUserId) {
@@ -192,7 +192,6 @@ export async function setupDependencies(server: any) {
 
   // // to be removed or fixed
   const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
-  await initializeVirtualUserUseCase.execute();
 
 
   // controllers
@@ -254,6 +253,8 @@ export async function setupDependencies(server: any) {
     chatController,
     messageController,
     respondTregarController,
-    suggestFriendController
+    suggestFriendController,
+
+    initializeVirtualUserUseCase
   };
 }

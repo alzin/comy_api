@@ -19,6 +19,9 @@ export async function startServer() {
 
   const dependencies = setupDependencies(server);
 
+  // // to be removed or fixed
+  await dependencies.initializeVirtualUserUseCase.execute();
+
   setupRoutes(app, dependencies);
 
   return new Promise<void>((resolve) => {
