@@ -2,7 +2,6 @@ import { CONFIG } from "./config"
 
 //services
 import { SocketIOService } from '../../chat/infra/services/SocketIOService';
-import { VirtualChatService } from '../../chat/infra/services/VirtualChatService';
 import { NodemailerEmailService } from '../../infra/services/NodemailerEmailService';
 import { BcryptPasswordHasher } from '../../infra/services/BcryptPasswordHasher';
 import { JwtTokenService } from '../../infra/services/JwtTokenService';
@@ -97,7 +96,6 @@ export function setupDependencies(server: any) {
   // services
   const socketService = new SocketIOService(server, userRepository, messageRepository);
   socketService.initialize();
-  const virtualChatService = new VirtualChatService();
   const emailService = new NodemailerEmailService();
   const encryptionService = new BcryptPasswordHasher();
   const tokenService = new JwtTokenService();
