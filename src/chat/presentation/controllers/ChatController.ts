@@ -1,4 +1,3 @@
-// File: src/chat/presentation/controllers/ChatController.ts
 import { Request, Response } from 'express';
 import { CreateChatUseCase } from '../../application/use-cases/CreateChatUseCase';
 import { GetUserChatsUseCase } from '../../application/use-cases/GetUserChatsUseCase';
@@ -69,7 +68,12 @@ export class ChatController {
       }
 
       const chats = await this.getUserChatsUseCase.execute(userId);
-      res.status(200).json(chats);
+      const response = {
+        isAdmin: userId === this.adminId, // Set isAdmin at the top level
+        chats: chats, // Include all chats with their full details
+      };
+
+      res.status(200).json(response);
     } catch (error: any) {
       console.error('error', error);
       res.status(500).json({ error: error.message });

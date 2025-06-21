@@ -2,11 +2,12 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { SocketIOService } from '../../infra/services/SocketIOService';
 import { UserModel } from '../../../infra/database/models/UserModel';
+import { CONFIG } from '../../../main/config/config';
 
 // Utility function to get sender profile image URL
 const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
   if (senderId === 'COMY オフィシャル AI') {
-    return 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg';
+    return CONFIG.BOT_IMAGE_URL ;
   }
   const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
   return user?.profileImageUrl;

@@ -6,6 +6,7 @@ import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../domain/entities/Message';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from '../../config/MessageContentTemplates';
+import { CONFIG } from '../../../main/config/config';
 
 interface RespondToSuggestionInput {
   messageId: string;
@@ -92,7 +93,7 @@ export class RespondToSuggestionUseCase {
           isMatchCard: false,
           isSuggested: false,
           status: 'pending',
-          senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+          senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
           images: [],
         };
         await this.botMessageRepository.create(botMessage);
@@ -113,7 +114,7 @@ export class RespondToSuggestionUseCase {
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+        senderProfileImageUrl:CONFIG.BOT_IMAGE_URL,
         images,
       };
       await this.botMessageRepository.create(imageBotMessage);
@@ -134,7 +135,7 @@ export class RespondToSuggestionUseCase {
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+      senderProfileImageUrl:CONFIG.BOT_IMAGE_URL,
       images: [],
     };
     await this.botMessageRepository.create(confirmBotMessage);
@@ -172,7 +173,7 @@ export class RespondToSuggestionUseCase {
       suggestedUserProfileImageUrl: user.profileImageUrl ,
       suggestedUserName: senderName,
       suggestedUserCategory: user.category || 'unknown',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+      senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
       relatedUserId: userId,
       images: [],
     };

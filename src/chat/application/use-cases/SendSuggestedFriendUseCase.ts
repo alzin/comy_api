@@ -6,6 +6,7 @@ import { ISuggestedPairRepository } from '../../domain/repo/ISuggestedPairReposi
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from '../../config/MessageContentTemplates';
 import { IBusinessSheetRepository } from '../../../domain/repo/IBusinessSheetRepository';
+import { CONFIG } from '../../../main/config/config';
 
 export class SendSuggestedFriendUseCase {
   constructor(
@@ -117,7 +118,7 @@ export class SendSuggestedFriendUseCase {
       suggestedUserProfileImageUrl: suggestedUser.profileImageUrl || '',
       suggestedUserName: suggestedUser.name || '',
       suggestedUserCategory: suggestedUser.category || 'unknown',
-      senderProfileImageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg',
+      senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
       relatedUserId: suggestedUserId,
       images: images || [],
     };
