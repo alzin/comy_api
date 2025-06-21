@@ -4,7 +4,7 @@ import { CONFIG } from "../../main/config/config";
 import { log } from "console";
 
 export class AuthController {
-  constructor(private authUseCase: IAuthUseCase) {}
+  constructor(private authUseCase: IAuthUseCase) { }
 
   private setTokenCookie(res: Response, name: string, token: string): void {
     const ONE_MINUTE_IN_MS = 60 * 1000;
@@ -18,7 +18,7 @@ export class AuthController {
       sameSite: "none",
       maxAge:
         name === CONFIG.REFRESH_TOKEN_COOKIE_NAME
-          ? ONE_WEEK_IN_MS 
+          ? ONE_WEEK_IN_MS
           : ONE_DAY_IN_MS,
     });
   }
