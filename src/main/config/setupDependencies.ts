@@ -53,6 +53,7 @@ import { RespondToSuggestionUseCase } from "../../chat/application/use-cases/Res
 import { RespondToMatchUseCase } from "../../chat/application/use-cases/RespondToMatchUseCase";
 import { SendSuggestedFriendUseCase } from "../../chat/application/use-cases/SendSuggestedFriendUseCase";
 import { InitializeVirtualUserUseCase } from "../../chat/application/use-cases/InitializeVirtualUserUseCase";
+import { CreateChatWithBotUseCase } from "../../chat/application/use-cases/CreateChatWithBotUseCase";
 
 
 // repository
@@ -190,6 +191,11 @@ export function setupDependencies(server: any) {
     businessSheetRepository
   );
 
+  const createChatWithBotUseCase = new CreateChatWithBotUseCase(
+    chatRepository,
+    createChatUseCase
+  )
+
   // // to be removed or fixed
   const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
 
@@ -214,7 +220,8 @@ export function setupDependencies(server: any) {
 
   const chatController = new ChatController(
     createChatUseCase,
-    getUserChatsUseCase
+    getUserChatsUseCase,
+    createChatWithBotUseCase
   );
 
   const messageController = new MessageController(
