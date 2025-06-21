@@ -99,7 +99,7 @@ export class MongoChatRepository implements IChatRepository {
       createdAt: chatDoc.createdAt.toString(),
       updatedAt: chatDoc.updatedAt.toString(),
       latestMessage,
-      profileImageUrl,
+      //profileImageUrl,
     };
   }
 

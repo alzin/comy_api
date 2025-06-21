@@ -31,6 +31,7 @@ export class GetUserChatsUseCase {
           ...chat,
           name: chatName,
           users: usersWithRoles.map(({ role, id, image }) => ({ role, id, image })),
+          isAdmin: userId === this.adminId,
         };
       })
     );
@@ -39,8 +40,8 @@ export class GetUserChatsUseCase {
   private assignUserRoles(users: ChatUser[], userId: string, isGroup: boolean): ChatUser[] {
     const isAdmin = userId === this.adminId;
     return users.map((user, index) => {
-      if (user.id === this.botId) return { ...user, role: 'bot' };
-      if (user.id === this.adminId) return { ...user, role: 'admin' };
+      if (user.id === this.botId) return { ...user, role: 'bot', image: CONFIG.BOT_IMAGE_URL };
+      if (user.id === this.adminId) return { ...user, role: 'admin', image: CONFIG.BOT_IMAGE_URL }; // Set admin image to CONFIG.BOT_IMAGE_URL
       if (isGroup && isAdmin) return { ...user, role: index === 0 ? 'user-a' : 'user-b' };
       return { ...user, role: user.id === userId ? 'user-b' : 'user-a' };
     });

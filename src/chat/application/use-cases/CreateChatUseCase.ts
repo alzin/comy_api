@@ -62,7 +62,7 @@ export class CreateChatUseCase {
       createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo'}),
       updatedAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo'}),
       latestMessage: null,
-      profileImageUrl: ''
+      //profileImageUrl: ''
     };
 
     return await this.chatRepository.create(chat);

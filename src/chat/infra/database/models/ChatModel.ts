@@ -9,6 +9,7 @@ export interface IChatModel extends Document<Types.ObjectId> {
   createdAt: string;
   updatedAt: string;
   latestMessage?: Types.ObjectId | null;
+  isAdmin?: boolean; // Added isAdmin attribute
 }
 
 const ChatSchema: Schema<IChatModel> = new Schema(
@@ -19,7 +20,8 @@ const ChatSchema: Schema<IChatModel> = new Schema(
     profileImageUrl: { type: String, default: '' },
     latestMessage: { type: Schema.Types.ObjectId, ref: 'Message', default: null },
     createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
-    updatedAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }
+    updatedAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
+    isAdmin: { type: Boolean, default: false }, // Added isAdmin with default value
   },
   { timestamps: false }
 );

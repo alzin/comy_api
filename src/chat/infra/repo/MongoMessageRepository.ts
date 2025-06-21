@@ -1,4 +1,3 @@
-// src/chat/infra/repo/MongoMessageRepository.ts
 import { Types } from 'mongoose';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { Message } from '../../domain/entities/Message';
@@ -29,9 +28,11 @@ export class MongoMessageRepository extends BaseRepository<IMessageModel> implem
   }
 
   private async getSenderDetails(senderId: string): Promise<SenderDetails> {
-    return senderId === CONFIG.BOT_ID 
-      ? BOT_DETAILS
-      : this.getUserSenderDetails(senderId);
+    // Check for both BOT_ID and ADMIN to return BOT_DETAILS
+    if (senderId === CONFIG.BOT_ID || senderId === CONFIG.ADMIN) {
+      return BOT_DETAILS;
+    }
+    return this.getUserSenderDetails(senderId);
   }
 
   private async getUserSenderDetails(userId: string): Promise<SenderDetails> {
