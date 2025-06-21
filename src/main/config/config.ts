@@ -39,8 +39,4 @@ export const CONFIG = {
   //BOT_IMAGE_URL:process.env.BOT_IMAGE_URL
   BOT_IMAGE_URL:"https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg"
 
-
-
-
-
 };
