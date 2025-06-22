@@ -1,4 +1,3 @@
-///src/chat/infra/database/models/ChatModel.ts
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IChatModel extends Document<Types.ObjectId> {
@@ -7,11 +6,10 @@ export interface IChatModel extends Document<Types.ObjectId> {
   isGroupChat: boolean;
   users: Types.ObjectId[];
   profileImageUrl: string;
-  profileImageUrls?: string[];
-  botProfileImageUrl?: string;
   createdAt: string;
   updatedAt: string;
   latestMessage?: Types.ObjectId | null;
+  isAdmin?: boolean; // Added isAdmin attribute
 }
 
 const ChatSchema: Schema<IChatModel> = new Schema(
@@ -20,13 +18,14 @@ const ChatSchema: Schema<IChatModel> = new Schema(
     isGroupChat: { type: Boolean, required: true },
     users: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
     profileImageUrl: { type: String, default: '' },
-    profileImageUrls: [{ type: String }],
-    botProfileImageUrl: { type: String },
     latestMessage: { type: Schema.Types.ObjectId, ref: 'Message', default: null },
     createdAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
-    updatedAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) }
+    updatedAt: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
+    isAdmin: { type: Boolean, default: false }, // Added isAdmin with default value
   },
   { timestamps: false }
 );
+
+ChatSchema.index({ users: 1 });
 
 export const ChatModel = mongoose.model<IChatModel>('Chat', ChatSchema);

@@ -1,4 +1,3 @@
-///src/chat/application/use-cases/GetUserChatsUseCase.ts
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat, ChatUser } from '../../domain/entities/Chat';
@@ -24,8 +23,7 @@ export class GetUserChatsUseCase {
 
     return Promise.all(
       chats.map(async (chat: Chat) => {
-        const usersWithDetails = await this.getUsersWithDetails(chat.users);
-        const filteredUsers = chat.isGroup ? usersWithDetails.filter((u) => u.id !== this.botId) : usersWithDetails;
+        const filteredUsers = chat.isGroup ? chat.users.filter((u) => u.id !== this.botId) : chat.users;
         const usersWithRoles = this.assignUserRoles(filteredUsers, userId, chat.isGroup);
         const chatName = this.getChatName(usersWithRoles, userId, chat.isGroup);
 
@@ -33,19 +31,7 @@ export class GetUserChatsUseCase {
           ...chat,
           name: chatName,
           users: usersWithRoles.map(({ role, id, image }) => ({ role, id, image })),
-        };
-      })
-    );
-  }
-
-  private async getUsersWithDetails(users: ChatUser[]): Promise<ChatUser[]> {
-    return Promise.all(
-      users.map(async (chatUser) => {
-        const user = await this.userRepository.findById(chatUser.id);
-        return {
-          ...chatUser,
-          name: user?.name || 'Unknown User',
-          image: user?.profileImageUrl,
+          isAdmin: userId === this.adminId,
         };
       })
     );
@@ -54,8 +40,8 @@ export class GetUserChatsUseCase {
   private assignUserRoles(users: ChatUser[], userId: string, isGroup: boolean): ChatUser[] {
     const isAdmin = userId === this.adminId;
     return users.map((user, index) => {
-      if (user.id === this.botId) return { ...user, role: 'bot' };
-      if (user.id === this.adminId) return { ...user, role: 'admin' };
+      if (user.id === this.botId) return { ...user, role: 'bot', image: CONFIG.BOT_IMAGE_URL };
+      if (user.id === this.adminId) return { ...user, role: 'admin', image: CONFIG.BOT_IMAGE_URL }; // Set admin image to CONFIG.BOT_IMAGE_URL
       if (isGroup && isAdmin) return { ...user, role: index === 0 ? 'user-a' : 'user-b' };
       return { ...user, role: user.id === userId ? 'user-b' : 'user-a' };
     });
