@@ -1,25 +1,45 @@
-///src/chat/infra/repo/MongoBlacklistRepository.ts
-import { IBlacklistRepository } from '../../../chat/domain/repo/IBlacklistRepository';
-import { BlacklistModel } from '../database/models/BlacklistModel';
+import { IBlacklistRepository } from '../../domain/repo/IBlacklistRepository';
+import { BlacklistModel, IBlacklistModel } from '../database/models/BlacklistModel';
+import { BaseRepository } from '../repositories/base.repository';
+import { formatDate } from '../utils/mongoUtils';
+import { toBlacklistDomain } from '../mappers/BlacklistMapper';
 
-export class MongoBlacklistRepository implements IBlacklistRepository {
-  add(userId: string, suggestedUserId: string) {
-      throw new Error('Method not implemented.');
+export class MongoBlacklistRepository extends BaseRepository<IBlacklistModel> implements IBlacklistRepository {
+  constructor() {
+    super(BlacklistModel);
   }
+
   async addToBlacklist(userId: string, blacklistedUserId: string): Promise<void> {
-    await BlacklistModel.create({
-      userId,
-      blockedUserId: blacklistedUserId,
-    });
+    this.validateObjectId(userId, 'userId');
+    this.validateObjectId(blacklistedUserId, 'blacklistedUserId');
+
+    await this.executeQuery(
+      BlacklistModel.create({
+        userId: this.toObjectId(userId),
+        blockedUserId: this.toObjectId(blacklistedUserId),
+        createdAt: formatDate(),
+      }),
+    );
   }
 
   async getBlacklistedUsers(userId: string): Promise<string[]> {
-    const blacklisted = await BlacklistModel.find({ userId }).select('blockedUserId');
-    return blacklisted.map(entry => entry.blockedUserId.toString());
+    this.validateObjectId(userId, 'userId');
+
+    const blacklisted = await this.executeQuery(
+      BlacklistModel.find({ userId: this.toObjectId(userId) }).select('blockedUserId').lean().exec(),
+    );
+
+    return blacklisted.map(entry => toBlacklistDomain(entry.blockedUserId));
   }
 
-  async isBlacklisted(userId: string, blockedUserId: string): Promise<boolean> {
-    const entry = await BlacklistModel.findOne({ userId, blockedUserId });
-    return !!entry; 
+  async isBlacklisted(userId: string, blacklistedUserId: string): Promise<boolean> {
+    this.validateObjectId(userId, 'userId');
+    this.validateObjectId(blacklistedUserId, 'blacklistedUserId');
+
+    const entry = await this.executeQuery(
+      BlacklistModel.findOne({ userId: this.toObjectId(userId), blockedUserId: this.toObjectId(blacklistedUserId) }).exec(),
+    );
+
+    return !!entry;
   }
 }
