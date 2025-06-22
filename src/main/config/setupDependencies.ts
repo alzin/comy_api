@@ -225,7 +225,6 @@ export function setupDependencies(server: any) {
   const messageController = new MessageController(
     sendMessageUseCase,
     getMessagesUseCase,
-    socketService
   );
 
   const respondTregarController = new RespondTregarController(
