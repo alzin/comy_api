@@ -39,7 +39,7 @@ export class MessageController {
         return;
       }
 
-      if (!chatId || !content) {
+      if (!chatId || !content || content.trim() === '') {
         res.status(400).json({ message: 'Missing required fields: chatId or content' });
         return;
       }
