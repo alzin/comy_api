@@ -123,6 +123,7 @@ export class SendSuggestedFriendUseCase {
       senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
       relatedUserId: suggestedUserId,
       images: images || [],
+      senderName: ''
     };
 
     const savedMessage = await this.botMessageRepo.create(botMessage);

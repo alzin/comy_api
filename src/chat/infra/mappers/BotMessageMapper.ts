@@ -7,6 +7,7 @@ export function toBotMessageDomain(messageDoc: IBotMessageModel, suggestedUser?:
   return {
     id: messageDoc._id.toString(),
     senderId: messageDoc.senderId.toString(),
+    senderName: suggestedUser?.name || 'Unknown', 
     content: messageDoc.content || '',
     chatId: messageDoc.chatId.toString(),
     createdAt: messageDoc.createdAt.toString(),
