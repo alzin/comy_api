@@ -20,7 +20,7 @@ export class MessageController {
         res.status(401).json({ message: 'Unauthorized' });
         return;
       }
-      const messages = await this.getMessagesUseCase.execute(chatId, userId);
+      const messages = await this.getMessagesUseCase.execute(userId, chatId);
       res.status(200).json(messages);
 
     } catch (error: any) {
