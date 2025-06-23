@@ -139,7 +139,7 @@ export function setupDependencies(server: any) {
   const updateReferrerNameUseCase = new UpdateReferrerNameUseCase(userRepository);
   const checkSubscriptionStatusUseCase = new CheckSubscriptionStatusUseCase(userRepository);
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
-  const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
+  const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository);
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 
   const suggestFriendsUseCase = new SuggestFriendsUseCase(

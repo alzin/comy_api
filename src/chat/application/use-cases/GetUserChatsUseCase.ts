@@ -1,23 +1,17 @@
 import { IChatRepository } from '../../domain/repo/IChatRepository';
-import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { Chat, ChatUser } from '../../domain/entities/Chat';
 import { CONFIG } from '../../../main/config/config';
 
 export class GetUserChatsUseCase {
   private readonly chatRepository: IChatRepository;
-  private readonly userRepository: IUserRepository;
   private readonly botId: string = CONFIG.BOT_ID;
   private readonly adminId: string = CONFIG.ADMIN;
 
-  constructor(chatRepository: IChatRepository, userRepository: IUserRepository) {
+  constructor(chatRepository: IChatRepository) {
     this.chatRepository = chatRepository;
-    this.userRepository = userRepository;
   }
 
   async execute(userId: string): Promise<Chat[]> {
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
 
     const chats = await this.chatRepository.findByUserId(userId);
 
