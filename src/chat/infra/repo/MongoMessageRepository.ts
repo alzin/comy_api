@@ -5,14 +5,10 @@ import MessageModel, { IMessageModel } from '../database/models/MessageModel';
 import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 import { BaseRepository } from '../repositories/base.repository';
 import { IUserRepository } from '../../../domain/repo/IUserRepository';
-import { CONFIG } from '../../../main/config/config';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
-
-// Constants and Types
-const BOT_DETAILS = {
-  name: 'COMY オフィシャル AI',
-  profileImageUrl: CONFIG.BOT_IMAGE_URL
-};
+import { CONFIG } from '../../../main/config/config';
+import { toMessageDomain, toBotMessageDomain } from '../mappers/MessageMapper';
+import { toObjectId } from '../utils/mongoUtils';
 
 type SenderDetails = {
   name: string;
@@ -22,109 +18,54 @@ type SenderDetails = {
 export class MongoMessageRepository extends BaseRepository<IMessageModel> implements IMessageRepository {
   constructor(
     private userRepository: IUserRepository,
-    private chatRepository: IChatRepository
+    private chatRepository: IChatRepository,
   ) {
     super(MessageModel);
   }
 
-  private async getSenderDetails(senderId: string): Promise<SenderDetails> {
-    // Check for both BOT_ID and ADMIN to return BOT_DETAILS
-    if (senderId === CONFIG.BOT_ID || senderId === CONFIG.ADMIN) {
-      return BOT_DETAILS;
-    }
-    return this.getUserSenderDetails(senderId);
+  private validateMultipleObjectIds(ids: { id: string; field?: string }[]): void {
+    ids.forEach(({ id, field }) => this.validateObjectId(id, field));
   }
 
-  private async getUserSenderDetails(userId: string): Promise<SenderDetails> {
-    const user = await this.userRepository.findById(userId);
+  private prepareReadBy(readBy: string[], userId?: string): Types.ObjectId[] {
+    const combined = [...new Set([...readBy, ...(userId ? [userId] : [])])];
+    return combined.map(id => toObjectId(id));
+  }
+
+  private async updateReadByForModel(model: any, idField: string, idValue: string, userId: Types.ObjectId): Promise<boolean> {
+    const result = await this.runQuery(
+      model.findOneAndUpdate(
+        { [idField]: toObjectId(idValue) },
+        { $addToSet: { readBy: userId } },
+        { new: true },
+      ).exec(),
+    );
+    return !!result;
+  }
+
+  private async getSenderDetails(senderId: string): Promise<SenderDetails> {
+    if (senderId === CONFIG.BOT_ID || senderId === CONFIG.ADMIN) {
+      return {
+        name: 'COMY オフィシャル AI',
+        profileImageUrl: CONFIG.BOT_IMAGE_URL,
+      };
+    }
+    const user = await this.userRepository.findById(senderId);
     return {
       name: user?.name || 'Unknown User',
-      profileImageUrl: user?.profileImageUrl || ''
+      profileImageUrl: user?.profileImageUrl || '',
     };
   }
 
-  private toDomain(messageDoc: IMessageModel): Message {
+  private prepareMessageDoc(message: Message, senderName: string, profileImageUrl: string, userId?: string): Partial<IMessageModel> {
     return {
-      id: messageDoc._id.toString(),
-      senderId: messageDoc.senderId,
-      senderName: messageDoc.senderName,
-      content: messageDoc.content || '',
-      chatId: messageDoc.chat.toString(),
-      createdAt: messageDoc.createdAt.toString(),
-      readBy: messageDoc.readBy.map(id => id.toString()),
-      isMatchCard: messageDoc.isMatchCard || false,
-      isSuggested: messageDoc.isSuggested || false,
-      suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
-      suggestedUserName: messageDoc.suggestedUserName,
-      suggestedUserCategory: messageDoc.suggestedUserCategory,
-      status: messageDoc.status,
-      senderProfileImageUrl: messageDoc.senderProfileImageUrl,
-      relatedUserId: messageDoc.relatedUserId?.toString(),
-      images: messageDoc.images || [],
-    };
-  }
-
-  private convertBotMessageToDomain(botMsg: IBotMessageModel): Message {
-    const relatedUserId = botMsg.suggestedUser 
-      ? (botMsg.suggestedUser as unknown as Types.ObjectId).toString()
-      : botMsg.relatedUserId?.toString();
-
-    return {
-      ...this.getBaseBotMessageFields(botMsg),
-      suggestedUserName: botMsg.suggestedUserName,
-      suggestedUserCategory: botMsg.suggestedUserCategory,
-      relatedUserId,
-    };
-  }
-
-  private getBaseBotMessageFields(botMsg: IBotMessageModel): Omit<Message, 'suggestedUserName' | 'suggestedUserCategory' | 'relatedUserId'> {
-    return {
-      id: botMsg._id.toString(),
-      senderId: botMsg.senderId || CONFIG.BOT_ID,
-      senderName: BOT_DETAILS.name,
-      content: botMsg.content || '',
-      chatId: botMsg.chatId.toString(),
-      createdAt: botMsg.createdAt.toString(),
-      readBy: botMsg.readBy.map(id => id.toString()),
-      isMatchCard: botMsg.isMatchCard || false,
-      isSuggested: botMsg.isSuggested || false,
-      suggestedUserProfileImageUrl: botMsg.suggestedUserProfileImageUrl,
-      status: botMsg.status,
-      senderProfileImageUrl: BOT_DETAILS.profileImageUrl,
-      images: botMsg.images || [],
-    };
-  }
-
-  async create(message: Message, userId?: string): Promise<Message> {
-    this.validateMessageIds(message, userId);
-    
-    const { name, profileImageUrl } = await this.getSenderDetails(message.senderId);
-    const messageDoc = this.createMessageDocument(message, name, profileImageUrl, userId);
-    
-    const savedDoc = await this.executeQuery(messageDoc.save());
-    return this.toDomain(savedDoc);
-  }
-
-  private validateMessageIds(message: Message, userId?: string) {
-    this.validateObjectId(message.chatId, 'chatId');
-    this.validateObjectId(message.senderId, 'senderId');
-    if (userId) this.validateObjectId(userId, 'userId');
-  }
-
-  private createMessageDocument(
-    message: Message, 
-    senderName: string, 
-    profileImageUrl: string, 
-    userId?: string
-  ): IMessageModel {
-    return new MessageModel({
-      _id: this.getMessageId(message.id),
+      _id: message.id ? toObjectId(message.id) : new Types.ObjectId(),
       senderId: message.senderId,
       senderName,
       content: message.content,
-      chat: this.toObjectId(message.chatId),
-      createdAt: this.getMessageDate(message.createdAt),
-      readBy: this.getReadByList(message.readBy, userId),
+      chat: toObjectId(message.chatId),
+      createdAt: message.createdAt || new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+      readBy: this.prepareReadBy(message.readBy, userId),
       isMatchCard: message.isMatchCard || false,
       isSuggested: message.isSuggested || false,
       suggestedUserProfileImageUrl: message.suggestedUserProfileImageUrl,
@@ -132,128 +73,87 @@ export class MongoMessageRepository extends BaseRepository<IMessageModel> implem
       suggestedUserCategory: message.isMatchCard ? message.suggestedUserCategory : undefined,
       status: message.isMatchCard ? (message.status || 'pending') : undefined,
       senderProfileImageUrl: message.senderProfileImageUrl || profileImageUrl,
-      relatedUserId: this.getRelatedUserId(message),
+      relatedUserId: (message.isMatchCard || message.isSuggested) && message.relatedUserId ? message.relatedUserId : undefined,
       images: message.images || [],
-    });
+    };
   }
 
-  private getMessageId(id?: string): Types.ObjectId {
-    return id ? this.toObjectId(id) : new Types.ObjectId();
+  async generateId(): Promise<string> {
+    return new Types.ObjectId().toString();
   }
 
-  private getMessageDate(createdAt?: string): string {
-    return createdAt || new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-  }
+  async create(message: Message, userId?: string): Promise<Message> {
+    this.validateMultipleObjectIds([
+      { id: message.chatId, field: 'chatId' },
+      { id: message.senderId, field: 'senderId' },
+      ...(userId ? [{ id: userId, field: 'userId' }] : []),
+    ]);
 
-  private getReadByList(readBy: string[], userId?: string): Types.ObjectId[] {
-    const combined = [...new Set([...readBy, ...(userId ? [userId] : [])])];
-    return combined.map(id => this.toObjectId(id));
-  }
+    const { name, profileImageUrl } = await this.getSenderDetails(message.senderId);
+    const messageDoc = new MessageModel(this.prepareMessageDoc(message, name, profileImageUrl, userId));
+    const savedDoc = await this.runQuery(messageDoc.save());
 
-  private getRelatedUserId(message: Message): Types.ObjectId | undefined {
-    return (message.isMatchCard || message.isSuggested) && message.relatedUserId 
-      ? this.toObjectId(message.relatedUserId)
-      : undefined;
+    return toMessageDomain(savedDoc);
   }
 
   async findByChatId(chatId: string, page: number = 1, limit: number = 20): Promise<Message[]> {
-    this.validateObjectId(chatId);
-    
+    this.validateMultipleObjectIds([{ id: chatId, field: 'chatId' }]);
+
     const [messages, botMessages] = await Promise.all([
-      this.fetchNormalMessages(chatId),
-      this.fetchBotMessages(chatId)
+      this.runQuery(
+        MessageModel.find({ chat: toObjectId(chatId) })
+          .sort({ createdAt: -1 })
+          .lean()
+          .exec(),
+      ).then(msgs => (msgs as IMessageModel[]).map(toMessageDomain)),
+      this.runQuery(
+        BotMessageModel.find({ chatId: toObjectId(chatId) })
+          .sort({ createdAt: -1 })
+          .lean()
+          .exec(),
+      ).then(msgs => (msgs as IBotMessageModel[]).map(toBotMessageDomain)),
     ]);
 
-    return this.mergeAndSortMessages(messages, botMessages);
-  }
-
-  private async fetchNormalMessages(chatId: string): Promise<Message[]> {
-    const messages = await this.executeQuery(
-      MessageModel.find({ chat: this.toObjectId(chatId) })
-        .sort({ createdAt: -1 })
-        .lean()
-        .exec() as Promise<IMessageModel[]>
-    );
-    return messages.map(this.toDomain);
-  }
-
-  private async fetchBotMessages(chatId: string): Promise<Message[]> {
-    const botMessages = await this.executeQuery(
-      BotMessageModel.find({ chatId: this.toObjectId(chatId) })
-        .sort({ createdAt: -1 })
-        .lean()
-        .exec() as Promise<IBotMessageModel[]>
-    );
-    return botMessages.map(msg => this.convertBotMessageToDomain(msg));
-  }
-
-  private mergeAndSortMessages(messages: Message[], botMessages: Message[]): Message[] {
-    return [...messages, ...botMessages]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...messages, ...botMessages].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async updateReadBy(messageId: string, userId: string): Promise<void> {
-    this.validateObjectIds(messageId, userId);
-    
-    const userObjectId = this.toObjectId(userId);
-    await this.updateMessageReadStatus(messageId, userObjectId) || 
-      await this.updateBotMessageReadStatus(messageId, userObjectId);
-  }
+    this.validateMultipleObjectIds([
+      { id: messageId, field: 'messageId' },
+      { id: userId, field: 'userId' },
+    ]);
 
-  private async updateMessageReadStatus(messageId: string, userId: Types.ObjectId): Promise<boolean> {
-    const result = await this.executeQuery(
-      MessageModel.findByIdAndUpdate(
-        this.toObjectId(messageId),
-        { $addToSet: { readBy: userId } },
-        { new: true }
-      ).exec()
-    );
-    return !!result;
-  }
-
-  private async updateBotMessageReadStatus(messageId: string, userId: Types.ObjectId): Promise<void> {
-    await this.executeQuery(
-      BotMessageModel.findByIdAndUpdate(
-        this.toObjectId(messageId),
-        { $addToSet: { readBy: userId } },
-        { new: true }
-      ).exec()
-    );
+    const userObjectId = toObjectId(userId);
+    const updated = await this.updateReadByForModel(MessageModel, '_id', messageId, userObjectId);
+    if (!updated) {
+      await this.updateReadByForModel(BotMessageModel, '_id', messageId, userObjectId);
+    }
   }
 
   async updateReadByForChat(chatId: string, userId: string): Promise<void> {
-    this.validateObjectIds(chatId, userId);
+    this.validateMultipleObjectIds([
+      { id: chatId, field: 'chatId' },
+      { id: userId, field: 'userId' },
+    ]);
 
-    const userObjectId = this.toObjectId(userId);
+    const userObjectId = toObjectId(userId);
     await Promise.all([
-      this.updateNormalMessagesReadStatus(chatId, userObjectId),
-      this.updateBotMessagesReadStatus(chatId, userObjectId)
+      this.runQuery(
+        MessageModel.updateMany(
+          { chat: toObjectId(chatId) },
+          { $addToSet: { readBy: userObjectId } },
+        ).exec(),
+      ),
+      this.runQuery(
+        BotMessageModel.updateMany(
+          { chatId: toObjectId(chatId) },
+          { $addToSet: { readBy: userObjectId } },
+        ).exec(),
+      ),
     ]);
   }
 
-  private async updateNormalMessagesReadStatus(chatId: string, userId: Types.ObjectId): Promise<void> {
-    await this.executeQuery(
-      MessageModel.updateMany(
-        { chat: this.toObjectId(chatId) },
-        { $addToSet: { readBy: userId } }
-      ).exec()
-    );
-  }
-
-  private async updateBotMessagesReadStatus(chatId: string, userId: Types.ObjectId): Promise<void> {
-    await this.executeQuery(
-      BotMessageModel.updateMany(
-        { chatId: this.toObjectId(chatId) },
-        { $addToSet: { readBy: userId } }
-      ).exec()
-    );
-  }
-
-  private validateObjectIds(...ids: string[]): void {
-    ids.forEach(id => this.validateObjectId(id));
-  }
-  
-  async generateId(): Promise<string> {
-    return new Types.ObjectId().toString();
+  protected async runQuery<T>(query: Promise<T>): Promise<T> {
+    return query;
   }
 }

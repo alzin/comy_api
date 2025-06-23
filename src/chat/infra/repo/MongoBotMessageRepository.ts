@@ -1,63 +1,30 @@
-// src/chat/infra/repo/MongoBotMessageRepository.ts
-import mongoose, { Types } from 'mongoose';
-import { IBotMessageRepository, BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
+import { Types } from 'mongoose';
+import { IBotMessageRepository, BotMessage } from '../../domain/repo/IBotMessageRepository';
 import BotMessageModel, { IBotMessageModel } from '../database/models/BotMessageModel';
 import { UserDocument } from '../../../infra/database/models/UserModel';
 import { BaseRepository } from '../repositories/base.repository';
+import { toBotMessageDomain } from '../mappers/BotMessageMapper';
+import { toObjectId } from '../utils/mongoUtils';
 
 export class MongoBotMessageRepository extends BaseRepository<IBotMessageModel> implements IBotMessageRepository {
   constructor() {
     super(BotMessageModel);
   }
 
-  generateId(): string {
-  return super.generateId() as string;
-}
-
-  private toDomain(messageDoc: IBotMessageModel, suggestedUser?: UserDocument): BotMessage {
-    return {
-      id: messageDoc._id.toString(),
-      senderId: messageDoc.senderId.toString(),
-      content: messageDoc.content || '',
-      chatId: messageDoc.chatId.toString(),
-      createdAt: messageDoc.createdAt.toString(),
-      readBy: messageDoc.readBy.map((id: Types.ObjectId) => id.toString()),
-      recipientId: messageDoc.recipientId?.toString(),
-      suggestedUser: suggestedUser ? {
-        _id: suggestedUser._id.toString(),
-        name: messageDoc.suggestedUserName || suggestedUser.name || '',
-        profileImageUrl: messageDoc.suggestedUserProfileImageUrl || suggestedUser.profileImageUrl || '',
-        category: messageDoc.suggestedUserCategory || suggestedUser.category || '',
-      } : undefined,
-      suggestionReason: messageDoc.suggestionReason,
-      status: messageDoc.status as 'pending' | 'accepted' | 'rejected',
-      isMatchCard: messageDoc.isMatchCard || false,
-      isSuggested: messageDoc.isSuggested || false,
-      suggestedUserProfileImageUrl: messageDoc.suggestedUserProfileImageUrl,
-      suggestedUserName: messageDoc.suggestedUserName,
-      suggestedUserCategory: messageDoc.suggestedUserCategory,
-      senderProfileImageUrl: messageDoc.senderProfileImageUrl,
-      relatedUserId: messageDoc.relatedUserId || (suggestedUser ? suggestedUser._id.toString() : undefined),
-      images: messageDoc.images || [],
-    };
+  private validateMultipleObjectIds(ids: { id: string; field: string }[]): void {
+    ids.forEach(({ id, field }) => this.validateObjectId(id, field));
   }
 
-  async create(botMessage: BotMessage): Promise<BotMessage> {
-    this.validateObjectId(botMessage.senderId, 'senderId');
-    this.validateObjectId(botMessage.chatId, 'chatId');
-    
-    if (botMessage.recipientId) this.validateObjectId(botMessage.recipientId, 'recipientId');
-    if (botMessage.suggestedUser) this.validateObjectId(botMessage.suggestedUser._id, 'suggestedUser._id');
-
-    const messageDoc = new BotMessageModel({
-      _id: botMessage.id ? this.toObjectId(botMessage.id) : new Types.ObjectId(),
-      senderId: this.toObjectId(botMessage.senderId),
+  private prepareBotMessageDoc(botMessage: BotMessage): Partial<IBotMessageModel> {
+    return {
+      _id: botMessage.id ? toObjectId(botMessage.id) : new Types.ObjectId(),
+      senderId: botMessage.senderId,
       content: botMessage.content,
-      chatId: this.toObjectId(botMessage.chatId),
+      chatId: toObjectId(botMessage.chatId),
       createdAt: botMessage.createdAt || new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-      readBy: botMessage.readBy.map(id => this.toObjectId(id)),
-      recipientId: botMessage.recipientId ? this.toObjectId(botMessage.recipientId) : undefined,
-      suggestedUser: botMessage.suggestedUser ? this.toObjectId(botMessage.suggestedUser._id) : undefined,
+      readBy: botMessage.readBy.map(id => toObjectId(id)),
+      recipientId: botMessage.recipientId,
+      suggestedUser: botMessage.suggestedUser ? toObjectId(botMessage.suggestedUser._id) : undefined,
       suggestionReason: botMessage.suggestionReason,
       status: botMessage.status || 'pending',
       isMatchCard: botMessage.isMatchCard || false,
@@ -68,58 +35,70 @@ export class MongoBotMessageRepository extends BaseRepository<IBotMessageModel> 
       senderProfileImageUrl: botMessage.senderProfileImageUrl,
       relatedUserId: botMessage.relatedUserId,
       images: botMessage.images || [],
-    });
+    };
+  }
 
-    const savedDoc = await this.executeQuery<IBotMessageModel>(messageDoc.save());
-    const populatedDoc = await BotMessageModel.populate(savedDoc, {
-      path: 'suggestedUser',
-      select: '_id name profileImageUrl category'
-    });
-    
-    return this.toDomain(
-      populatedDoc,
-      populatedDoc.suggestedUser as unknown as UserDocument
-    );
+  private async populateMessageDoc<T extends IBotMessageModel | null>(
+    doc: T,
+    fields: string = '_id name profileImageUrl category'
+  ): Promise<T> {
+    if (!doc) return doc;
+    return (await BotMessageModel.populate(doc, { path: 'suggestedUser', select: fields })) as T;
+  }
+
+  generateId(): string {
+    return super.generateId() as string;
+  }
+
+  async create(botMessage: BotMessage): Promise<BotMessage> {
+    this.validateMultipleObjectIds([
+      { id: botMessage.senderId, field: 'senderId' },
+      { id: botMessage.chatId, field: 'chatId' },
+      ...(botMessage.recipientId ? [{ id: botMessage.recipientId, field: 'recipientId' }] : []),
+      ...(botMessage.suggestedUser ? [{ id: botMessage.suggestedUser._id, field: 'suggestedUser._id' }] : []),
+    ]);
+
+    const messageDoc = new BotMessageModel(this.prepareBotMessageDoc(botMessage));
+    const savedDoc = await this.runQuery<IBotMessageModel>(messageDoc.save());
+    const populatedDoc = await this.populateMessageDoc(savedDoc) as IBotMessageModel & { suggestedUser?: UserDocument };
+
+    return toBotMessageDomain(populatedDoc, populatedDoc.suggestedUser);
+  }
+
+  protected async runQuery<T>(query: Promise<T>): Promise<T> {
+    return query;
   }
 
   async findByIdWithSuggestedUser(messageId: string): Promise<BotMessage | null> {
-    this.validateObjectId(messageId);
+    this.validateObjectId(messageId, 'messageId');
 
-    const messageDoc = await this.executeQuery<IBotMessageModel | null>(
-      BotMessageModel.findById(messageId)
-        .populate('suggestedUser', '_id name profileImageUrl category')
-        .exec()
+    const messageDoc = await this.runQuery<IBotMessageModel | null>(
+      BotMessageModel.findById(messageId).exec()
     );
+    const populatedDoc = await this.populateMessageDoc(messageDoc);
 
-    if (!messageDoc) return null;
+    if (!populatedDoc) return null;
 
-    return this.toDomain(
-      messageDoc,
-      messageDoc.suggestedUser as unknown as UserDocument
-    );
+    return toBotMessageDomain(populatedDoc, populatedDoc.suggestedUser as unknown as UserDocument);
   }
 
   async findById(id: string): Promise<BotMessage | null> {
-    this.validateObjectId(id);
+    this.validateObjectId(id, 'id');
 
-    const messageDoc = await this.executeQuery<IBotMessageModel | null>(
-      BotMessageModel.findById(id)
-        .populate('suggestedUser', '_id')
-        .exec()
+    const messageDoc = await this.runQuery<IBotMessageModel | null>(
+      BotMessageModel.findById(id).exec()
     );
+    const populatedDoc = await this.populateMessageDoc(messageDoc, '_id');
 
-    if (!messageDoc) return null;
+    if (!populatedDoc) return null;
 
-    return this.toDomain(
-      messageDoc,
-      messageDoc.suggestedUser as unknown as UserDocument
-    );
+    return toBotMessageDomain(populatedDoc, populatedDoc.suggestedUser as unknown as UserDocument);
   }
 
   async updateSuggestionStatus(id: string, status: 'accepted' | 'rejected'): Promise<void> {
-    this.validateObjectId(id);
+    this.validateObjectId(id, 'id');
 
-    const result = await this.executeQuery<IBotMessageModel | null>(
+    const result = await this.runQuery<IBotMessageModel | null>(
       BotMessageModel.findByIdAndUpdate(id, { status }, { new: true }).exec()
     );
 
@@ -129,14 +108,16 @@ export class MongoBotMessageRepository extends BaseRepository<IBotMessageModel> 
   }
 
   async updateReadBy(chatId: string, userId: string): Promise<void> {
-    this.validateObjectId(chatId);
-    this.validateObjectId(userId);
+    this.validateMultipleObjectIds([
+      { id: chatId, field: 'chatId' },
+      { id: userId, field: 'userId' },
+    ]);
 
-    await this.executeQuery<void>(
+    await this.runQuery(
       BotMessageModel.updateMany(
-        { chatId: this.toObjectId(chatId) },
-        { $addToSet: { readBy: this.toObjectId(userId) } }
-      ).exec() as Promise<any>
+        { chatId: toObjectId(chatId) },
+        { $addToSet: { readBy: toObjectId(userId) } }
+      ).exec()
     );
   }
 
@@ -146,29 +127,27 @@ export class MongoBotMessageRepository extends BaseRepository<IBotMessageModel> 
     recipientId: string,
     suggestedUserId: string
   ): Promise<BotMessage | null> {
-    this.validateObjectId(chatId);
-    this.validateObjectId(senderId);
-    this.validateObjectId(recipientId);
-    this.validateObjectId(suggestedUserId);
+    this.validateMultipleObjectIds([
+      { id: chatId, field: 'chatId' },
+      { id: senderId, field: 'senderId' },
+      { id: recipientId, field: 'recipientId' },
+      { id: suggestedUserId, field: 'suggestedUserId' },
+    ]);
 
-    const messageDoc = await this.executeQuery<IBotMessageModel | null>(
+    const messageDoc = await this.runQuery<IBotMessageModel | null>(
       BotMessageModel.findOne({
-        chatId: this.toObjectId(chatId),
-        senderId: this.toObjectId(senderId),
-        recipientId: this.toObjectId(recipientId),
-        suggestedUser: this.toObjectId(suggestedUserId),
+        chatId: toObjectId(chatId),
+        senderId: toObjectId(senderId),
+        recipientId: toObjectId(recipientId),
+        suggestedUser: toObjectId(suggestedUserId),
         status: 'pending',
-      })
-      .populate('suggestedUser', '_id name profileImageUrl category')
-      .exec()
+      }).exec()
     );
+    const populatedDoc = await this.populateMessageDoc(messageDoc);
 
-    if (!messageDoc) return null;
+    if (!populatedDoc) return null;
 
-    return this.toDomain(
-      messageDoc,
-      messageDoc.suggestedUser as unknown as UserDocument
-    );
+    return toBotMessageDomain(populatedDoc, populatedDoc.suggestedUser as unknown as UserDocument);
   }
 
   async createAsync(botMessage: BotMessage): Promise<BotMessage> {
