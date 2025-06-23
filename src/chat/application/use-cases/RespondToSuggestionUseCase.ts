@@ -26,7 +26,7 @@ export class RespondToSuggestionUseCase {
     private readonly createChatUseCase: CreateChatUseCase,
     private readonly virtualUserId: string,
     private readonly messageRepository: IMessageRepository
-  ) {}
+  ) { }
 
   async execute(input: RespondToSuggestionInput): Promise<{ message: string; chatId?: string }> {
     const { messageId, response, userId } = input;
@@ -50,7 +50,7 @@ export class RespondToSuggestionUseCase {
 
     const user = await this.userRepository.findById(userId);
     const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl ;
+    const userProfileImageUrl = user?.profileImageUrl;
 
     const userResponseMessage: Message = {
       id: await this.messageRepository.generateId(),
@@ -114,7 +114,7 @@ export class RespondToSuggestionUseCase {
         isMatchCard: false,
         isSuggested: false,
         status: 'pending',
-        senderProfileImageUrl:CONFIG.BOT_IMAGE_URL,
+        senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
         images,
       };
       await this.botMessageRepository.create(imageBotMessage);
@@ -135,7 +135,7 @@ export class RespondToSuggestionUseCase {
       isMatchCard: false,
       isSuggested: false,
       status: 'pending',
-      senderProfileImageUrl:CONFIG.BOT_IMAGE_URL,
+      senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
       images: [],
     };
     await this.botMessageRepository.create(confirmBotMessage);
@@ -170,7 +170,7 @@ export class RespondToSuggestionUseCase {
       status: 'pending',
       isMatchCard: true,
       isSuggested: false,
-      suggestedUserProfileImageUrl: user.profileImageUrl ,
+      suggestedUserProfileImageUrl: user.profileImageUrl,
       suggestedUserName: senderName,
       suggestedUserCategory: user.category || 'unknown',
       senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,

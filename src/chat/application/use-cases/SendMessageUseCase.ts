@@ -8,39 +8,28 @@ import { IUserRepository } from '../../../domain/repo/IUserRepository';
 import { CONFIG } from '../../../main/config/config';
 
 export class SendMessageUseCase {
+  private botId = CONFIG.BOT_ID;
+  private adminId = CONFIG.ADMIN;
+
   constructor(
     private readonly messageRepository: IMessageRepository,
     private readonly chatRepository: IChatRepository,
     private readonly socketService: ISocketService,
     private readonly generateBotResponseUseCase: GenerateBotResponseUseCase,
     private readonly userRepository: IUserRepository
-  ) {}
-
-  private truncateContent(content: string): string {
-    return content.length > 20 ? content.substring(0, 20) : content;
-  }
+  ) { }
 
   async execute(data: { senderId: string; content: string; chatId: string }): Promise<Message> {
     const { senderId, content, chatId } = data;
 
-    if (!content || content.trim() === '') {
-      throw new Error('Message content cannot be empty');
-    }
-
-    if (!(await this.chatRepository.isValidId(chatId))) {
-      throw new Error(`Invalid chatId: ${chatId}`);
-    }
-
-    if (!(await this.userRepository.isValidId(senderId))) {
-      throw new Error(`Invalid senderId: ${senderId}`);
-    }
-
     const chat = await this.chatRepository.findById(chatId);
+
     if (!chat) {
       throw new Error('Chat not found');
     }
 
     const sender = await this.userRepository.findById(senderId);
+
     if (!sender) {
       throw new Error('Sender not found');
     }
@@ -49,17 +38,15 @@ export class SendMessageUseCase {
     const senderProfileImageUrl = sender.profileImageUrl;
 
     const message = await this.createMessage(senderId, senderName, content, chatId, senderProfileImageUrl);
+
     const savedMessage = await this.sendMessage(message, chatId);
 
-    const botId1 = CONFIG.BOT_ID;
-    const botId2 = CONFIG.ADMIN;
-
-    if (botId1 && chat.users.some(user => user.id === botId1)) {
-      await this.handleBotResponse(chatId, content, botId1);
+    if (this.botId && chat.users.some(user => user.id === this.botId)) {
+      await this.handleBotResponse(chatId, content, this.botId);
     }
 
-    if (botId2 && chat.users.some(user => user.id === botId2)) {
-      await this.handleBotResponse(chatId, content, botId2);
+    if (this.adminId && chat.users.some(user => user.id === this.adminId)) {
+      await this.handleBotResponse(chatId, content, this.adminId);
     }
 
     return savedMessage;
@@ -67,7 +54,6 @@ export class SendMessageUseCase {
 
   private async createMessage(senderId: string, senderName: string, content: string, chatId: string, senderProfileImageUrl?: string): Promise<Message> {
     return {
-      id: await this.messageRepository.generateId(),
       senderId,
       senderName,
       content,
@@ -83,7 +69,7 @@ export class SendMessageUseCase {
   private createLatestMessage(savedMessage: Message): LatestMessage {
     return {
       id: savedMessage.id,
-      content: this.truncateContent(savedMessage.content),
+      content: savedMessage.content,
       createdAt: savedMessage.createdAt,
       readBy: savedMessage.readBy,
     };

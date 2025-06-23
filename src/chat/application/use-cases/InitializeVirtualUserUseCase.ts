@@ -5,30 +5,28 @@ import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus'
 import { CONFIG } from '../../../main/config/config';
 
 export class InitializeVirtualUserUseCase {
+  private virtualUserEmail = CONFIG.VIRTUAL_USER_EMAIL;
+  private virtualUserPassword = CONFIG.VIRTUAL_USER_PASSWORD;
+
   constructor(private userRepository: IUserRepository) { }
 
   async execute(): Promise<string> {
-    const virtualUserEmail = CONFIG.VIRTUAL_USER_EMAIL;
-    let virtualUser = await this.userRepository.findByEmail(virtualUserEmail);
+
+    let virtualUser = await this.userRepository.findByEmail(this.virtualUserEmail);
 
     if (!virtualUser) {
       virtualUser = {
-        // id: CONFIG.BOT_ID,
-        email: virtualUserEmail,
-        password: CONFIG.VIRTUAL_USER_PASSWORD,
+        email: this.virtualUserEmail,
+        password: this.virtualUserPassword,
         name: 'COMY オフィシャル AI',
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
       };
       await this.userRepository.create(virtualUser as User);
-      console.log('Virtual user created:', virtualUserEmail);
+      console.log('Virtual user created:', this.virtualUserEmail);
     } else {
-      console.log('Virtual user already exists:', virtualUserEmail);
-    }
-
-    if (!virtualUser || !virtualUser.id) {
-      throw new Error('Failed to initialize virtual user');
+      console.log('Virtual user already exists:', this.virtualUserEmail);
     }
 
     console.log('Virtual chat bot initialized successfully');

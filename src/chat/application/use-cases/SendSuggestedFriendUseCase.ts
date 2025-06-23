@@ -7,6 +7,7 @@ import { CreateChatUseCase } from './CreateChatUseCase';
 import { getTemplatedMessage } from '../../config/MessageContentTemplates';
 import { IBusinessSheetRepository } from '../../../domain/repo/IBusinessSheetRepository';
 import { CONFIG } from '../../../main/config/config';
+import { SuggestedPair } from '../../domain/entities/SuggestedPair';
 
 export class SendSuggestedFriendUseCase {
   constructor(
@@ -18,7 +19,7 @@ export class SendSuggestedFriendUseCase {
     private createChatUseCase: CreateChatUseCase,
     private virtualUserId: string,
     private businessSheetRepository: IBusinessSheetRepository
-  ) {}
+  ) { }
 
   async execute(): Promise<{ message: string; sentCount: number }> {
     try {
@@ -54,7 +55,7 @@ export class SendSuggestedFriendUseCase {
     }
   }
 
-  private async processSinglePair(pair: any): Promise<{ message: BotMessage; pairId: string } | null> {
+  private async processSinglePair(pair: SuggestedPair): Promise<{ message: BotMessage; pairId: string } | null> {
     const userId = pair.userId.toString();
     const suggestedUserId = pair.suggestedUserId.toString();
 
@@ -82,6 +83,7 @@ export class SendSuggestedFriendUseCase {
       userId,
       suggestedUserId
     );
+
     if (existingMessage) {
       console.log(`Suggestion already exists for user ${userId} and suggestedUser ${suggestedUserId}`);
       return null;

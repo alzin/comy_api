@@ -19,6 +19,7 @@ export class CreateChatWithBotUseCase {
 
     if (!botChatId && userId !== this.adminId) {
       console.log(`Create a new conversation for the user ${userId} with bot ${this.botId}`);
+
       const newChat = await this.createChatUseCase.execute(
         [userId, this.botId],
         'Private Chat with Virtual Assistant',
