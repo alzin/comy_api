@@ -26,7 +26,7 @@ const messageSchema = new Schema<IMessageModel>(
     senderName: { type: String, required: true },
     content: { type: String, required: true },
     chat: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
-    createdAt: { type: String, required: true },
+    createdAt: { type: String,default:()=>new Date().toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"})},
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isMatchCard: { type: Boolean, default: false },
     isSuggested: { type: Boolean, default: false },
