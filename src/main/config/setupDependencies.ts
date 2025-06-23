@@ -2,7 +2,6 @@ import { CONFIG } from "./config"
 
 //services
 import { SocketIOService } from '../../chat/infra/services/SocketIOService';
-import { VirtualChatService } from '../../chat/infra/services/VirtualChatService';
 import { NodemailerEmailService } from '../../infra/services/NodemailerEmailService';
 import { BcryptPasswordHasher } from '../../infra/services/BcryptPasswordHasher';
 import { JwtTokenService } from '../../infra/services/JwtTokenService';
@@ -24,6 +23,9 @@ import { SearchUsersController } from '../../presentation/controllers/SearchUser
 import { WebhookController } from '../../presentation/controllers/WebhookController';
 import { CheckSubscriptionStatusController } from '../../presentation/controllers/CheckSubscriptionStatusController';
 import { ActiveUsersEmailController } from '../../presentation/controllers/ActiveUsersEmailController';
+import { RespondTregarController } from "../../chat/presentation/controllers/RespondTregarController";
+import { SuggestFriendController } from "../../chat/presentation/controllers/SuggestFriendController";
+
 
 // use-cases
 import { AuthUseCase } from '../../application/use-cases/auth/AuthUseCase';
@@ -45,6 +47,13 @@ import { CheckSubscriptionStatusUseCase } from '../../application/use-cases/user
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 import { UpdateReferrerNameUseCase } from '../../application/use-cases/payment/UpdateReferrerNameUseCase';
+import { SuggestFriendsUseCase } from "../../chat/application/use-cases/SuggestFriendsUseCase";
+import { RespondToSuggestionUseCase } from "../../chat/application/use-cases/RespondToSuggestionUseCase";
+import { RespondToMatchUseCase } from "../../chat/application/use-cases/RespondToMatchUseCase";
+import { SendSuggestedFriendUseCase } from "../../chat/application/use-cases/SendSuggestedFriendUseCase";
+import { InitializeVirtualUserUseCase } from "../../chat/application/use-cases/InitializeVirtualUserUseCase";
+import { CreateChatWithBotUseCase } from "../../chat/application/use-cases/CreateChatWithBotUseCase";
+
 
 // repository
 import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
@@ -87,7 +96,6 @@ export function setupDependencies(server: any) {
   // services
   const socketService = new SocketIOService(server, userRepository, messageRepository);
   socketService.initialize();
-  const virtualChatService = new VirtualChatService();
   const emailService = new NodemailerEmailService();
   const encryptionService = new BcryptPasswordHasher();
   const tokenService = new JwtTokenService();
@@ -134,6 +142,62 @@ export function setupDependencies(server: any) {
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository, userRepository);
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 
+  const suggestFriendsUseCase = new SuggestFriendsUseCase(
+    userRepository,
+    botMessageRepository,
+    chatRepository,
+    blacklistRepository,
+    friendRepository,
+    createChatUseCase,
+    socketService,
+    suggestedPairRepository,
+    virtualUserId
+  );
+
+  const respondToSuggestionUseCase = new RespondToSuggestionUseCase(
+    botMessageRepository,
+    blacklistRepository,
+    chatRepository,
+    socketService,
+    userRepository,
+    createChatUseCase,
+    virtualUserId,
+    messageRepository
+  );
+
+  const respondToMatchUseCase = new RespondToMatchUseCase(
+    botMessageRepository,
+    blacklistRepository,
+    chatRepository,
+    friendRepository,
+    socketService,
+    userRepository,
+    createChatUseCase,
+    virtualUserId,
+    adminBotId,
+    messageRepository
+  );
+
+  const sendSuggestedFriendUseCase = new SendSuggestedFriendUseCase(
+    userRepository,
+    botMessageRepository,
+    chatRepository,
+    socketService,
+    suggestedPairRepository,
+    createChatUseCase,
+    virtualUserId,
+    businessSheetRepository
+  );
+
+  const createChatWithBotUseCase = new CreateChatWithBotUseCase(
+    chatRepository,
+    createChatUseCase
+  )
+
+  // // to be removed or fixed
+  const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
+
+
   // controllers
   const authController = new AuthController(authUseCase);
   const activeUsersEmailController = new ActiveUsersEmailController(sendActiveUsersEmailUseCase);
@@ -154,19 +218,33 @@ export function setupDependencies(server: any) {
 
   const chatController = new ChatController(
     createChatUseCase,
-    getUserChatsUseCase
+    getUserChatsUseCase,
+    createChatWithBotUseCase
   );
 
   const messageController = new MessageController(
     sendMessageUseCase,
     getMessagesUseCase,
-    socketService
   );
+
+  const respondTregarController = new RespondTregarController(
+    respondToSuggestionUseCase,
+    respondToMatchUseCase
+  )
+
+  const suggestFriendController = new SuggestFriendController(
+    suggestFriendsUseCase,
+    sendSuggestedFriendUseCase,
+  )
+
+
 
 
   return {
     userRepository,
+
     tokenService,
+
     authController,
     businessSheetController,
     stripeController,
@@ -176,27 +254,11 @@ export function setupDependencies(server: any) {
     webhookController,
     checkSubscriptionStatusController,
     activeUsersEmailController,
-    socketService,
-    chatService: {
-      createChatUseCase,
-      getUserChatsUseCase,
-    },
-    messageService: {
-      sendMessageUseCase,
-      getMessagesUseCase,
-    },
-    botMessageRepository,
-    messageRepository,
-    chatRepository,
-    blacklistRepository,
-    friendRepository,
-    suggestedPairRepository,
-    virtualChatService,
-    sendMessageUseCase,
-    virtualUserId,
-    adminBotId,
     chatController,
     messageController,
-    businessSheetRepository
+    respondTregarController,
+    suggestFriendController,
+
+    initializeVirtualUserUseCase
   };
 }

@@ -1,54 +1,28 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-import { SocketIOService } from '../../infra/services/SocketIOService';
-import { UserModel } from '../../../infra/database/models/UserModel';
-import { CONFIG } from '../../../main/config/config';
-
-// Utility function to get sender profile image URL
-const getSenderProfileImageUrl = async (senderId: string): Promise<string> => {
-  if (senderId === 'COMY オフィシャル AI') {
-    return CONFIG.BOT_IMAGE_URL ;
-  }
-  const user = await UserModel.findById(senderId).select('profileImageUrl').exec();
-  return user?.profileImageUrl;
-};
-
+import { SendMessageUseCase } from '../../application/use-cases/SendMessageUseCase';
+import { GetMessagesUseCase } from '../../application/use-cases/GetMessagesUseCase';
 
 export class MessageController {
-  private sendMessageUseCase: any;
-  private getMessagesUseCase: any;
-  private socketService: SocketIOService;
 
-  constructor(sendMessageUseCase: any, getMessagesUseCase: any, socketService: SocketIOService) {
-    this.sendMessageUseCase = sendMessageUseCase;
-    this.getMessagesUseCase = getMessagesUseCase;
-    this.socketService = socketService;
-  }
+  constructor(
+    private sendMessageUseCase: SendMessageUseCase,
+    private getMessagesUseCase: GetMessagesUseCase,
+  ) { }
 
   async getMessages(req: Request, res: Response): Promise<void> {
     const chatId = req.params.chatId;
     const userId = (req as any).user?.id;
 
     try {
-      console.log(`Fetching messages for chatId: ${chatId}`);
-      if (!mongoose.Types.ObjectId.isValid(chatId)) {
-        console.log(`Invalid chat ID: ${chatId}`);
-        res.status(400).json({ message: 'Invalid chat ID' });
-        return;
-      }
 
       if (!userId) {
         console.log('Unauthorized access: No user ID provided');
         res.status(401).json({ message: 'Unauthorized' });
         return;
       }
-
-      // Update readBy for all messages in the chat
-      await this.getMessagesUseCase.messageRepository.updateReadByForChat(chatId, userId);
-
-      const messages = await this.getMessagesUseCase.execute(chatId);
-      console.log(`Found ${messages.length} messages for chatId: ${chatId}`);
+      const messages = await this.getMessagesUseCase.execute(userId, chatId);
       res.status(200).json(messages);
+
     } catch (error: any) {
       console.error(`Error fetching messages for chatId: ${chatId}`, error);
       res.status(500).json({ message: 'Server error', error: error.message || error });
@@ -56,44 +30,32 @@ export class MessageController {
   }
 
   async sendMessage(req: Request, res: Response): Promise<void> {
-  try {
-    const { chatId, content } = req.body;
-    const userId = (req as any).user?.id;
+    try {
+      const { chatId, content } = req.body;
+      const userId = (req as any).user?.id;
 
-    if (!userId) {
-      console.log('Unauthorized access: No user ID provided');
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      if (!chatId || !content) {
+        res.status(400).json({ message: 'Missing required fields: chatId or content' });
+        return;
+      }
+
+      const messageDetails = {
+        senderId: userId,
+        content,
+        chatId,
+      };
+
+      const message = await this.sendMessageUseCase.execute(messageDetails);
+
+      res.status(200).json(message);
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      res.status(500).json({ message: 'Server error', error: error.message || error });
     }
-
-    if (!chatId || !content) {
-      res.status(400).json({ message: 'Missing required fields: chatId or content' });
-      return;
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
-      console.log(`Invalid chatId: ${chatId}`);
-      res.status(400).json({ message: 'Invalid chatId format' });
-      return;
-    }
-
-    const sender = await UserModel.findById(userId).select('name').exec();
-    const senderName = sender ? sender.name : 'Unknown User';
-    const senderProfileImageUrl = await getSenderProfileImageUrl(userId);
-    const messageWithSenderImage = {
-      senderId: userId,
-      senderName,
-      content,
-      chatId,
-      senderProfileImageUrl,
-      readBy: [userId],
-    };
-    const message = await this.sendMessageUseCase.execute(messageWithSenderImage);
-    this.socketService.emitMessage(chatId, message);
-    res.status(200).json(message);
-  } catch (error: any) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ message: 'Server error', error: error.message || error });
   }
-}
 }

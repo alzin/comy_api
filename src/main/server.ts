@@ -6,17 +6,12 @@ import { setupRoutes } from '../presentation/routes/setupRoutes';
 import { setupDependencies } from '../main/config/setupDependencies';
 import { setupSwagger } from '../main/config/swagger';
 import { dbConnectMiddleware } from '../presentation/middlewares/dbConnectMiddleware';
-import { InitializeVirtualUserUseCase } from '../chat/application/use-cases/InitializeVirtualUserUseCase';
-import { CONFIG } from '../main/config/config';
-
-console.log('API_KEY:', CONFIG.API_KEY);
 
 export async function startServer() {
   const app = express();
   const server = http.createServer(app);
   console.log('HTTP server created:', server.listening);
 
-  // Apply the database connection middleware
   app.use(dbConnectMiddleware);
 
   setupMiddlewares(app);
@@ -24,10 +19,8 @@ export async function startServer() {
 
   const dependencies = setupDependencies(server);
 
-  const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(dependencies.userRepository);
-  const virtualUserId = await initializeVirtualUserUseCase.execute();
-
-  console.log('Dependencies initialized with virtualUserId:', virtualUserId);
+  // // to be removed or fixed
+  await dependencies.initializeVirtualUserUseCase.execute();
 
   setupRoutes(app, dependencies);
 
