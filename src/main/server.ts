@@ -20,7 +20,7 @@ export async function startServer() {
   const dependencies = setupDependencies(server);
 
   // // to be removed or fixed
-  await dependencies.initializeVirtualUserUseCase.execute();
+  //await dependencies.initializeVirtualUserUseCase.execute();
 
   setupRoutes(app, dependencies);
 

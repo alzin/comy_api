@@ -1,10 +1,8 @@
 import express, { Request, Response } from 'express';
 import { ChatController } from '../controllers/ChatController';
 import { MessageController } from '../controllers/MessageController';
-
 import { RespondTregarController } from '../controllers/RespondTregarController';
 import { SuggestFriendController } from '../controllers/SuggestFriendController';
-
 
 export const setupChatRoutes = (
   chatController: ChatController,
@@ -12,7 +10,6 @@ export const setupChatRoutes = (
   respondTregarController: RespondTregarController,
   suggestFriendController: SuggestFriendController
 ) => {
-
   const router = express.Router();
 
   router.post('/', (req: Request, res: Response) => chatController.createChat(req, res));
@@ -23,9 +20,7 @@ export const setupChatRoutes = (
   router.post('/suggestions/respond', async (req: Request, res: Response) => respondTregarController.ToSuggestion(req, res));
 
   router.post('/matches/respond', async (req: Request, res: Response) => respondTregarController.ToMatch(req, res));
-
-  router.post('/suggest-friends', async (req: Request, res: Response) => suggestFriendController.store(req, res));
-
+  // router.post('/suggest-friends', async (req: Request, res: Response) => suggestFriendController.store(req, res));
   router.post('/send-suggested-friend', async (req: Request, res: Response) => suggestFriendController.send(req, res));
 
   return router;

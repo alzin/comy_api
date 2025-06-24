@@ -48,11 +48,9 @@ import { CheckSubscriptionStatusUseCase } from '../../application/use-cases/user
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 import { UpdateReferrerNameUseCase } from '../../application/use-cases/payment/UpdateReferrerNameUseCase';
-import { SuggestFriendsUseCase } from "../../chat/application/use-cases/SuggestFriendsUseCase";
 import { RespondToSuggestionUseCase } from "../../chat/application/use-cases/RespondToSuggestionUseCase";
 import { RespondToMatchUseCase } from "../../chat/application/use-cases/RespondToMatchUseCase";
 import { SendSuggestedFriendUseCase } from "../../chat/application/use-cases/SendSuggestedFriendUseCase";
-import { InitializeVirtualUserUseCase } from "../../chat/application/use-cases/InitializeVirtualUserUseCase";
 import { CreateChatWithBotUseCase } from "../../chat/application/use-cases/CreateChatWithBotUseCase";
 
 // Repository
@@ -100,7 +98,7 @@ export function setupDependencies(server: any) {
   const emailSender = new BulkEmailSender();
   const activeUsersFetcher = new ActiveUsersFetcher();
 
-  //BotMessageService
+  // BotMessageService
   const botMessageService: IBotMessageService = new BotMessageService(
     botMessageRepository,
     socketService
@@ -141,18 +139,6 @@ export function setupDependencies(server: any) {
   const createChatUseCase = new CreateChatUseCase(chatRepository, userRepository);
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository);
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
-
-  const suggestFriendsUseCase = new SuggestFriendsUseCase(
-    userRepository,
-    botMessageRepository,
-    chatRepository,
-    blacklistRepository,
-    friendRepository,
-    createChatUseCase,
-    socketService,
-    suggestedPairRepository,
-    virtualUserId
-  );
 
   const respondToSuggestionUseCase = new RespondToSuggestionUseCase(
     botMessageRepository,
@@ -196,8 +182,7 @@ export function setupDependencies(server: any) {
     createChatUseCase
   );
 
-  // to be removed or fixed
-  const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
+  //const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
 
   // Controllers
   const authController = new AuthController(authUseCase);
@@ -234,7 +219,6 @@ export function setupDependencies(server: any) {
   );
 
   const suggestFriendController = new SuggestFriendController(
-    suggestFriendsUseCase,
     sendSuggestedFriendUseCase
   );
 
@@ -254,6 +238,6 @@ export function setupDependencies(server: any) {
     messageController,
     respondTregarController,
     suggestFriendController,
-    initializeVirtualUserUseCase
+    //initializeVirtualUserUseCase
   };
 }
