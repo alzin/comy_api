@@ -7,6 +7,7 @@ import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { BaseRespondUseCase } from './BaseRespondUseCase';
 import { IBotMessageService } from '../../domain/services/IBotMessageService';
+import { CONFIG } from '../../../main/config/config';
 
 interface RespondToMatchInput {
   messageId: string;
@@ -66,7 +67,7 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
     if (!notifyChatId) {
       const newNotifyChat = await this.createChatUseCase.execute(
         [suggestedUser._id, this.virtualUserId],
-        `Private Chat with Virtual Assistant`,
+        CONFIG.BOT_NAME,
         false
       );
       notifyChatId = newNotifyChat.id;

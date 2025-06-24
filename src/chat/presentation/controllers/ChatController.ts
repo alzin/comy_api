@@ -27,7 +27,7 @@ export class ChatController {
 
       const chat = await this.createChatUseCase.execute(
         updatedUsers,
-        name || (isGroupChat ? 'Group Chat with Virtual Assistant' : 'Private Chat'),
+        name ,
         isGroupChat
       );
       res.status(201).json(chat);

@@ -9,6 +9,7 @@ import { CreateChatUseCase } from './CreateChatUseCase';
 import { User } from '../../../domain/entities/User';
 import { SubscriptionStatus } from '../../../domain/entities/SubscriptionStatus';
 import { ISocketService } from '../../domain/services/ISocketService';
+import { CONFIG } from '../../../main/config/config';
 
 export class SuggestFriendsUseCase {
   private virtualUserId: string;
@@ -84,7 +85,7 @@ export class SuggestFriendsUseCase {
           console.log(`Creating new private chat for user ${user.id} with virtual user`);
           chat = await this.createChatUseCase.execute(
             [user.id!, this.virtualUserId],
-            'Private Chat with Virtual Assistant',
+            CONFIG.BOT_NAME,
             false
           );
           console.log(`Created chat with ID: ${chat.id}`);

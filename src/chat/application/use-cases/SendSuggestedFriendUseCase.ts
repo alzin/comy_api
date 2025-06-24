@@ -72,7 +72,7 @@ export class SendSuggestedFriendUseCase {
     if (!chat) {
       chat = await this.createChatUseCase.execute(
         [userId, this.virtualUserId],
-        'Private Chat with Virtual Assistant',
+        CONFIG.BOT_NAME,
         false
       );
     }
