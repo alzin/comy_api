@@ -8,6 +8,7 @@ import { CreateChatUseCase } from './CreateChatUseCase';
 import { BaseRespondUseCase } from './BaseRespondUseCase';
 import { IBotMessageService } from '../../domain/services/IBotMessageService';
 import { CONFIG } from '../../../main/config/config';
+import { IBusinessSheetRepository } from '../../../domain/repo/IBusinessSheetRepository';
 
 interface RespondToMatchInput {
   messageId: string;
@@ -29,7 +30,8 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
     private readonly friendRepository: IFriendRepository,
     private readonly adminBotId: string,
     messageRepository: IMessageRepository,
-    botMessageService: IBotMessageService
+    botMessageService: IBotMessageService,
+    private businessSheetRepository: IBusinessSheetRepository
   ) {
     super(botMessageRepository, blacklistRepository, chatRepository, socketService, userRepository, createChatUseCase, virtualUserId, messageRepository, botMessageService);
   }
@@ -53,6 +55,7 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
     const users = [userId, suggestedUser._id, this.adminBotId];
     const chatName = `${user.name || 'User'}, ${suggestedUser.name}`;
     const newChat = await this.createChatUseCase.execute(users, chatName, true);
+    const userBusinessSheet = await this.businessSheetRepository.findByUserId(suggestedUser._id);
 
     await this.botMessageService.sendGroupMessages(
       newChat.id,
@@ -60,7 +63,8 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
       suggestedUser.name,
       user.category || '未指定',
       suggestedUser.category || '未指定',
-      this.adminBotId
+      this.adminBotId,
+      userBusinessSheet.companyStrengths
     );
 
     let notifyChatId = await this.chatRepository.getPrivateChatId(suggestedUser._id, this.virtualUserId);

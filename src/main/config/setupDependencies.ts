@@ -158,12 +158,13 @@ export function setupDependencies(server: any) {
     chatRepository,
     socketService,
     userRepository,
-    createChatUseCase, 
-    virtualUserId, 
+    createChatUseCase,
+    virtualUserId,
     friendRepository,
-    adminBotId, 
-    messageRepository, 
-    botMessageService
+    adminBotId,
+    messageRepository,
+    botMessageService,
+    businessSheetRepository
   );
 
   const sendSuggestedFriendUseCase = new SendSuggestedFriendUseCase(

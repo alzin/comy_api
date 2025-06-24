@@ -36,10 +36,10 @@ export const messageTemplates: MessageTemplates = {
     text: '${suggestedUserName}さんとのビジネスマッチができました。チャットで挨拶してみましょう。',
   },
   matchGroupIntro1: {
-    text: '${userName}さん、お世話になっております！こちら${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは“自社の強みテーブル”です！',
+    text: '${userName}さん、お世話になっております！こちら${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは ${companyStrengths} です！',
   },
   matchGroupIntro2: {
-    text: '${suggestedUserName}さん、お世話になっております！こちら${userCategory}カテゴリーの${userName}さんをご紹介します！${userCategory}カテゴリーの${userName}さんの強みは”自社の強みテーブル”です！',
+    text: '${suggestedUserName}さん、お世話になっております！こちら${userCategory}カテゴリーの${userName}さんをご紹介します！${userCategory}カテゴリーの${userName}さんの強みは ${companyStrengths} です！',
   },
   matchGroupIntro3: {
     text: '是非お二人でお話をしてみてください！',
