@@ -88,7 +88,7 @@ export class SendMessageUseCase {
     if (botResponse) {
       const botMessage = await this.createMessage(
         botId,
-        'COMY オフィシャル AI',
+        CONFIG.BOT_NAME,
         botResponse,
         chatId,
         CONFIG.BOT_IMAGE_URL

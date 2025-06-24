@@ -49,7 +49,7 @@ export class CreateChatUseCase {
     if (!chatName) {
       if (!isGroup) {
         const otherUser = usersDetails.find((u) => u.id !== this.botId);
-        chatName = otherUser?.id === this.botId ? 'COMY オフィシャル AI' : otherUser?.name || 'Private Chat';
+        chatName = otherUser?.id === this.botId ? CONFIG.BOT_NAME : otherUser?.name || 'Private Chat';
       } else {
         chatName = usersDetails.map((u) => u.name).join(', ') || 'Group Chat';
       }

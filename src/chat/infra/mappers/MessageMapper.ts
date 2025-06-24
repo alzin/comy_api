@@ -5,7 +5,7 @@ import { IBotMessageModel } from '../database/models/BotMessageModel';
 import { CONFIG } from '../../../main/config/config';
 
 const BOT_DETAILS = {
-  name: 'COMY オフィシャル AI',
+  name: CONFIG.BOT_NAME,
   profileImageUrl: CONFIG.BOT_IMAGE_URL,
 };
 

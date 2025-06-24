@@ -18,7 +18,7 @@ export class InitializeVirtualUserUseCase {
       virtualUser = {
         email: this.virtualUserEmail,
         password: this.virtualUserPassword,
-        name: 'COMY オフィシャル AI',
+        name: CONFIG.BOT_NAME,
         category: 'bot',
         isOnline: true,
         subscriptionStatus: SubscriptionStatus.Active,
