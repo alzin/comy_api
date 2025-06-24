@@ -44,7 +44,7 @@ export class GetUserChatsUseCase {
   private getChatName(users: ChatUser[], userId: string, isGroup: boolean): string {
     if (!isGroup) {
       const otherUser = users.find((u) => u.id !== userId);
-      return otherUser?.id === this.botId ? 'COMY オフィシャル AI' : otherUser?.name || 'Private Chat';
+      return otherUser?.id === this.botId ? CONFIG.BOT_NAME : otherUser?.name || 'Private Chat';
     }
 
     const isAdmin = userId === this.adminId;

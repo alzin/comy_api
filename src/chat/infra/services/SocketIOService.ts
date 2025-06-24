@@ -51,7 +51,7 @@ export class SocketIOService implements ISocketService {
     return {
       id: botMessage.id || new mongoose.Types.ObjectId().toString(),
       senderId: botMessage.senderId,
-      senderName: 'COMY オフィシャル AI',
+      senderName: CONFIG.BOT_NAME,
       content: botMessage.content || '',
       chatId: botMessage.chatId,
       readBy: botMessage.readBy || [],

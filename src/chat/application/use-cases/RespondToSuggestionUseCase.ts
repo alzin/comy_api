@@ -1,12 +1,11 @@
-import { IBotMessageRepository, BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
+import { IBotMessageRepository, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
 import { IBlacklistRepository } from '../../domain/repo/IBlacklistRepository';
 import { IChatRepository } from '../../domain/repo/IChatRepository';
 import { ISocketService } from '../../domain/services/ISocketService';
 import { IMessageRepository } from '../../domain/repo/IMessageRepository';
-import { Message } from '../../domain/entities/Message';
 import { CreateChatUseCase } from './CreateChatUseCase';
-import { getTemplatedMessage } from '../../config/MessageContentTemplates';
-import { CONFIG } from '../../../main/config/config';
+import { BaseRespondUseCase } from './BaseRespondUseCase';
+import { IBotMessageService } from '../../domain/services/IBotMessageService';
 
 interface RespondToSuggestionInput {
   messageId: string;
@@ -16,178 +15,64 @@ interface RespondToSuggestionInput {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export class RespondToSuggestionUseCase {
+export class RespondToSuggestionUseCase extends BaseRespondUseCase {
   constructor(
-    private readonly botMessageRepository: IBotMessageRepository,
-    private readonly blacklistRepository: IBlacklistRepository,
-    private readonly chatRepository: IChatRepository,
-    private readonly socketService: ISocketService,
-    private readonly userRepository: any,
-    private readonly createChatUseCase: CreateChatUseCase,
-    private readonly virtualUserId: string,
-    private readonly messageRepository: IMessageRepository
-  ) { }
+    botMessageRepository: IBotMessageRepository,
+    blacklistRepository: IBlacklistRepository,
+    chatRepository: IChatRepository,
+    socketService: ISocketService,
+    userRepository: any,
+    createChatUseCase: CreateChatUseCase,
+    virtualUserId: string,
+    messageRepository: IMessageRepository,
+    botMessageService: IBotMessageService
+  ) {
+    super(botMessageRepository, blacklistRepository, chatRepository, socketService, userRepository, createChatUseCase, virtualUserId, messageRepository, botMessageService);
+  }
 
   async execute(input: RespondToSuggestionInput): Promise<{ message: string; chatId?: string }> {
     const { messageId, response, userId } = input;
 
-    if (!['マッチを希望する', 'マッチを希望しない'].includes(response)) {
-      throw new Error('Invalid response');
-    }
-
-    const suggestion = await this.botMessageRepository.findByIdWithSuggestedUser(messageId);
-    if (!suggestion || !suggestion.suggestedUser || suggestion.status !== 'pending') {
-      throw new Error('Invalid or already processed suggestion');
-    }
-
-    const chatId = suggestion.chatId;
-    if (!chatId) {
-      throw new Error('Invalid chat ID');
-    }
-
-    await this.botMessageRepository.updateReadBy(chatId, userId);
-    await this.botMessageRepository.updateSuggestionStatus(messageId, response === 'マッチを希望する' ? 'accepted' : 'rejected');
-
-    const user = await this.userRepository.findById(userId);
-    const senderName = user?.name || 'Unknown User';
-    const userProfileImageUrl = user?.profileImageUrl;
-
-    const userResponseMessage: Message = {
-      id: await this.messageRepository.generateId(),
-      senderId: userId,
-      senderName,
-      content: response,
-      chatId,
-      readBy: [userId],
-      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-      isMatchCard: false,
-      isSuggested: false,
-      senderProfileImageUrl: userProfileImageUrl,
-      images: [],
-    };
-    await this.messageRepository.create(userResponseMessage);
-    this.socketService.emitMessage(chatId, userResponseMessage);
-    console.log(`Emitted user response message ${userResponseMessage.id} in chat ${chatId}`);
-
-    await delay(800); // Delay to ensure user response appears first
+    await this.validateInput(input);
+    const { suggestion, suggestedUser, chatId } = await this.fetchSuggestion(messageId);
+    await this.updateSuggestionStatus(messageId, chatId, userId, response);
+    await this.sendUserResponse(input, chatId);
 
     if (response === 'マッチを希望しない') {
-      await this.blacklistRepository.addToBlacklist(userId, suggestion.suggestedUser._id);
-      await this.blacklistRepository.addToBlacklist(suggestion.suggestedUser._id, userId);
-
-      const botMessages = [
-        getTemplatedMessage('suggestionRejected', { senderName }),
-        getTemplatedMessage('suggestionRejectedFollowUp1', {}),
-        getTemplatedMessage('suggestionRejectedFollowUp2', {}),
-      ];
-
-      for (let i = 0; i < botMessages.length; i++) {
-        const { text } = botMessages[i];
-        const botMessage: BotMessage = {
-          id: await this.botMessageRepository.generateId(),
-          senderId: this.virtualUserId,
-          content: text,
-          chatId,
-          createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-          readBy: [this.virtualUserId, userId], // Include userId in readBy
-          isMatchCard: false,
-          isSuggested: false,
-          status: 'pending',
-          senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
-          images: [],
-        };
-        await this.botMessageRepository.create(botMessage);
-        this.socketService.emitMessage(chatId, botMessage);
-        console.log(`Emitted bot message ${botMessage.id} in chat ${chatId}: ${text}`);
-        await delay(300); // Delay between bot messages
-      }
-
-      await delay(800); // Additional delay before image message
-      const { text, images } = getTemplatedMessage('suggestionRejectedImages', {});
-      const imageBotMessage: BotMessage = {
-        id: await this.botMessageRepository.generateId(),
-        senderId: this.virtualUserId,
-        content: text,
-        chatId,
-        createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-        readBy: [this.virtualUserId, userId], // Include userId in readBy
-        isMatchCard: false,
-        isSuggested: false,
-        status: 'pending',
-        senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
-        images,
-      };
-      await this.botMessageRepository.create(imageBotMessage);
-      this.socketService.emitMessage(chatId, imageBotMessage);
-      console.log(`Emitted image bot message ${imageBotMessage.id} in chat ${chatId} with images: ${JSON.stringify(images)}`);
-
-      return { message: botMessages.map(m => m.text).join('\n') };
+      return { message: await this.handleRejection(userId, suggestedUser._id, chatId, suggestion.senderName || 'Unknown User') };
     }
 
-    const { text: confirmText } = getTemplatedMessage('suggestionAcceptedConfirmation', { suggestedUserName: suggestion.suggestedUser.name });
-    const confirmBotMessage: BotMessage = {
-      id: await this.botMessageRepository.generateId(),
-      senderId: this.virtualUserId,
-      content: confirmText,
-      chatId,
-      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-      readBy: [this.virtualUserId, userId], // Include userId in readBy
-      isMatchCard: false,
-      isSuggested: false,
-      status: 'pending',
-      senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
-      images: [],
-    };
-    await this.botMessageRepository.create(confirmBotMessage);
-    this.socketService.emitMessage(chatId, confirmBotMessage);
-    console.log(`Emitted confirmation bot message ${confirmBotMessage.id} in chat ${chatId}`);
+    const confirmText = await this.sendConfirmationMessage(chatId, suggestedUser.name);
 
-    let suggestedUserChatId = await this.chatRepository.getPrivateChatId(suggestion.suggestedUser._id, this.virtualUserId);
+    let suggestedUserChatId = await this.chatRepository.getPrivateChatId(suggestedUser._id, this.virtualUserId);
     if (!suggestedUserChatId) {
       const newChat = await this.createChatUseCase.execute(
-        [suggestion.suggestedUser._id, this.virtualUserId],
+        [suggestedUser._id, this.virtualUserId],
         `Private Chat with Virtual User`,
         false
       );
       suggestedUserChatId = newChat.id;
     }
 
-    const { text: matchMessageText } = getTemplatedMessage('suggestionMatchRequest', {
-      suggestedUserName: suggestion.suggestedUser.name,
-      senderName,
-      userCategory: user.category || 'unknown',
-    });
-    const matchBotMessage: BotMessage = {
-      id: await this.botMessageRepository.generateId(),
-      senderId: this.virtualUserId,
-      content: matchMessageText,
-      chatId: suggestedUserChatId,
-      createdAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
-      readBy: [this.virtualUserId],
-      recipientId: suggestion.suggestedUser._id,
-      suggestedUser: { _id: userId, name: senderName, profileImageUrl: user.profileImageUrl, category: user.category },
-      suggestionReason: 'Match request',
-      status: 'pending',
-      isMatchCard: true,
-      isSuggested: false,
-      suggestedUserProfileImageUrl: user.profileImageUrl,
-      suggestedUserName: senderName,
-      suggestedUserCategory: user.category || 'unknown',
-      senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
-      relatedUserId: userId,
-      images: [],
-    };
-
+    const user = await this.userRepository.findById(userId);
     const existingMessage = await this.botMessageRepository.findExistingSuggestion(
       suggestedUserChatId,
       this.virtualUserId,
-      suggestion.suggestedUser._id,
+      suggestedUser._id,
       userId
     );
+
     if (!existingMessage) {
-      await this.botMessageRepository.create(matchBotMessage);
-      this.socketService.emitMessage(suggestedUserChatId, matchBotMessage);
-      console.log(`Emitted match request message ${matchBotMessage.id} in chat ${suggestedUserChatId}`);
+      await this.botMessageService.sendMatchRequestMessage(
+        suggestedUserChatId,
+        user.name || 'Unknown User',
+        suggestedUser.name,
+        user.category || 'unknown',
+        userId,
+        user.profileImageUrl,
+        this.virtualUserId,
+        suggestedUser._id
+      );
     }
 
     return { message: confirmText };

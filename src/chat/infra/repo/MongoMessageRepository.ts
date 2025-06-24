@@ -46,7 +46,7 @@ export class MongoMessageRepository extends BaseRepository<IMessageModel> implem
   private async getSenderDetails(senderId: string): Promise<SenderDetails> {
     if (senderId === CONFIG.BOT_ID || senderId === CONFIG.ADMIN) {
       return {
-        name: 'COMY オフィシャル AI',
+        name: CONFIG.BOT_NAME,
         profileImageUrl: CONFIG.BOT_IMAGE_URL,
       };
     }

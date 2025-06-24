@@ -1,6 +1,6 @@
-import { CONFIG } from "./config"
+import { CONFIG } from "./config";
 
-//services
+// Services
 import { SocketIOService } from '../../chat/infra/services/SocketIOService';
 import { NodemailerEmailService } from '../../infra/services/NodemailerEmailService';
 import { BcryptPasswordHasher } from '../../infra/services/BcryptPasswordHasher';
@@ -10,8 +10,10 @@ import { AWSImageUploadService } from '../../infra/services/AWSImageUploadServic
 import { StripeService } from '../../infra/services/StripeService';
 import { BulkEmailSender } from '../../infra/services/BulkEmailSender';
 import { ActiveUsersFetcher } from '../../infra/services/ActiveUsersFetcher';
+import { BotMessageService } from '../../chat/infra/services/BotMessageService';
+import { IBotMessageService } from '../../chat/domain/services/IBotMessageService';
 
-// controllers
+// Controllers
 import { MessageController } from '../../chat/presentation/controllers/MessageController';
 import { ChatController } from '../../chat/presentation/controllers/ChatController';
 import { AuthController } from '../../presentation/controllers/AuthController';
@@ -26,8 +28,7 @@ import { ActiveUsersEmailController } from '../../presentation/controllers/Activ
 import { RespondTregarController } from "../../chat/presentation/controllers/RespondTregarController";
 import { SuggestFriendController } from "../../chat/presentation/controllers/SuggestFriendController";
 
-
-// use-cases
+// Use-cases
 import { AuthUseCase } from '../../application/use-cases/auth/AuthUseCase';
 import { SendMessageUseCase } from '../../chat/application/use-cases/SendMessageUseCase';
 import { GetMessagesUseCase } from '../../chat/application/use-cases/GetMessagesUseCase';
@@ -47,15 +48,12 @@ import { CheckSubscriptionStatusUseCase } from '../../application/use-cases/user
 import { SendActiveUsersEmailUseCase } from '../../application/use-cases/users/SendActiveUsersEmailUseCase';
 import { GenerateBotResponseUseCase } from '../../chat/application/use-cases/GenerateBotResponseUseCase';
 import { UpdateReferrerNameUseCase } from '../../application/use-cases/payment/UpdateReferrerNameUseCase';
-import { SuggestFriendsUseCase } from "../../chat/application/use-cases/SuggestFriendsUseCase";
 import { RespondToSuggestionUseCase } from "../../chat/application/use-cases/RespondToSuggestionUseCase";
 import { RespondToMatchUseCase } from "../../chat/application/use-cases/RespondToMatchUseCase";
 import { SendSuggestedFriendUseCase } from "../../chat/application/use-cases/SendSuggestedFriendUseCase";
-import { InitializeVirtualUserUseCase } from "../../chat/application/use-cases/InitializeVirtualUserUseCase";
 import { CreateChatWithBotUseCase } from "../../chat/application/use-cases/CreateChatWithBotUseCase";
 
-
-// repository
+// Repository
 import { MongoMessageRepository } from '../../chat/infra/repo/MongoMessageRepository';
 import { MongoChatRepository } from '../../chat/infra/repo/MongoChatRepository';
 import { MongoFriendRepository } from '../../chat/infra/repo/MongoFriendRepository';
@@ -66,10 +64,7 @@ import { BusinessSheetRepository } from '../../infra/repo/BusinessSheetRepositor
 import { StripeGateway } from '../../infra/gateways/StripeGateway';
 import { MongoSuggestedPairRepository } from '../../chat/infra/repo/MongoSuggestedPairRepository';
 
-
-
 export function setupDependencies(server: any) {
-
   const virtualUserId = CONFIG.BOT_ID;
   if (!virtualUserId) {
     throw new Error('BOT_ID is not defined in .env');
@@ -79,7 +74,6 @@ export function setupDependencies(server: any) {
   if (!adminBotId) {
     throw new Error('ADMIN is not defined in .env');
   }
-
 
   // Repository
   const userRepository = new MongoUserRepository();
@@ -92,8 +86,7 @@ export function setupDependencies(server: any) {
   const stripeGateway = new StripeGateway();
   const suggestedPairRepository = new MongoSuggestedPairRepository();
 
-
-  // services
+  // Services
   const socketService = new SocketIOService(server, userRepository, messageRepository);
   socketService.initialize();
   const emailService = new NodemailerEmailService();
@@ -105,8 +98,13 @@ export function setupDependencies(server: any) {
   const emailSender = new BulkEmailSender();
   const activeUsersFetcher = new ActiveUsersFetcher();
 
+  // BotMessageService
+  const botMessageService: IBotMessageService = new BotMessageService(
+    botMessageRepository,
+    socketService
+  );
 
-  // use-cases
+  // Use-cases
   const authUseCase = new AuthUseCase(
     userRepository,
     emailService,
@@ -142,18 +140,6 @@ export function setupDependencies(server: any) {
   const getUserChatsUseCase = new GetUserChatsUseCase(chatRepository);
   const getMessagesUseCase = new GetMessagesUseCase(messageRepository);
 
-  const suggestFriendsUseCase = new SuggestFriendsUseCase(
-    userRepository,
-    botMessageRepository,
-    chatRepository,
-    blacklistRepository,
-    friendRepository,
-    createChatUseCase,
-    socketService,
-    suggestedPairRepository,
-    virtualUserId
-  );
-
   const respondToSuggestionUseCase = new RespondToSuggestionUseCase(
     botMessageRepository,
     blacklistRepository,
@@ -162,20 +148,22 @@ export function setupDependencies(server: any) {
     userRepository,
     createChatUseCase,
     virtualUserId,
-    messageRepository
+    messageRepository,
+    botMessageService
   );
 
   const respondToMatchUseCase = new RespondToMatchUseCase(
     botMessageRepository,
     blacklistRepository,
     chatRepository,
-    friendRepository,
     socketService,
     userRepository,
-    createChatUseCase,
-    virtualUserId,
-    adminBotId,
-    messageRepository
+    createChatUseCase, 
+    virtualUserId, 
+    friendRepository,
+    adminBotId, 
+    messageRepository, 
+    botMessageService
   );
 
   const sendSuggestedFriendUseCase = new SendSuggestedFriendUseCase(
@@ -192,13 +180,11 @@ export function setupDependencies(server: any) {
   const createChatWithBotUseCase = new CreateChatWithBotUseCase(
     chatRepository,
     createChatUseCase
-  )
+  );
 
-  // // to be removed or fixed
-  const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
+  //const initializeVirtualUserUseCase = new InitializeVirtualUserUseCase(userRepository);
 
-
-  // controllers
+  // Controllers
   const authController = new AuthController(authUseCase);
   const activeUsersEmailController = new ActiveUsersEmailController(sendActiveUsersEmailUseCase);
 
@@ -224,27 +210,21 @@ export function setupDependencies(server: any) {
 
   const messageController = new MessageController(
     sendMessageUseCase,
-    getMessagesUseCase,
+    getMessagesUseCase
   );
 
   const respondTregarController = new RespondTregarController(
     respondToSuggestionUseCase,
     respondToMatchUseCase
-  )
+  );
 
   const suggestFriendController = new SuggestFriendController(
-    suggestFriendsUseCase,
-    sendSuggestedFriendUseCase,
-  )
-
-
-
+    sendSuggestedFriendUseCase
+  );
 
   return {
     userRepository,
-
     tokenService,
-
     authController,
     businessSheetController,
     stripeController,
@@ -258,7 +238,6 @@ export function setupDependencies(server: any) {
     messageController,
     respondTregarController,
     suggestFriendController,
-
-    initializeVirtualUserUseCase
+    //initializeVirtualUserUseCase
   };
 }

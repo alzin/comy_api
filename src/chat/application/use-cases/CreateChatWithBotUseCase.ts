@@ -22,7 +22,7 @@ export class CreateChatWithBotUseCase {
 
       const newChat = await this.createChatUseCase.execute(
         [userId, this.botId],
-        'Private Chat with Virtual Assistant',
+        CONFIG.BOT_NAME,
         false
       );
       botChatId = newChat.id;

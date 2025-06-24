@@ -10,11 +10,9 @@ interface MessageTemplates {
 
 export const messageTemplates: MessageTemplates = {
   // GenerateBotResponseUseCase templates
-  bot1Response: {
-    text: 'COMY オフィシャル AI: Thanks for your message "${content}"! How can I assist you today?',
-  },
+
   bot2Response: {
-    text: 'COMY オフィシャル AI: こんにちは！ "${content}" についてもっと教えてください！',
+    text: 'CONFIG.BOT_NAME: こんにちは！ "${content}" についてもっと教えてください！',
   },
 
   // RespondToMatchUseCase templates

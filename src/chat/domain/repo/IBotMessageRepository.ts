@@ -7,6 +7,7 @@ export interface SuggestedUser {
 }
 
 export interface BotMessage {
+  senderName: string;
   id?: string; 
   senderId: string;
   content: string;

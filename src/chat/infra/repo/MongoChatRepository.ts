@@ -117,7 +117,16 @@ export class MongoChatRepository implements IChatRepository {
 
     if (!populatedChat) throw new Error('Failed to populate created chat');
 
-    const latestMessage = await this.getLatestMessage(populatedChat._id);
+    let latestMessage: LatestMessage | null = null;
+    if (chat.latestMessage?.id) {
+      const messageDoc = await MessageModel.findById(chat.latestMessage.id).exec() ||
+                        await BotMessageModel.findById(chat.latestMessage.id).exec();
+      if (!messageDoc) throw new Error(`Invalid latest message with ID ${chat.latestMessage.id}`);
+      latestMessage = mapToLatestMessage(messageDoc);
+    } else {
+      latestMessage = await this.getLatestMessage(populatedChat._id);
+    }
+
     return mapToChatDomain(populatedChat, latestMessage, this.BOT_ID);
   }
 

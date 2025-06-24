@@ -72,7 +72,7 @@ export class SendSuggestedFriendUseCase {
     if (!chat) {
       chat = await this.createChatUseCase.execute(
         [userId, this.virtualUserId],
-        'Private Chat with Virtual Assistant',
+        CONFIG.BOT_NAME,
         false
       );
     }
@@ -123,6 +123,7 @@ export class SendSuggestedFriendUseCase {
       senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
       relatedUserId: suggestedUserId,
       images: images || [],
+      senderName: ''
     };
 
     const savedMessage = await this.botMessageRepo.create(botMessage);

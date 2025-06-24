@@ -2,6 +2,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IBotMessageModel extends Document<Types.ObjectId> {
+  senderName: string;
   relatedUserId: string;
   _id: Types.ObjectId;
   senderId: string;
@@ -27,7 +28,7 @@ const botMessageSchema = new Schema<IBotMessageModel>(
     senderId: { type: String, required: true },
     content: { type: String }, 
     chatId: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
-    createdAt: { type: String, required: true },
+    createdAt: { type: String,default:()=>new Date().toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"})},
     readBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     recipientId: { type: String },
     suggestedUser: { type: Schema.Types.ObjectId, ref: 'User' },
