@@ -35,7 +35,7 @@ export class BotMessageService implements IBotMessageService {
           status: 'pending',
           senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
           images: [],
-          senderName: ''
+          senderName: CONFIG.BOT_NAME
       };
       await this.botMessageRepository.create(botMessage);
       this.socketService.emitMessage(chatId, botMessage);
@@ -58,7 +58,7 @@ export class BotMessageService implements IBotMessageService {
         status: 'pending',
         senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
         images,
-        senderName: ''
+        senderName: CONFIG.BOT_NAME
     };
     await this.botMessageRepository.create(imageBotMessage);
     this.socketService.emitMessage(chatId, imageBotMessage);
@@ -82,7 +82,7 @@ export class BotMessageService implements IBotMessageService {
         status: 'pending',
         senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
         images: [],
-        senderName: ''
+        senderName: CONFIG.BOT_NAME
     };
     await this.botMessageRepository.create(confirmBotMessage);
     this.socketService.emitMessage(chatId, confirmBotMessage);
@@ -126,7 +126,7 @@ export class BotMessageService implements IBotMessageService {
           status: 'pending',
           senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
           images: [],
-          senderName: ''
+          senderName: CONFIG.BOT_NAME
       };
       await this.botMessageRepository.create(botMessage);
       this.socketService.emitMessage(chatId, botMessage);
@@ -149,7 +149,7 @@ export class BotMessageService implements IBotMessageService {
         status: 'pending',
         senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
         images: [],
-        senderName: ''
+        senderName: CONFIG.BOT_NAME
     };
     await this.botMessageRepository.create(notifyBotMessage);
     this.socketService.emitMessage(chatId, notifyBotMessage);
@@ -190,7 +190,7 @@ export class BotMessageService implements IBotMessageService {
         senderProfileImageUrl: CONFIG.BOT_IMAGE_URL,
         relatedUserId: userId,
         images: [],
-        senderName: ''
+        senderName:CONFIG.BOT_NAME
     };
     await this.botMessageRepository.create(matchBotMessage);
     this.socketService.emitMessage(chatId, matchBotMessage);

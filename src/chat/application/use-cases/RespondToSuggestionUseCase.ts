@@ -6,6 +6,7 @@ import { IMessageRepository } from '../../domain/repo/IMessageRepository';
 import { CreateChatUseCase } from './CreateChatUseCase';
 import { BaseRespondUseCase } from './BaseRespondUseCase';
 import { IBotMessageService } from '../../domain/services/IBotMessageService';
+import { CONFIG } from '../../../main/config/config';
 
 interface RespondToSuggestionInput {
   messageId: string;
@@ -48,7 +49,7 @@ export class RespondToSuggestionUseCase extends BaseRespondUseCase {
     if (!suggestedUserChatId) {
       const newChat = await this.createChatUseCase.execute(
         [suggestedUser._id, this.virtualUserId],
-        `Private Chat with Virtual User`,
+        CONFIG.BOT_NAME,
         false
       );
       suggestedUserChatId = newChat.id;
