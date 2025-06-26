@@ -22,7 +22,6 @@
     "@aws-sdk/client-s3": "^3.651.1",
     "@aws-sdk/lib-storage": "^3.651.1",
     "@copilotkit/runtime": "^1.7.1",
-    "@literalai/client": "^0.1.5",
     "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.7",

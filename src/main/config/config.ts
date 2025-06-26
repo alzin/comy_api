@@ -35,8 +35,7 @@ export const CONFIG = {
   VIRTUAL_USER_PASSWORD: process.env.VIRTUAL_USER_PASSWORD,
 
   API_KEY: process.env.API_KEY,
-  LITERAL_API_KEY: process.env.LITERAL_API_KEY,
   //BOT_IMAGE_URL:process.env.BOT_IMAGE_URL
-  BOT_IMAGE_URL:"https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg",
-  BOT_NAME:"COMY オフィシャル AI"
+  BOT_IMAGE_URL: "https://comy-test.s3.ap-northeast-1.amazonaws.com/bot_image.jpg",
+  BOT_NAME: "COMY オフィシャル AI"
 };
