@@ -23,13 +23,13 @@ export const messageTemplates: MessageTemplates = {
     text: 'お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。',
   },
   matchRejectedFollowUp2: {
-    text: '月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。',
+    text: '月曜日の20:00からオンラインでの交流会も行っているのでそちらもご利用ください。',
   },
   matchRejectedImages: {
     text: '',
     images: [
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://us06web.zoom.us/j/6910311031?pwd=2mPYwMkjvjOEamaT3X8F6pbmH9gJgV.1' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://us06web.zoom.us/j/6910311031?pwd=2mPYwMkjvjOEamaT3X8F6pbmH9gJgV.1' },
     ],
   },
   matchAcceptedConfirmation: {
@@ -56,13 +56,13 @@ export const messageTemplates: MessageTemplates = {
     text: 'お手伝いが必要な場合は是非月曜日の21:00からのビジネスシートアップデート勉強会にご参加ください。',
   },
   suggestionRejectedFollowUp2: {
-    text: '月曜日の20:00と水曜日の11:00からオンラインでの交流会も行っているのでそちらもご利用ください。',
+    text: '月曜日の20:00からオンラインでの交流会も行っているのでそちらもご利用ください。',
   },
   suggestionRejectedImages: {
     text: '',
     images: [
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://zoom.us/j/business-sheet-meeting' },
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://us06web.zoom.us/j/6910311031?pwd=2mPYwMkjvjOEamaT3X8F6pbmH9gJgV.1' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://us06web.zoom.us/j/6910311031?pwd=2mPYwMkjvjOEamaT3X8F6pbmH9gJgV.1' },
     ],
   },
   suggestionAcceptedConfirmation: {
