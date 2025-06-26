@@ -62,7 +62,7 @@ export const messageTemplates: MessageTemplates = {
     text: '',
     images: [
       { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/study-session.jpg', zoomLink: 'https://us06web.zoom.us/j/6910311031?pwd=2mPYwMkjvjOEamaT3X8F6pbmH9gJgV.1' },
-      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://zoom.us/j/virtual-meeting' },
+      { imageUrl: 'https://comy-test.s3.ap-northeast-1.amazonaws.com/networking-event.jpg', zoomLink: 'https://us06web.zoom.us/j/6910311031?pwd=2mPYwMkjvjOEamaT3X8F6pbmH9gJgV.1' },
     ],
   },
   suggestionAcceptedConfirmation: {
