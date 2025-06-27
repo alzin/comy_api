@@ -44,7 +44,7 @@ export class MongoUserRepository implements IUserRepository {
     return mongoose.Types.ObjectId.isValid(id);
   }
 
-  async create(user: Omit<User, 'id'>): Promise<User> {
+  async create(user:User): Promise<User> {
     const newUser = new UserModel(user);
     const savedUser = await newUser.save();
     return this.mapToDomain(savedUser);
