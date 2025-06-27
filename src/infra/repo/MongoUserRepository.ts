@@ -23,7 +23,6 @@ export class MongoUserRepository implements IUserRepository {
       subscriptionPlan: userDoc.subscriptionPlan,
       profileImageUrl: userDoc.profileImageUrl,
       isOnline: userDoc.isOnline,
-      // lastActive: userDoc.lastActive,
       referrerName: userDoc.referrerName
 
     };
@@ -101,7 +100,6 @@ export class MongoUserRepository implements IUserRepository {
     try {
       await UserModel.findByIdAndUpdate(userId, {
         isOnline,
-        lastActive: new Date(),
       }).exec();
       return true;
     } catch (error) {

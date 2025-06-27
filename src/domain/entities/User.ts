@@ -15,7 +15,6 @@ export interface User {
   currentPeriodEnd?: Date;
   subscriptionPlan?: string;
   isOnline: boolean;
-  // lastActive: string;
   referrerName?: string;
 
 }

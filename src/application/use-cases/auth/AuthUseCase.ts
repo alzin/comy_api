@@ -65,7 +65,6 @@ export class AuthUseCase implements IAuthUseCase {
       subscriptionPlan: undefined,
       isOnline: false,
       referrerName: undefined,
-      // lastActive: new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
     });
 
     const verificationUrl = `${CONFIG.SERVER_URL}auth/verify-email?token=${verificationToken}`;
