@@ -98,7 +98,7 @@ export class AuthUseCase implements IAuthUseCase {
 
   async verifyEmail(
     token: string
-  ): Promise<{ accessToken: string; refreshToken: string; email: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string}> {
     const user = await this.userRepository.findByVerificationToken(token);
     if (!user) {
       throw new Error("Invalid or expired token");
@@ -120,7 +120,7 @@ export class AuthUseCase implements IAuthUseCase {
       CONFIG.REFRESH_TOKEN_EXPIRATION
     );
 
-    return { accessToken, refreshToken, email: user.email };
+    return { accessToken, refreshToken };
   }
 
   async login(
