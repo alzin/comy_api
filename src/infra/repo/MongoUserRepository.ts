@@ -8,8 +8,9 @@ import { SubscriptionStatus } from '../../domain/entities/SubscriptionStatus';
 
 export class MongoUserRepository implements IUserRepository {
   updateUserStatus(userId: string, isOnline: boolean): Promise<boolean> {
-    throw new Error('Method not implemented.');
-  }
+  console.log('Method not implemented.');
+  return Promise.resolve(false); 
+}
   private mapToDomain(userDoc: UserDocument): User {
     return {
       id: userDoc._id.toString(),
