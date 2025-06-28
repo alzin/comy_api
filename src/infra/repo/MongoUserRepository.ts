@@ -7,6 +7,9 @@ import { PipelineStage } from 'mongoose';
 import { SubscriptionStatus } from '../../domain/entities/SubscriptionStatus';
 
 export class MongoUserRepository implements IUserRepository {
+  updateUserStatus(userId: string, isOnline: boolean): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
   private mapToDomain(userDoc: UserDocument): User {
     return {
       id: userDoc._id.toString(),
@@ -23,7 +26,6 @@ export class MongoUserRepository implements IUserRepository {
       subscriptionPlan: userDoc.subscriptionPlan,
       profileImageUrl: userDoc.profileImageUrl,
       isOnline: userDoc.isOnline,
-      // lastActive: userDoc.lastActive,
       referrerName: userDoc.referrerName
 
     };
@@ -42,7 +44,7 @@ export class MongoUserRepository implements IUserRepository {
     return mongoose.Types.ObjectId.isValid(id);
   }
 
-  async create(user: Omit<User, 'id'>): Promise<User> {
+  async create(user:User): Promise<User> {
     const newUser = new UserModel(user);
     const savedUser = await newUser.save();
     return this.mapToDomain(savedUser);
@@ -80,36 +82,10 @@ export class MongoUserRepository implements IUserRepository {
   async getAllUsersInfo(): Promise<UserInfo[]> {
     return this.findAndMapToUserInfo({});
   }
-
-  async update(id: string, update: Partial<User>): Promise<User | null>;
-  async update(userId: string, userData: Partial<User>): Promise<void>;
-  async update(id: string, update: Partial<User>): Promise<User | null | void> {
-    if (!(await this.isValidId(id))) {
-      return null;
-    }
-    const updatedUser = await UserModel.findByIdAndUpdate(id, { $set: update }, { new: true }).exec();
-    if (arguments.length === 2 && arguments[1] === update) {
-      return updatedUser ? this.mapToDomain(updatedUser) : null;
-    }
-    return;
+  
+  async update(userId: string, userData: Partial<User>): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, { $set: userData }).exec();
   }
-
-  async updateUserStatus(userId: string, isOnline: boolean): Promise<boolean> {
-    if (!(await this.isValidId(userId))) {
-      return false;
-    }
-    try {
-      await UserModel.findByIdAndUpdate(userId, {
-        isOnline,
-        lastActive: new Date(),
-      }).exec();
-      return true;
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      return false;
-    }
-  }
-
   async searchUsers(searchTerm: string): Promise<UserInfo[]> {
     const searchWords = searchTerm.split(' ').filter((word) => word.length > 0);
     const searchRegex = searchWords.map((word) => new RegExp(word, 'i'));

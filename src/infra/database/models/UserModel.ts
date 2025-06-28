@@ -18,7 +18,6 @@ const UserSchema: Schema<UserDocument> = new Schema(
     stripeCustomerId: { type: String, unique: true, sparse: true },
     stripeSubscriptionId: { type: String, unique: true, sparse: true },
     isOnline: { type: Boolean, default: false },
-    // lastActive: { type: String, default: () => new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) },
     subscriptionStatus: {
       type: String,
       enum: Object.values(SubscriptionStatus),
