@@ -9,7 +9,7 @@ export class CreateChatUseCase {
   constructor(
     private chatRepository: IChatRepository,
     private userRepository: IUserRepository
-  ) { }
+  ) {}
 
   async execute(userIds: string[], name: string, isGroup: boolean): Promise<Chat> {
     if (!userIds || userIds.length < 2) {

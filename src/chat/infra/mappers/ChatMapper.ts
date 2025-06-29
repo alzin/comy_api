@@ -50,8 +50,6 @@ export function mapToChatDomain(
   latestMessage: LatestMessage | null,
   botId: string,
 ): Chat {
-  const isPopulated = (doc: any): doc is PopulatedChatDocument => doc.users && doc.users[0] && 'name' in doc.users[0];
-
   const users = chatDoc.users.map(user => mapToChatUser(user, botId, CONFIG.ADMIN));
 
   return {

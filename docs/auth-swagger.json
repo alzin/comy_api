@@ -473,67 +473,8 @@
           }
         }
       }
-    },
-
-    "/auth/logout": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "User logout",
-        "description": "Logs out the user by clearing authentication cookies.",
-        "responses": {
-          "200": {
-            "description": "Logout successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Logout successful"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Logout failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Logout failed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Internal server error"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
-  
   "components": {
     "securitySchemes": {
       "BearerAuth": {

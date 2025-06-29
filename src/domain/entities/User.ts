@@ -1,3 +1,5 @@
+// src/domain/entities/User.ts
+
 import { SubscriptionStatus } from "./SubscriptionStatus";
 
 export interface User {

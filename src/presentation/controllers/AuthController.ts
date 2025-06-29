@@ -97,9 +97,7 @@ export class AuthController {
   async refreshAccessToken(req: Request, res: Response): Promise<void> {
     try {
       const refreshToken = req.cookies[CONFIG.REFRESH_TOKEN_COOKIE_NAME];
-      if (!refreshToken) {
-        res.status(400).json({ message: "No refresh token provided" });
-      }
+
       const newAccessToken =
         await this.authUseCase.refreshAccessToken(refreshToken);
       this.setTokenCookie(res, CONFIG.ACCESS_TOKEN_COOKIE_NAME, newAccessToken);
@@ -112,7 +110,6 @@ export class AuthController {
       }
     }
   }
-
 
   async changePassword(req: Request, res: Response): Promise<void> {
     try {

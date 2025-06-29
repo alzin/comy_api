@@ -1,4 +1,4 @@
-// src/application/use-cases/business-sheet/CreateBusinessSheetUseCass.ts
+// src/application/use-cases/business-sheet/CreateBusinessSheetUseCase.ts
 import { BusinessSheet } from "../../../domain/entities/BusinessSheet";
 import { IBusinessSheetRepository } from "../../../domain/repo/IBusinessSheetRepository";
 import { BusinessSheetImageUploader } from "./BusinessSheetImageUploader";

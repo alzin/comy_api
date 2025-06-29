@@ -3,13 +3,13 @@ import { CONFIG } from '../../../main/config/config';
 import { CreateChatUseCase } from './CreateChatUseCase';
 
 export class CreateChatWithBotUseCase {
-  private botId: string = CONFIG.BOT_ID;
-  private adminId: string = CONFIG.ADMIN;
+  private botId = CONFIG.BOT_ID;
+  private adminId = CONFIG.ADMIN;
 
   constructor(
     private chatRepository: IChatRepository,
     private createChatUseCase: CreateChatUseCase
-  ) { }
+  ) {}
 
   async execute(
     userId: string,

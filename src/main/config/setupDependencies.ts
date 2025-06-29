@@ -239,6 +239,5 @@ export function setupDependencies(server: any) {
     messageController,
     respondTregarController,
     suggestFriendController,
-    //initializeVirtualUserUseCase
   };
 }

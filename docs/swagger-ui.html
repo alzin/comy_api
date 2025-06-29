@@ -14,13 +14,11 @@
   <body>
     <div id="swagger-ui"></div>
     <script>
-      
       window.onload = async function () {
         const urls = [
           "/auth-swagger.json",
           "/business-sheet-swagger.json",
           "/users-swagger.json",
-          "/admins-swagger.json",
         ];
 
         try {
@@ -29,7 +27,7 @@
 
           // Merge the JSON objects
           const mergedJson = _.merge({}, ...jsonMap);
-          
+
           SwaggerUIBundle({
             spec: mergedJson,
             dom_id: "#swagger-ui",
@@ -39,12 +37,10 @@
             ],
             layout: "BaseLayout",
           });
-        
         } catch (error) {
           console.error("Error loading Swagger files:", error);
         }
       };
-      
     </script>
   </body>
 </html>

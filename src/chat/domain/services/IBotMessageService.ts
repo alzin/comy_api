@@ -1,5 +1,3 @@
-import { BotMessage } from '../../domain/repo/IBotMessageRepository';
-
 export interface IBotMessageService {
   sendRejectionMessages(chatId: string, senderName: string, virtualUserId: string): Promise<string[]>;
   sendConfirmationMessage(chatId: string, suggestedUserName: string, virtualUserId: string): Promise<string>;
