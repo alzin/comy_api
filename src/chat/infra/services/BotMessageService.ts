@@ -97,20 +97,21 @@ export class BotMessageService implements IBotMessageService {
     userCategory: string,
     suggestedUserCategory: string,
     botId: string,
-    companyStrengths: string
+    suggestedUserCompanyStrengths: string,
+    userCompanyStrengths: string
   ): Promise<void> {
     const groupMessages = [
       getTemplatedMessage('matchGroupIntro1', {
         userName,
         suggestedUserName,
         suggestedUserCategory: suggestedUserCategory || '未指定',
-        companyStrengths: companyStrengths || '「自社の強みテーブル '
+        suggestedUserCompanyStrengths: suggestedUserCompanyStrengths || '「自社の強みテーブル」'
       }),
       getTemplatedMessage('matchGroupIntro2', {
         suggestedUserName,
         userName,
         userCategory: userCategory || '未指定',
-        companyStrengths: companyStrengths || '「自社の強みテーブル '
+        userCompanyStrengths: userCompanyStrengths || '「自社の強みテーブル」'
       }),
       getTemplatedMessage('matchGroupIntro3', {}),
     ];
