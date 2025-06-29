@@ -1,6 +1,5 @@
-////src/domain/repo/IUserRepository.ts
-import { User } from '../entities/User';
-import { UserInfo } from '../entities/UserInfo';
+import { User } from "../entities/User";
+import { UserInfo } from "../entities/UserInfo";
 
 export interface IUserRepository {
   create(user: User): Promise<User>;
@@ -14,6 +13,4 @@ export interface IUserRepository {
   updateUserStatus(userId: string, isOnline: boolean): Promise<boolean>;
   searchUsers(searchTerm: string): Promise<UserInfo[]>;
   delete(id: string): Promise<void>;
-  isValidId(id: string): Promise<boolean>;
-
 }

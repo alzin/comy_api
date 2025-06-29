@@ -7,7 +7,7 @@ export interface IAuthUseCase {
   ): Promise<void>;
   verifyEmail(
     token: string,
-  ): Promise<{ accessToken: string; refreshToken: string}>;
+  ): Promise<{ accessToken: string; refreshToken: string }>;
   login(
     email: string,
     password: string,

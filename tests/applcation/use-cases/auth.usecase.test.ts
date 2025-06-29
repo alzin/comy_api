@@ -1,4 +1,3 @@
-import { rejects } from "assert";
 import { AuthUseCase } from "../../../src/application/use-cases/auth/AuthUseCase";
 import { IUserRepository } from "../../../src/domain/repo/IUserRepository";
 import { IEmailService } from "../../../src/domain/services/IEmailService";
@@ -97,8 +96,8 @@ describe("AuthUseCase", () => {
       await authUseCase.verifyEmail("valid_token");
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
-        "1",
         expect.objectContaining({
+          id: "1",
           isEmailVerified: true,
           verificationToken: null,
         }),
@@ -209,8 +208,8 @@ describe("AuthUseCase", () => {
       );
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
-        mockUser.id,
         expect.objectContaining({
+          id: "1",
           password: "new_hashed_password",
         }),
       );
@@ -256,8 +255,8 @@ describe("AuthUseCase", () => {
       await authUseCase.forgotPassword("test@example.com");
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
-        mockUser.id,
         expect.objectContaining({
+          id: "1",
           verificationToken: "reset_token",
         }),
       );
@@ -288,8 +287,8 @@ describe("AuthUseCase", () => {
       await authUseCase.resetPassword("valid_token", "new_password");
 
       expect(mockUserRepository.update).toHaveBeenCalledWith(
-        mockUser.id,
         expect.objectContaining({
+          id: "1",
           password: "new_hashed_password",
           verificationToken: null,
         }),
@@ -325,9 +324,9 @@ describe("AuthUseCase", () => {
     it("should throw an error for invalid refresh token", async () => {
       mockTokenService.verify.mockResolvedValue(null);
 
-     await expect(
-    authUseCase.refreshAccessToken("invalid_refresh_token"),
-    ).rejects.toThrow("Invalid refresh token");
+      await expect(
+        authUseCase.refreshAccessToken("invalid_refresh_token"),
+      ).rejects.toThrow("Invalid refresh token");
     });
   });
 });

@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { BotMessage, SuggestedUser } from '../../domain/repo/IBotMessageRepository';
+import { BotMessage } from '../../domain/repo/IBotMessageRepository';
 import { IBotMessageModel } from '../database/models/BotMessageModel';
 import { UserDocument } from '../../../infra/database/models/UserModel';
 

@@ -55,7 +55,9 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
     const users = [userId, suggestedUser._id, this.adminBotId];
     const chatName = `${user.name || 'User'}, ${suggestedUser.name}`;
     const newChat = await this.createChatUseCase.execute(users, chatName, true);
-    const userBusinessSheet = await this.businessSheetRepository.findByUserId(suggestedUser._id);
+    const suggestedUserBusinessSheet = await this.businessSheetRepository.findByUserId(suggestedUser._id);
+    const userBusinessSheet = await this.businessSheetRepository.findByUserId(userId);
+
 
     await this.botMessageService.sendGroupMessages(
       newChat.id,
@@ -64,6 +66,7 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
       user.category || '未指定',
       suggestedUser.category || '未指定',
       this.adminBotId,
+      suggestedUserBusinessSheet.companyStrengths,
       userBusinessSheet.companyStrengths
     );
 
