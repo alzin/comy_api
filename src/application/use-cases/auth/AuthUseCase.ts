@@ -17,7 +17,7 @@ export class AuthUseCase implements IAuthUseCase {
     private encryptionService: IEncryptionService,
     private tokenService: ITokenService,
     private randomStringGenerator: IRandomStringGenerator,
-  ) {}
+  ) { }
 
   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
@@ -189,7 +189,7 @@ export class AuthUseCase implements IAuthUseCase {
 
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepository.findByEmail(email);
-    
+
     if (!user) {
       throw new Error("User not found");
     }

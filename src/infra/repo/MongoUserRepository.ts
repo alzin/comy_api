@@ -7,8 +7,8 @@ import { SubscriptionStatus } from "../../domain/entities/SubscriptionStatus";
 
 export class MongoUserRepository implements IUserRepository {
   updateUserStatus(userId: string, isOnline: boolean): Promise<boolean> {
-  console.log('Method not implemented.');
-  return Promise.resolve(false); 
+    console.log('Method not implemented.');
+    return Promise.resolve(false);
   }
 
   async create(user: User): Promise<User> {
@@ -38,7 +38,7 @@ export class MongoUserRepository implements IUserRepository {
       email: { $ne: 'virtual@chat.com' },
       isEmailVerified: true,
     }).exec();
-    
+
     const mappedUsers = users.map(user => this.mapToDomain(user));
 
     return mappedUsers;
