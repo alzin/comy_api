@@ -33,7 +33,7 @@ export const messageTemplates: MessageTemplates = {
     ],
   },
   matchAcceptedConfirmation: {
-    text: '${suggestedUserName}さんとのビジネスマッチができました。チャットで挨拶してみましょう。',
+    text: '${suggestedUserName}さんにマッチの希望を送りました。',
   },
   matchGroupIntro1: {
     text: '${userName}さん、お世話になっております！こちら${suggestedUserCategory}カテゴリーの${suggestedUserName}さんをご紹介します！${suggestedUserCategory}カテゴリーの${suggestedUserName}さんの強みは ${suggestedUserCompanyStrengths} です！',
