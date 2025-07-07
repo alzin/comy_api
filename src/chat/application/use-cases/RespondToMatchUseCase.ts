@@ -44,14 +44,15 @@ export class RespondToMatchUseCase extends BaseRespondUseCase {
     await this.updateSuggestionStatus(messageId, chatId, userId, response);
     await this.sendUserResponse(input, chatId);
 
+    const user = await this.userRepository.findById(userId);
+
     if (response === 'マッチを希望しない') {
-      return { message: await this.handleRejection(userId, suggestedUser._id, chatId, suggestion.senderName || 'Unknown User') };
+      return { message: await this.handleRejection(userId, suggestedUser._id, chatId, user.name || 'Unknown User') };
     }
 
     await this.friendRepository.addFriend(userId, suggestedUser._id);
     const confirmText = await this.sendConfirmationMessage(chatId, suggestedUser.name);
 
-    const user = await this.userRepository.findById(userId);
     const users = [userId, suggestedUser._id, this.adminBotId];
     const chatName = `${user.name || 'User'}, ${suggestedUser.name}`;
     const newChat = await this.createChatUseCase.execute(users, chatName, true);

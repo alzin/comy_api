@@ -39,8 +39,10 @@ export class RespondToSuggestionUseCase extends BaseRespondUseCase {
     await this.updateSuggestionStatus(messageId, chatId, userId, response);
     await this.sendUserResponse(input, chatId);
 
+    const user = await this.userRepository.findById(userId);
+
     if (response === 'マッチを希望しない') {
-      return { message: await this.handleRejection(userId, suggestedUser._id, chatId, suggestion.senderName || 'Unknown User') };
+      return { message: await this.handleRejection(userId, suggestedUser._id, chatId, user.name || 'Unknown User') };
     }
 
     const confirmText = await this.sendConfirmationMessage(chatId, suggestedUser.name);
@@ -55,7 +57,6 @@ export class RespondToSuggestionUseCase extends BaseRespondUseCase {
       suggestedUserChatId = newChat.id;
     }
 
-    const user = await this.userRepository.findById(userId);
     const existingMessage = await this.botMessageRepository.findExistingSuggestion(
       suggestedUserChatId,
       this.virtualUserId,
